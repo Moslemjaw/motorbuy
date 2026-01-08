@@ -55,15 +55,15 @@ export default function Home() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="flex flex-wrap gap-4"
+              className="flex flex-wrap gap-3 md:gap-4"
             >
               <Link href="/products">
-                <Button size="lg" className="text-lg px-8 h-14 rounded-full shadow-lg shadow-primary/30" data-testid="button-shop-parts">
-                  Shop Parts <ArrowRight className="ml-2 w-5 h-5" />
+                <Button size="default" className="text-sm md:text-lg px-4 md:px-8 h-10 md:h-14 rounded-full shadow-lg shadow-primary/30" data-testid="button-shop-parts">
+                  Shop Parts <ArrowRight className="ml-2 w-4 h-4 md:w-5 md:h-5" />
                 </Button>
               </Link>
               <Link href="/vendors">
-                <Button size="lg" variant="outline" className="text-lg px-8 h-14 rounded-full border-white/30 text-white bg-white/5 backdrop-blur-sm" data-testid="button-browse-vendors">
+                <Button size="default" variant="outline" className="text-sm md:text-lg px-4 md:px-8 h-10 md:h-14 rounded-full border-white/30 text-white bg-white/5 backdrop-blur-sm" data-testid="button-browse-vendors">
                   Browse Vendors
                 </Button>
               </Link>

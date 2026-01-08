@@ -14,7 +14,7 @@ export default function Stories() {
     <div className="min-h-screen bg-background font-body">
       <Navbar />
       
-      <section className="relative gradient-dark text-white py-20 overflow-hidden">
+      <section className="relative gradient-dark text-white py-8 md:py-20 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-accent/20 via-transparent to-transparent" />
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
@@ -22,14 +22,14 @@ export default function Stories() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center">
-                <Newspaper className="w-6 h-6" />
+            <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-white/10 flex items-center justify-center">
+                <Newspaper className="w-5 h-5 md:w-6 md:h-6" />
               </div>
               <Badge className="bg-white/10 border-white/20 text-white">Community Feed</Badge>
             </div>
-            <h1 className="text-4xl lg:text-5xl font-display font-bold mb-4">Vendor Stories</h1>
-            <p className="text-white/70 text-lg max-w-xl">
+            <h1 className="text-2xl md:text-4xl lg:text-5xl font-display font-bold mb-2 md:mb-4">Vendor Stories</h1>
+            <p className="text-white/70 text-sm md:text-lg max-w-xl">
               Latest updates, promotions, and announcements from our trusted vendors.
             </p>
           </motion.div>
