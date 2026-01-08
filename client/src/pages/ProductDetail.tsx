@@ -128,7 +128,7 @@ export default function ProductDetail() {
 
             <div className="space-y-4 pt-6 border-t">
               {product.vendorId && (
-                <Link href={`/vendor/${product.vendorId}`}>
+                <Link href={`/vendor/${product.vendorId}`} data-testid="link-vendor-shop">
                   <div className="flex items-center gap-4 bg-card p-5 rounded-2xl border hover:shadow-lg transition-shadow cursor-pointer group">
                     <div className="w-14 h-14 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center text-white">
                       <Store className="w-7 h-7" />
@@ -136,7 +136,7 @@ export default function ProductDetail() {
                     <div className="flex-1">
                       <div className="text-sm text-muted-foreground">Sold by</div>
                       <div className="font-bold text-lg group-hover:text-primary transition-colors">
-                        {product.vendor?.storeName || `Vendor #${product.vendorId}`}
+                        Vendor #{product.vendorId}
                       </div>
                     </div>
                     <Button variant="ghost" size="sm" className="shrink-0">

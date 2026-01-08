@@ -65,7 +65,7 @@ export default function Cart() {
               Looks like you haven't added any parts yet. Start exploring our collection!
             </p>
             <Link href="/products">
-              <Button size="lg" className="rounded-full px-8">
+              <Button size="lg" className="rounded-full px-8" data-testid="button-start-shopping">
                 Start Shopping <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </Link>

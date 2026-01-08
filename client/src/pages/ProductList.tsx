@@ -131,7 +131,7 @@ export default function ProductList() {
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               Try adjusting your search or filter criteria to find what you're looking for.
             </p>
-            <Button variant="outline" onClick={clearFilters} className="rounded-full px-6">
+            <Button variant="outline" onClick={clearFilters} className="rounded-full px-6" data-testid="button-clear-all-filters">
               Clear All Filters
             </Button>
           </motion.div>

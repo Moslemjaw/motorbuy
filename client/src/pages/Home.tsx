@@ -69,12 +69,12 @@ export default function Home() {
               className="flex flex-wrap gap-4"
             >
               <Link href="/products">
-                <Button size="lg" className="text-lg px-8 h-14 rounded-full shadow-lg shadow-primary/30">
+                <Button size="lg" className="text-lg px-8 h-14 rounded-full shadow-lg shadow-primary/30" data-testid="button-shop-parts">
                   Shop Parts <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
               <Link href="/vendors">
-                <Button size="lg" variant="outline" className="text-lg px-8 h-14 rounded-full border-white/30 text-white bg-white/5 backdrop-blur-sm">
+                <Button size="lg" variant="outline" className="text-lg px-8 h-14 rounded-full border-white/30 text-white bg-white/5 backdrop-blur-sm" data-testid="button-browse-vendors">
                   Browse Vendors
                 </Button>
               </Link>
@@ -168,7 +168,7 @@ export default function Home() {
           )}
           <div className="text-center mt-14">
             <Link href="/products">
-              <Button size="lg" variant="outline" className="rounded-full px-10 h-12">
+              <Button size="lg" variant="outline" className="rounded-full px-10 h-12" data-testid="button-view-all-products">
                 View All Products <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </Link>
@@ -219,7 +219,7 @@ export default function Home() {
             </div>
             <div className="text-center mt-14">
               <Link href="/stories">
-                <Button size="lg" className="rounded-full px-10 h-12 shadow-lg shadow-primary/30">
+                <Button size="lg" className="rounded-full px-10 h-12 shadow-lg shadow-primary/30" data-testid="button-view-all-stories">
                   View All Stories <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </Link>

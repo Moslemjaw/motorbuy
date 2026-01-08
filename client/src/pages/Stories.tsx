@@ -51,7 +51,7 @@ export default function Stories() {
               Check back soon for updates from our vendors.
             </p>
             <Link href="/vendors">
-              <Button variant="outline" className="rounded-full">
+              <Button variant="outline" className="rounded-full" data-testid="button-browse-vendors">
                 Browse Vendors <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </Link>
