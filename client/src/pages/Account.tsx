@@ -161,47 +161,49 @@ export default function Account() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <CardTitle className="flex items-center gap-2">
-              <Package className="w-5 h-5" /> Order History
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isOrdersLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="animate-spin" />
-              </div>
-            ) : !orders || orders.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No orders yet.</p>
-                <Link href="/products">
-                  <Button variant="outline" className="mt-4" data-testid="button-start-shopping">Start Shopping</Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {orders.map((order) => (
-                  <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg" data-testid={`order-row-${order.id}`}>
-                    <div>
-                      <div className="font-medium">Order #{order.id}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
+        {roleData?.role !== "vendor" && (
+          <Card className="md:col-span-2">
+            <CardHeader className="flex flex-row items-center justify-between gap-2">
+              <CardTitle className="flex items-center gap-2">
+                <Package className="w-5 h-5" /> Order History
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isOrdersLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="animate-spin" />
+                </div>
+              ) : !orders || orders.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No orders yet.</p>
+                  <Link href="/products">
+                    <Button variant="outline" className="mt-4" data-testid="button-start-shopping">Start Shopping</Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {orders.map((order) => (
+                    <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg" data-testid={`order-row-${order.id}`}>
+                      <div>
+                        <div className="font-medium">Order #{order.id}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold">{formatKWD(order.total)}</div>
+                        <Badge variant={order.status === "delivered" ? "default" : "secondary"}>
+                          {order.status}
+                        </Badge>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-bold">{formatKWD(order.total)}</div>
-                      <Badge variant={order.status === "delivered" ? "default" : "secondary"}>
-                        {order.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {roleData?.role === "vendor" && (
           <Card>
