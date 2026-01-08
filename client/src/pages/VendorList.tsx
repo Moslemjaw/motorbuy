@@ -66,34 +66,50 @@ export default function VendorList() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <Card className="h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-border group overflow-hidden" data-testid={`vendor-card-${vendor.id}`}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4 mb-5">
-                      <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-primary/20">
-                        {vendor.logoUrl ? (
-                          <img src={vendor.logoUrl} className="w-full h-full object-cover rounded-2xl" alt={vendor.storeName} />
-                        ) : (
-                          <span className="text-2xl font-bold">{vendor.storeName?.[0]}</span>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-display font-bold text-lg truncate group-hover:text-primary transition-colors">{vendor.storeName}</h3>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                          <span>Verified Dealer</span>
+                <Link href={`/vendor/${vendor.id}`} className="block">
+                  <Card className="h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-border group overflow-hidden" data-testid={`vendor-card-${vendor.id}`}>
+                    <div className="relative h-32 bg-gradient-to-br from-primary/80 via-primary to-accent overflow-hidden">
+                      {vendor.coverImageUrl ? (
+                        <img src={vendor.coverImageUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-4">
+                        <div className="flex items-end gap-3">
+                          <div className="w-16 h-16 rounded-xl bg-background p-0.5 shadow-lg -mb-8">
+                            <div className="w-full h-full rounded-lg bg-card flex items-center justify-center overflow-hidden">
+                              {vendor.logoUrl ? (
+                                <img src={vendor.logoUrl} className="w-full h-full object-cover" alt={vendor.storeName} />
+                              ) : (
+                                <Store className="w-8 h-8 text-primary" />
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
                     
-                    <p className="text-muted-foreground mb-6 line-clamp-2 leading-relaxed">{vendor.description || "Quality automotive parts and accessories."}</p>
-                    
-                    <Link href={`/vendor/${vendor.id}`}>
-                      <Button variant="outline" className="w-full rounded-xl h-11 group-hover:border-primary group-hover:text-primary transition-colors" data-testid={`button-view-vendor-${vendor.id}`}>
-                        View Profile <ArrowRight className="ml-2 w-4 h-4" />
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
+                    <CardContent className="pt-10 pb-6 px-4">
+                      <div className="mb-3">
+                        <h3 className="font-display font-bold text-lg group-hover:text-primary transition-colors mb-1">{vendor.storeName}</h3>
+                        <div className="flex items-center gap-1.5 text-sm">
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          <span className="text-green-600 font-medium">Verified Seller</span>
+                        </div>
+                      </div>
+                      
+                      <p className="text-muted-foreground text-sm mb-4 line-clamp-2 leading-relaxed">{vendor.description || "Quality automotive parts and accessories."}</p>
+                      
+                      <div className="flex items-center justify-between pt-3 border-t border-border">
+                        <span className="text-xs text-muted-foreground">Kuwait</span>
+                        <span className="text-sm text-primary font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
+                          Visit Shop <ArrowRight className="w-4 h-4" />
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
               </motion.div>
             ))}
           </div>
