@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { 
-  roles, vendors, categories, products, orders, orderItems, vendorStories, cartItems,
-  type Role, type Vendor, type Category, type Product, type Order, type OrderItem, type VendorStory, type CartItem,
+  roles, vendors, categories, products, orders, orderItems, vendorStories, cartItems, paymentRequests,
+  type Role, type Vendor, type Category, type Product, type Order, type OrderItem, type VendorStory, type CartItem, type PaymentRequest,
   type InsertRole, type InsertVendor, type InsertCategory, type InsertProduct, type InsertOrder, type InsertOrderItem, type InsertStory, type InsertCartItem
 } from "@shared/schema";
 import { eq, desc, sql } from "drizzle-orm";
@@ -41,6 +41,14 @@ export interface IStorage {
   // Stories
   getStories(): Promise<(VendorStory & { vendor: Vendor })[]>;
   createStory(story: InsertStory): Promise<VendorStory>;
+  deleteStory(id: number): Promise<void>;
+
+  // Payment Requests
+  getPaymentRequests(vendorId: number): Promise<PaymentRequest[]>;
+  createPaymentRequest(vendorId: number, amount: string): Promise<PaymentRequest>;
+
+  // Vendor Orders
+  getVendorOrders(vendorId: number): Promise<Order[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -178,6 +186,42 @@ export class DatabaseStorage implements IStorage {
   async createStory(story: InsertStory): Promise<VendorStory> {
     const [newStory] = await db.insert(vendorStories).values(story).returning();
     return newStory;
+  }
+
+  async deleteStory(id: number): Promise<void> {
+    await db.delete(vendorStories).where(eq(vendorStories.id, id));
+  }
+
+  async getPaymentRequests(vendorId: number): Promise<PaymentRequest[]> {
+    return await db.select().from(paymentRequests)
+      .where(eq(paymentRequests.vendorId, vendorId))
+      .orderBy(desc(paymentRequests.createdAt));
+  }
+
+  async createPaymentRequest(vendorId: number, amount: string): Promise<PaymentRequest> {
+    const [request] = await db.insert(paymentRequests).values({
+      vendorId,
+      amount,
+    }).returning();
+    return request;
+  }
+
+  async getVendorOrders(vendorId: number): Promise<Order[]> {
+    const vendorProducts = await db.select().from(products).where(eq(products.vendorId, vendorId));
+    const productIds = vendorProducts.map(p => p.id);
+    
+    if (productIds.length === 0) return [];
+    
+    const items = await db.select().from(orderItems).where(
+      sql`${orderItems.productId} IN ${productIds}`
+    );
+    
+    const orderIds = [...new Set(items.map(i => i.orderId))];
+    if (orderIds.length === 0) return [];
+    
+    return await db.select().from(orders)
+      .where(sql`${orders.id} IN ${orderIds}`)
+      .orderBy(desc(orders.createdAt));
   }
 }
 

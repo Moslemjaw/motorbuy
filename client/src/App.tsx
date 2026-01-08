@@ -10,7 +10,11 @@ import ProductDetail from "@/pages/ProductDetail";
 import VendorList from "@/pages/VendorList";
 import Cart from "@/pages/Cart";
 import VendorDashboard from "@/pages/VendorDashboard";
-import Account from "@/pages/Account";
+import CustomerAccount from "@/pages/CustomerAccount";
+import OrderHistory from "@/pages/OrderHistory";
+import VendorAccount from "@/pages/VendorAccount";
+import VendorStore from "@/pages/VendorStore";
+import VendorWallet from "@/pages/VendorWallet";
 import AdminDashboard from "@/pages/AdminDashboard";
 import Stories from "@/pages/Stories";
 import VendorProfile from "@/pages/VendorProfile";
@@ -23,11 +27,24 @@ function Router() {
       <Route path="/products/:id" component={ProductDetail} />
       <Route path="/vendors" component={VendorList} />
       <Route path="/cart" component={Cart} />
-      <Route path="/vendor-dashboard" component={VendorDashboard} />
-      <Route path="/vendor/:id" component={VendorProfile} />
-      <Route path="/account" component={Account} />
-      <Route path="/admin" component={AdminDashboard} />
       <Route path="/stories" component={Stories} />
+      <Route path="/vendor/:id" component={VendorProfile} />
+      
+      {/* Customer routes */}
+      <Route path="/account" component={CustomerAccount} />
+      <Route path="/orders" component={OrderHistory} />
+      
+      {/* Vendor routes */}
+      <Route path="/vendor/account" component={VendorAccount} />
+      <Route path="/vendor/store" component={VendorStore} />
+      <Route path="/vendor/dashboard" component={VendorDashboard} />
+      <Route path="/vendor/wallet" component={VendorWallet} />
+      
+      {/* Legacy route redirects */}
+      <Route path="/vendor-dashboard" component={VendorDashboard} />
+      
+      {/* Admin routes */}
+      <Route path="/admin" component={AdminDashboard} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />

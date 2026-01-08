@@ -78,6 +78,15 @@ export const cartItems = pgTable("cart_items", {
   quantity: integer("quantity").notNull().default(1),
 });
 
+export const paymentRequests = pgTable("payment_requests", {
+  id: serial("id").primaryKey(),
+  vendorId: integer("vendor_id").notNull().references(() => vendors.id),
+  amount: decimal("amount").notNull(),
+  status: text("status", { enum: ["pending", "approved", "paid", "rejected"] }).default("pending").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  processedAt: timestamp("processed_at"),
+});
+
 export const rolesRelations = relations(roles, ({ one }) => ({
   user: one(users, { fields: [roles.userId], references: [users.id] }),
 }));
@@ -108,6 +117,10 @@ export const cartItemsRelations = relations(cartItems, ({ one }) => ({
   product: one(products, { fields: [cartItems.productId], references: [products.id] }),
 }));
 
+export const paymentRequestsRelations = relations(paymentRequests, ({ one }) => ({
+  vendor: one(vendors, { fields: [paymentRequests.vendorId], references: [vendors.id] }),
+}));
+
 export const insertRoleSchema = createInsertSchema(roles);
 export const insertVendorSchema = createInsertSchema(vendors).omit({ id: true, isApproved: true, walletBalance: true, createdAt: true });
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
@@ -116,6 +129,7 @@ export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, cre
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
 export const insertStorySchema = createInsertSchema(vendorStories).omit({ id: true, createdAt: true });
 export const insertCartItemSchema = createInsertSchema(cartItems).omit({ id: true });
+export const insertPaymentRequestSchema = createInsertSchema(paymentRequests).omit({ id: true, status: true, createdAt: true, processedAt: true });
 
 export type User = typeof users.$inferSelect;
 export type Role = typeof roles.$inferSelect;
@@ -136,3 +150,5 @@ export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type InsertStory = z.infer<typeof insertStorySchema>;
 export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
+export type PaymentRequest = typeof paymentRequests.$inferSelect;
+export type InsertPaymentRequest = z.infer<typeof insertPaymentRequestSchema>;

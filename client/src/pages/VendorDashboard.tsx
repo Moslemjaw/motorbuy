@@ -1,26 +1,106 @@
 import { Navbar } from "@/components/Navbar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useProducts, useCreateProduct, useCreateStory, useCategories, useRole, useStories, useVendors } from "@/hooks/use-motorbuy";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
-import { Plus, Package, Newspaper, Loader2, LayoutDashboard, ShoppingCart, TrendingUp, DollarSign, Image } from "lucide-react";
-import { useState } from "react";
+import { useRole, useVendors, useProducts, useCategories } from "@/hooks/use-motorbuy";
+import { Package, ShoppingCart, Loader2, ArrowLeft, Plus, Image, Trash2, BookOpen } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
+import { useState, useRef } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatKWD } from "@/lib/currency";
-
-type TabType = "overview" | "orders" | "products" | "stories";
+import { useUpload } from "@/hooks/use-upload";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { Order, VendorStory } from "@shared/schema";
 
 export default function VendorDashboard() {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { data: roleData, isLoading: isRoleLoading } = useRole();
+  const { data: vendors } = useVendors();
+  const { data: products } = useProducts();
+  const { data: categories } = useCategories();
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<TabType>("overview");
+  const { toast } = useToast();
+
+  const myVendor = vendors?.find(v => v.userId === user?.id);
+  const myProducts = products?.filter(p => p.vendorId === myVendor?.id) || [];
+
+  const { data: vendorOrders, isLoading: isOrdersLoading } = useQuery<Order[]>({
+    queryKey: ["/api/vendor/orders", myVendor?.id],
+    enabled: !!myVendor?.id,
+  });
+
+  const { data: stories, isLoading: isStoriesLoading } = useQuery<VendorStory[]>({
+    queryKey: ["/api/stories"],
+  });
+  const myStories = stories?.filter(s => s.vendorId === myVendor?.id) || [];
+
+  const [productName, setProductName] = useState("");
+  const [productDesc, setProductDesc] = useState("");
+  const [productPrice, setProductPrice] = useState("");
+  const [productStock, setProductStock] = useState("");
+  const [productBrand, setProductBrand] = useState("");
+  const [productCategory, setProductCategory] = useState("");
+  const [productImages, setProductImages] = useState<string[]>([]);
+  const [productWarranty, setProductWarranty] = useState("");
+
+  const [storyContent, setStoryContent] = useState("");
+  const [storyImage, setStoryImage] = useState<string | null>(null);
+
+  const productImageRef = useRef<HTMLInputElement>(null);
+  const storyImageRef = useRef<HTMLInputElement>(null);
+
+  const { uploadFile: uploadProductImage, isUploading: isUploadingProduct } = useUpload({
+    onSuccess: (response) => {
+      setProductImages([...productImages, response.objectPath]);
+      toast({ title: "Image Added" });
+    },
+    onError: (error) => toast({ title: "Upload Failed", description: error.message, variant: "destructive" }),
+  });
+
+  const { uploadFile: uploadStoryImage, isUploading: isUploadingStory } = useUpload({
+    onSuccess: (response) => {
+      setStoryImage(response.objectPath);
+      toast({ title: "Image Uploaded" });
+    },
+    onError: (error) => toast({ title: "Upload Failed", description: error.message, variant: "destructive" }),
+  });
+
+  const addProductMutation = useMutation({
+    mutationFn: async (data: any) => apiRequest("POST", "/api/products", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: "Product Added" });
+      setProductName(""); setProductDesc(""); setProductPrice(""); setProductStock("");
+      setProductBrand(""); setProductCategory(""); setProductImages([]); setProductWarranty("");
+    },
+    onError: () => toast({ title: "Error", description: "Failed to add product.", variant: "destructive" }),
+  });
+
+  const addStoryMutation = useMutation({
+    mutationFn: async (data: any) => apiRequest("POST", "/api/stories", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
+      toast({ title: "Story Posted" });
+      setStoryContent(""); setStoryImage(null);
+    },
+    onError: () => toast({ title: "Error", description: "Failed to post story.", variant: "destructive" }),
+  });
+
+  const deleteStoryMutation = useMutation({
+    mutationFn: async (id: number) => apiRequest("DELETE", `/api/stories/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
+      toast({ title: "Story Deleted" });
+    },
+    onError: () => toast({ title: "Error", variant: "destructive" }),
+  });
 
   if (isAuthLoading || isRoleLoading) {
     return (
@@ -29,365 +109,276 @@ export default function VendorDashboard() {
       </div>
     );
   }
-  
-  if (!isAuthenticated) {
+
+  if (!isAuthenticated || !user || roleData?.role !== "vendor") {
     setLocation("/");
     return null;
   }
-  
-  if (roleData?.role !== "vendor") {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
-          <p className="text-muted-foreground">This area is for vendors only.</p>
-        </div>
-      </div>
-    );
-  }
 
-  const tabs = [
-    { key: "overview" as TabType, label: "Overview", icon: LayoutDashboard },
-    { key: "orders" as TabType, label: "Orders", icon: ShoppingCart },
-    { key: "products" as TabType, label: "Products", icon: Package },
-    { key: "stories" as TabType, label: "Stories", icon: Newspaper },
-  ];
+  const handleAddProduct = () => {
+    if (!productName || !productDesc || !productPrice || !productCategory || !myVendor) {
+      toast({ title: "Missing Fields", description: "Please fill all required fields.", variant: "destructive" });
+      return;
+    }
+    addProductMutation.mutate({
+      vendorId: myVendor.id,
+      categoryId: parseInt(productCategory),
+      name: productName,
+      description: productDesc,
+      price: productPrice,
+      stock: parseInt(productStock) || 0,
+      brand: productBrand,
+      images: productImages.length > 0 ? productImages : ["https://placehold.co/400x300?text=Product"],
+      warrantyInfo: productWarranty || null,
+    });
+  };
+
+  const handlePostStory = () => {
+    if (!storyContent && !storyImage) {
+      toast({ title: "Empty Story", description: "Add content or an image.", variant: "destructive" });
+      return;
+    }
+    addStoryMutation.mutate({
+      vendorId: myVendor?.id,
+      content: storyContent,
+      imageUrl: storyImage,
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-background font-body">
+    <div className="min-h-screen bg-background font-body pb-20">
       <Navbar />
       
-      <div className="gradient-dark text-white py-8">
+      <div className="bg-primary/10 py-12 mb-8 border-b border-primary/20">
         <div className="container mx-auto px-4">
+          <Link href="/vendor/account">
+            <Button variant="ghost" size="sm" className="mb-4" data-testid="button-back">
+              <ArrowLeft className="w-4 h-4 mr-2" /> Back to Account
+            </Button>
+          </Link>
           <h1 className="text-3xl font-display font-bold mb-2">Vendor Dashboard</h1>
-          <p className="text-white/70">Manage your shop, products, and community stories.</p>
+          <p className="text-muted-foreground">Manage orders, products, and stories.</p>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
-          {tabs.map((tab) => (
-            <Button
-              key={tab.key}
-              variant={activeTab === tab.key ? "default" : "outline"}
-              onClick={() => setActiveTab(tab.key)}
-              className="gap-2"
-              data-testid={`tab-${tab.key}`}
-            >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
-            </Button>
-          ))}
-        </div>
+      <div className="container mx-auto px-4">
+        <Tabs defaultValue="orders" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsTrigger value="orders" data-testid="tab-orders">Orders</TabsTrigger>
+            <TabsTrigger value="products" data-testid="tab-products">Add Products</TabsTrigger>
+            <TabsTrigger value="stories" data-testid="tab-stories">Stories</TabsTrigger>
+          </TabsList>
 
-        {activeTab === "overview" && <OverviewTab userId={user!.id} />}
-        {activeTab === "orders" && <OrdersTab userId={user!.id} />}
-        {activeTab === "products" && <ProductsTab userId={user!.id} />}
-        {activeTab === "stories" && <StoriesTab userId={user!.id} />}
-      </div>
-    </div>
-  );
-}
-
-function OverviewTab({ userId }: { userId: string }) {
-  const { data: vendors } = useVendors();
-  const { data: products } = useProducts({});
-  const { data: stories } = useStories();
-  
-  const myVendor = vendors?.find(v => v.userId === userId);
-  const myProducts = products?.filter(p => myVendor && p.vendorId === myVendor.id) || [];
-  const myStories = stories?.filter(s => myVendor && s.vendorId === myVendor.id) || [];
-
-  const stats = [
-    { label: "Total Products", value: myProducts.length, icon: Package, color: "text-blue-500" },
-    { label: "Total Stories", value: myStories.length, icon: Newspaper, color: "text-purple-500" },
-    { label: "Total Sales", value: "0", icon: DollarSign, color: "text-green-500" },
-    { label: "Pending Orders", value: "0", icon: ShoppingCart, color: "text-orange-500" },
-  ];
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, i) => (
-          <Card key={i}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-2">
-                <stat.icon className={`w-5 h-5 ${stat.color}`} />
-                <TrendingUp className="w-4 h-4 text-muted-foreground" />
-              </div>
-              <div className="text-3xl font-bold">{stat.value}</div>
-              <div className="text-sm text-muted-foreground">{stat.label}</div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-3">
-          <Button variant="outline" className="gap-2">
-            <Plus className="w-4 h-4" /> Add Product
-          </Button>
-          <Button variant="outline" className="gap-2">
-            <Newspaper className="w-4 h-4" /> Post Story
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function OrdersTab({ userId }: { userId: string }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ShoppingCart className="w-5 h-5" /> Customer Orders
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="text-center py-12 text-muted-foreground">
-          <ShoppingCart className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p className="font-medium">No orders yet</p>
-          <p className="text-sm">When customers purchase your products, orders will appear here.</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ProductsTab({ userId }: { userId: string }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [newProduct, setNewProduct] = useState({ name: "", description: "", price: "", stock: "", categoryId: "", brand: "" });
-  
-  const { data: vendors } = useVendors();
-  const { data: products } = useProducts({});
-  const { data: categories } = useCategories();
-  const { mutate: createProduct, isPending } = useCreateProduct();
-  const { toast } = useToast();
-
-  const myVendor = vendors?.find(v => v.userId === userId);
-  const vendorId = myVendor?.id || 1;
-  const myProducts = products?.filter(p => myVendor && p.vendorId === myVendor.id) || [];
-
-  const handleCreate = () => {
-    createProduct({
-      ...newProduct,
-      vendorId,
-      price: newProduct.price,
-      stock: Number(newProduct.stock),
-      categoryId: Number(newProduct.categoryId),
-      images: ["https://placehold.co/600x400"],
-      warrantyInfo: "Standard Manufacturer Warranty"
-    }, {
-      onSuccess: () => {
-        setIsOpen(false);
-        toast({ title: "Success", description: "Product created" });
-        setNewProduct({ name: "", description: "", price: "", stock: "", categoryId: "", brand: "" });
-      },
-      onError: (e) => toast({ title: "Error", description: e.message, variant: "destructive" })
-    });
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">My Products ({myProducts.length})</h2>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2" data-testid="button-add-product">
-              <Plus className="w-4 h-4" /> Add Product
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Product</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <Input 
-                placeholder="Product Name" 
-                value={newProduct.name} 
-                onChange={e => setNewProduct({...newProduct, name: e.target.value})}
-                data-testid="input-product-name"
-              />
-              <Textarea 
-                placeholder="Description" 
-                value={newProduct.description} 
-                onChange={e => setNewProduct({...newProduct, description: e.target.value})}
-                data-testid="input-product-description"
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <Input 
-                  type="number" 
-                  placeholder="Price (KWD)" 
-                  value={newProduct.price} 
-                  onChange={e => setNewProduct({...newProduct, price: e.target.value})}
-                  data-testid="input-product-price"
-                />
-                <Input 
-                  type="number" 
-                  placeholder="Stock" 
-                  value={newProduct.stock} 
-                  onChange={e => setNewProduct({...newProduct, stock: e.target.value})}
-                  data-testid="input-product-stock"
-                />
-              </div>
-              <Input 
-                placeholder="Brand" 
-                value={newProduct.brand} 
-                onChange={e => setNewProduct({...newProduct, brand: e.target.value})}
-                data-testid="input-product-brand"
-              />
-              <Select onValueChange={v => setNewProduct({...newProduct, categoryId: v})}>
-                <SelectTrigger data-testid="select-category">
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories?.map(c => (
-                    <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button 
-                className="w-full" 
-                onClick={handleCreate} 
-                disabled={isPending}
-                data-testid="button-create-product"
-              >
-                {isPending ? "Creating..." : "Create Product"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {myProducts.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p className="font-medium">No products yet</p>
-            <p className="text-sm">Add your first product to start selling.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {myProducts.map((product) => (
-            <Card key={product.id} data-testid={`product-card-${product.id}`}>
-              <CardContent className="p-4">
-                <div className="aspect-video bg-muted rounded-lg mb-3 flex items-center justify-center">
-                  {product.images?.[0] ? (
-                    <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover rounded-lg" />
-                  ) : (
-                    <Image className="w-8 h-8 text-muted-foreground" />
-                  )}
-                </div>
-                <h3 className="font-semibold truncate">{product.name}</h3>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="font-bold text-primary">{formatKWD(product.price)}</span>
-                  <Badge variant="secondary">{product.stock} in stock</Badge>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function StoriesTab({ userId }: { userId: string }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [newStory, setNewStory] = useState({ content: "", imageUrl: "" });
-  
-  const { data: vendors } = useVendors();
-  const { data: stories } = useStories();
-  const { mutate: createStory, isPending } = useCreateStory();
-  const { toast } = useToast();
-
-  const myVendor = vendors?.find(v => v.userId === userId);
-  const vendorId = myVendor?.id || 1;
-  const myStories = stories?.filter(s => myVendor && s.vendorId === myVendor.id) || [];
-
-  const handleCreate = () => {
-    createStory({ ...newStory, vendorId }, {
-      onSuccess: () => {
-        setIsOpen(false);
-        toast({ title: "Success", description: "Story published" });
-        setNewStory({ content: "", imageUrl: "" });
-      },
-      onError: (e) => toast({ title: "Error", description: e.message, variant: "destructive" })
-    });
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">My Stories ({myStories.length})</h2>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2" data-testid="button-add-story">
-              <Plus className="w-4 h-4" /> Post Story
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Post a Story</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <Textarea 
-                placeholder="What's happening in your shop?" 
-                value={newStory.content} 
-                onChange={e => setNewStory({...newStory, content: e.target.value})}
-                data-testid="input-story-content"
-              />
-              <Input 
-                placeholder="Image URL (optional)" 
-                value={newStory.imageUrl} 
-                onChange={e => setNewStory({...newStory, imageUrl: e.target.value})}
-                data-testid="input-story-image"
-              />
-              <Button 
-                className="w-full" 
-                onClick={handleCreate} 
-                disabled={isPending}
-                data-testid="button-create-story"
-              >
-                {isPending ? "Posting..." : "Post Story"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {myStories.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <Newspaper className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p className="font-medium">No stories yet</p>
-            <p className="text-sm">Share updates, builds, and news with customers.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid md:grid-cols-2 gap-4">
-          {myStories.map((story) => (
-            <Card key={story.id} data-testid={`story-card-${story.id}`}>
-              <CardContent className="p-4">
-                {story.imageUrl && (
-                  <div className="aspect-video bg-muted rounded-lg mb-3 overflow-hidden">
-                    <img src={story.imageUrl} alt="" className="w-full h-full object-cover" />
+          <TabsContent value="orders">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingCart className="w-5 h-5" /> Recent Orders
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isOrdersLoading ? (
+                  <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>
+                ) : !vendorOrders || vendorOrders.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <ShoppingCart className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No orders yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {vendorOrders.map((order) => (
+                      <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg" data-testid={`vendor-order-${order.id}`}>
+                        <div>
+                          <div className="font-medium">Order #{order.id}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="font-bold">{formatKWD(order.total)}</span>
+                          <Badge variant={order.status === "delivered" ? "default" : "secondary"}>{order.status}</Badge>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
-                <p className="text-sm">{story.content}</p>
-                <p className="text-xs text-muted-foreground mt-2">
-                  {story.createdAt ? new Date(story.createdAt).toLocaleDateString() : ""}
-                </p>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+          </TabsContent>
+
+          <TabsContent value="products">
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Plus className="w-5 h-5" /> Add New Product
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Product Name *</Label>
+                    <Input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g., Performance Brake Pads" data-testid="input-product-name" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Description *</Label>
+                    <Textarea value={productDesc} onChange={(e) => setProductDesc(e.target.value)} placeholder="Product details..." data-testid="input-product-desc" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Price (KWD) *</Label>
+                      <Input type="number" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} placeholder="0.000" data-testid="input-product-price" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Stock</Label>
+                      <Input type="number" value={productStock} onChange={(e) => setProductStock(e.target.value)} placeholder="0" data-testid="input-product-stock" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Brand</Label>
+                    <Input value={productBrand} onChange={(e) => setProductBrand(e.target.value)} placeholder="Brand name" data-testid="input-product-brand" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Category *</Label>
+                    <Select value={productCategory} onValueChange={setProductCategory}>
+                      <SelectTrigger data-testid="select-category">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories?.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Warranty Info</Label>
+                    <Input value={productWarranty} onChange={(e) => setProductWarranty(e.target.value)} placeholder="e.g., 2 years" data-testid="input-warranty" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Product Images</Label>
+                    <input ref={productImageRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadProductImage(f); }} />
+                    <div className="flex gap-2 flex-wrap">
+                      {productImages.map((img, i) => (
+                        <img key={i} src={img} alt="" className="w-16 h-16 object-cover rounded border" />
+                      ))}
+                      <Button variant="outline" size="icon" onClick={() => productImageRef.current?.click()} disabled={isUploadingProduct} data-testid="button-add-image">
+                        {isUploadingProduct ? <Loader2 className="w-4 h-4 animate-spin" /> : <Image className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                  <Button className="w-full" onClick={handleAddProduct} disabled={addProductMutation.isPending} data-testid="button-add-product">
+                    {addProductMutation.isPending ? "Adding..." : "Add Product"}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="w-5 h-5" /> Your Products ({myProducts.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {myProducts.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p>No products yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {myProducts.map((product) => (
+                        <div key={product.id} className="flex items-center gap-3 p-3 border rounded-lg" data-testid={`product-row-${product.id}`}>
+                          <img src={product.images?.[0] || "https://placehold.co/50"} alt="" className="w-12 h-12 object-cover rounded" />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{product.name}</div>
+                            <div className="text-sm text-muted-foreground">{formatKWD(product.price)}</div>
+                          </div>
+                          <Badge variant="outline">{product.stock} in stock</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="stories">
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="w-5 h-5" /> Post a Story
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Content</Label>
+                    <Textarea value={storyContent} onChange={(e) => setStoryContent(e.target.value)} placeholder="Share updates, new arrivals, promotions..." className="min-h-[100px]" data-testid="input-story-content" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Image</Label>
+                    <input ref={storyImageRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadStoryImage(f); }} />
+                    {storyImage ? (
+                      <div className="relative">
+                        <img src={storyImage} alt="" className="w-full h-40 object-cover rounded-lg" />
+                        <Button variant="destructive" size="icon" className="absolute top-2 right-2" onClick={() => setStoryImage(null)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button variant="outline" className="w-full" onClick={() => storyImageRef.current?.click()} disabled={isUploadingStory} data-testid="button-add-story-image">
+                        {isUploadingStory ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Image className="w-4 h-4 mr-2" />}
+                        Add Image
+                      </Button>
+                    )}
+                  </div>
+                  <Button className="w-full" onClick={handlePostStory} disabled={addStoryMutation.isPending} data-testid="button-post-story">
+                    {addStoryMutation.isPending ? "Posting..." : "Post Story"}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="w-5 h-5" /> Your Stories ({myStories.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {isStoriesLoading ? (
+                    <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>
+                  ) : myStories.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p>No stories yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {myStories.map((story) => (
+                        <div key={story.id} className="p-3 border rounded-lg" data-testid={`story-row-${story.id}`}>
+                          {story.imageUrl && (
+                            <img src={story.imageUrl} alt="" className="w-full h-32 object-cover rounded-lg mb-2" />
+                          )}
+                          <p className="text-sm">{story.content}</p>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-xs text-muted-foreground">
+                              {story.createdAt ? new Date(story.createdAt).toLocaleDateString() : ""}
+                            </span>
+                            <Button variant="ghost" size="sm" onClick={() => deleteStoryMutation.mutate(story.id)} data-testid={`button-delete-story-${story.id}`}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

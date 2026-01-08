@@ -99,6 +99,77 @@ export async function registerRoutes(
     res.json(vendor);
   });
 
+  // Vendor store update
+  app.patch("/api/vendors/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const vendorId = Number(req.params.id);
+      const vendor = await storage.getVendor(vendorId);
+      if (!vendor) return res.status(404).json({ message: "Vendor not found" });
+      if (vendor.userId !== req.user.claims.sub) {
+        const role = await storage.getUserRole(req.user.claims.sub);
+        if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
+      }
+      const updated = await storage.updateVendor(vendorId, req.body);
+      res.json(updated);
+    } catch (e) {
+      console.error("Error updating vendor:", e);
+      res.status(500).json({ message: "Failed to update vendor" });
+    }
+  });
+
+  // Vendor wallet
+  app.get("/api/vendor/wallet", isAuthenticated, async (req: any, res) => {
+    try {
+      const vendorId = Number(req.query.vendorId || req.query["1"]);
+      const vendors = await storage.getVendors();
+      const vendor = vendors.find(v => v.userId === req.user.claims.sub);
+      if (!vendor) return res.status(404).json({ message: "Vendor not found" });
+      
+      const paymentRequests = await storage.getPaymentRequests(vendor.id);
+      res.json({
+        balance: vendor.walletBalance,
+        commissionRate: vendor.commissionRate,
+        paymentRequests,
+      });
+    } catch (e) {
+      console.error("Error getting wallet:", e);
+      res.status(500).json({ message: "Failed to get wallet" });
+    }
+  });
+
+  // Request payment
+  app.post("/api/vendor/wallet/request", isAuthenticated, async (req: any, res) => {
+    try {
+      const vendors = await storage.getVendors();
+      const vendor = vendors.find(v => v.userId === req.user.claims.sub);
+      if (!vendor) return res.status(404).json({ message: "Vendor not found" });
+      
+      const balance = parseFloat(vendor.walletBalance);
+      if (balance <= 0) return res.status(400).json({ message: "No balance available" });
+      
+      const request = await storage.createPaymentRequest(vendor.id, vendor.walletBalance);
+      res.status(201).json(request);
+    } catch (e) {
+      console.error("Error creating payment request:", e);
+      res.status(500).json({ message: "Failed to create payment request" });
+    }
+  });
+
+  // Vendor orders
+  app.get("/api/vendor/orders", isAuthenticated, async (req: any, res) => {
+    try {
+      const vendors = await storage.getVendors();
+      const vendor = vendors.find(v => v.userId === req.user.claims.sub);
+      if (!vendor) return res.json([]);
+      
+      const orders = await storage.getVendorOrders(vendor.id);
+      res.json(orders);
+    } catch (e) {
+      console.error("Error getting vendor orders:", e);
+      res.status(500).json({ message: "Failed to get orders" });
+    }
+  });
+
   // Products
   app.get(api.products.list.path, async (req, res) => {
     const products = await storage.getProducts(req.query as any);
@@ -196,6 +267,14 @@ export async function registerRoutes(
     } catch (e) {
       res.status(400).json({ message: "Validation error" });
     }
+  });
+
+  app.delete("/api/stories/:id", isAuthenticated, async (req: any, res) => {
+    const role = await storage.getUserRole(req.user.claims.sub);
+    if (role !== 'vendor') return res.status(403).json({ message: "Only vendors can delete stories" });
+    
+    await storage.deleteStory(Number(req.params.id));
+    res.status(204).send();
   });
 
   // Seed Data
