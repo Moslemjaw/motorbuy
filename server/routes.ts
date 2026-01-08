@@ -263,10 +263,16 @@ export async function registerRoutes(
       const vendor = vendors.find(v => v.userId === req.user.claims.sub);
       if (!vendor) return res.status(404).json({ message: "Vendor not found" });
       
-      const balance = parseFloat(vendor.walletBalance);
-      if (balance <= 0) return res.status(400).json({ message: "No balance available" });
+      const pendingAmount = parseFloat(vendor.pendingPayoutKwd || "0");
+      if (pendingAmount <= 0) return res.status(400).json({ message: "No pending payout available" });
       
-      const request = await storage.createPaymentRequest(vendor.id, vendor.walletBalance);
+      const existingRequests = await storage.getPaymentRequests(vendor.id);
+      const hasPendingRequest = existingRequests.some(r => r.status === 'pending');
+      if (hasPendingRequest) {
+        return res.status(400).json({ message: "You already have a pending payout request" });
+      }
+      
+      const request = await storage.createPaymentRequest(vendor.id, vendor.pendingPayoutKwd);
       res.status(201).json(request);
     } catch (e) {
       console.error("Error creating payment request:", e);

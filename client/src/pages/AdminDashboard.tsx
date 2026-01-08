@@ -11,7 +11,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Users, Store, DollarSign, Bell, CheckCircle, Loader2, Pencil, X, Save } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Vendor } from "@shared/schema";
 
 interface VendorFinancials extends Vendor {
@@ -34,6 +34,12 @@ export default function AdminDashboard() {
   const { data: roleData, isLoading: isRoleLoading } = useRole();
   const [, setLocation] = useLocation();
 
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated) {
+      setLocation("/");
+    }
+  }, [isAuthenticated, isAuthLoading, setLocation]);
+
   if (isAuthLoading || isRoleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -43,7 +49,6 @@ export default function AdminDashboard() {
   }
 
   if (!isAuthenticated) {
-    setLocation("/");
     return null;
   }
 
