@@ -140,9 +140,11 @@ export function Navbar() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button asChild variant="default" size="sm">
-                <a href="/api/login">Log In</a>
-              </Button>
+              <Link href="/auth">
+                <Button variant="default" size="sm" data-testid="button-login">
+                  Log In
+                </Button>
+              </Link>
             )}
           </div>
 
@@ -252,9 +254,11 @@ export function Navbar() {
                         </Button>
                       </div>
                     ) : (
-                      <Button asChild className="w-full" data-testid="button-login-mobile">
-                        <a href="/api/login">Log In with Replit</a>
-                      </Button>
+                      <Link href="/auth" onClick={closeSheet}>
+                        <Button className="w-full" data-testid="button-login-mobile">
+                          Log In
+                        </Button>
+                      </Link>
                     )}
                   </div>
                 </div>

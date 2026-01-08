@@ -1,24 +1,22 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import { registerAuthRoutes, isAuthenticated } from "./auth";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { api } from "@shared/routes";
 import { User, PaymentRequest } from "./mongodb";
-import { authStorage } from "./replit_integrations/auth/storage";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  await setupAuth(app);
   registerAuthRoutes(app);
   registerObjectStorageRoutes(app);
 
   app.patch("/api/users/me", isAuthenticated, async (req: any, res) => {
     try {
       const { profileImageUrl, bio, phone, address, city } = req.body;
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       
       const updateData: Record<string, any> = { updatedAt: new Date() };
       if (profileImageUrl !== undefined) updateData.profileImageUrl = profileImageUrl;
@@ -27,8 +25,8 @@ export async function registerRoutes(
       if (address !== undefined) updateData.address = address;
       if (city !== undefined) updateData.city = city;
       
-      const updated = await User.findOneAndUpdate(
-        { id: userId },
+      const updated = await User.findByIdAndUpdate(
+        userId,
         updateData,
         { new: true }
       );
@@ -41,20 +39,21 @@ export async function registerRoutes(
   });
 
   app.get(api.roles.get.path, isAuthenticated, async (req: any, res) => {
-    const role = await storage.getUserRole(req.user.claims.sub);
+    const role = await storage.getUserRole(req.session.userId);
     res.json({ role });
   });
 
   app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
     try {
-      const role = await storage.getUserRole(req.user.claims.sub);
+      const role = await storage.getUserRole(req.session.userId);
       if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
 
       const users = await User.find({});
-      const usersWithRoles = await Promise.all(users.map(async (user) => {
-        const userRole = await storage.getUserRole(user.id);
+      const usersWithRoles = await Promise.all(users.map(async (user: any) => {
+        const id = user._id.toString();
+        const userRole = await storage.getUserRole(id);
         return {
-          id: user.id,
+          id,
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
@@ -70,7 +69,7 @@ export async function registerRoutes(
 
   app.post("/api/admin/users/role", isAuthenticated, async (req: any, res) => {
     try {
-      const role = await storage.getUserRole(req.user.claims.sub);
+      const role = await storage.getUserRole(req.session.userId);
       if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
 
       const { userId, role: newRole } = req.body;
@@ -100,8 +99,8 @@ export async function registerRoutes(
   app.post(api.vendors.create.path, isAuthenticated, async (req: any, res) => {
     try {
       const input = api.vendors.create.input.parse(req.body);
-      const vendor = await storage.createVendor({ ...input, userId: req.user.claims.sub });
-      await storage.setUserRole(req.user.claims.sub, "vendor");
+      const vendor = await storage.createVendor({ ...input, userId: req.session.userId });
+      await storage.setUserRole(req.session.userId, "vendor");
       res.status(201).json(vendor);
     } catch (e) {
        res.status(400).json({ message: "Validation failed" });
@@ -109,7 +108,7 @@ export async function registerRoutes(
   });
 
   app.patch(api.vendors.approve.path, isAuthenticated, async (req: any, res) => {
-    const role = await storage.getUserRole(req.user.claims.sub);
+    const role = await storage.getUserRole(req.session.userId);
     if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
 
     const vendor = await storage.updateVendor(req.params.id, req.body);
@@ -121,8 +120,8 @@ export async function registerRoutes(
       const vendorId = req.params.id;
       const vendor = await storage.getVendor(vendorId);
       if (!vendor) return res.status(404).json({ message: "Vendor not found" });
-      if (vendor.userId !== req.user.claims.sub) {
-        const role = await storage.getUserRole(req.user.claims.sub);
+      if (vendor.userId !== req.session.userId) {
+        const role = await storage.getUserRole(req.session.userId);
         if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
       }
       const updated = await storage.updateVendor(vendorId, req.body);
@@ -135,7 +134,7 @@ export async function registerRoutes(
 
   app.get("/api/admin/vendors/financials", isAuthenticated, async (req: any, res) => {
     try {
-      const role = await storage.getUserRole(req.user.claims.sub);
+      const role = await storage.getUserRole(req.session.userId);
       if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
 
       const vendors = await storage.getVendors();
@@ -158,7 +157,7 @@ export async function registerRoutes(
 
   app.patch("/api/admin/vendors/:id/commission", isAuthenticated, async (req: any, res) => {
     try {
-      const role = await storage.getUserRole(req.user.claims.sub);
+      const role = await storage.getUserRole(req.session.userId);
       if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
 
       const { commissionType, commissionValue } = req.body;
@@ -179,7 +178,7 @@ export async function registerRoutes(
 
   app.post("/api/admin/vendors/:id/payout", isAuthenticated, async (req: any, res) => {
     try {
-      const role = await storage.getUserRole(req.user.claims.sub);
+      const role = await storage.getUserRole(req.session.userId);
       if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
 
       const vendor = await storage.getVendor(req.params.id);
@@ -200,7 +199,7 @@ export async function registerRoutes(
       for (const request of pendingRequests) {
         await PaymentRequest.findByIdAndUpdate(request.id, {
           status: 'paid',
-          processedBy: req.user.claims.sub,
+          processedBy: req.session.userId,
           processedAt: new Date(),
         });
       }
@@ -214,7 +213,7 @@ export async function registerRoutes(
 
   app.get("/api/admin/payout-requests", isAuthenticated, async (req: any, res) => {
     try {
-      const role = await storage.getUserRole(req.user.claims.sub);
+      const role = await storage.getUserRole(req.session.userId);
       if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
 
       const requests = await PaymentRequest.find({ status: 'pending' }).sort({ createdAt: -1 });
@@ -239,7 +238,7 @@ export async function registerRoutes(
   app.get("/api/vendor/wallet", isAuthenticated, async (req: any, res) => {
     try {
       const vendors = await storage.getVendors();
-      const vendor = vendors.find(v => v.userId === req.user.claims.sub);
+      const vendor = vendors.find(v => v.userId === req.session.userId);
       if (!vendor) return res.status(404).json({ message: "Vendor not found" });
       
       const paymentRequests = await storage.getPaymentRequests(vendor.id);
@@ -260,7 +259,7 @@ export async function registerRoutes(
   app.post("/api/vendor/wallet/request", isAuthenticated, async (req: any, res) => {
     try {
       const vendors = await storage.getVendors();
-      const vendor = vendors.find(v => v.userId === req.user.claims.sub);
+      const vendor = vendors.find(v => v.userId === req.session.userId);
       if (!vendor) return res.status(404).json({ message: "Vendor not found" });
       
       const pendingAmount = parseFloat(vendor.pendingPayoutKwd || "0");
@@ -283,7 +282,7 @@ export async function registerRoutes(
   app.get("/api/vendor/orders", isAuthenticated, async (req: any, res) => {
     try {
       const vendors = await storage.getVendors();
-      const vendor = vendors.find(v => v.userId === req.user.claims.sub);
+      const vendor = vendors.find(v => v.userId === req.session.userId);
       if (!vendor) return res.json([]);
       
       const orders = await storage.getVendorOrders(vendor.id);
@@ -306,7 +305,7 @@ export async function registerRoutes(
   });
 
   app.post(api.products.create.path, isAuthenticated, async (req: any, res) => {
-    const role = await storage.getUserRole(req.user.claims.sub);
+    const role = await storage.getUserRole(req.session.userId);
     if (role !== 'vendor') return res.status(403).json({ message: "Only vendors can add products" });
 
     try {
@@ -324,14 +323,14 @@ export async function registerRoutes(
   });
 
   app.get(api.cart.get.path, isAuthenticated, async (req: any, res) => {
-    const items = await storage.getCartItems(req.user.claims.sub);
+    const items = await storage.getCartItems(req.session.userId);
     res.json(items);
   });
 
   app.post(api.cart.add.path, isAuthenticated, async (req: any, res) => {
     try {
       const input = api.cart.add.input.parse(req.body);
-      const item = await storage.addToCart({ ...input, userId: req.user.claims.sub });
+      const item = await storage.addToCart({ ...input, userId: req.session.userId });
       res.status(201).json(item);
     } catch (e) {
       res.status(400).json({ message: "Error adding to cart" });
@@ -344,7 +343,7 @@ export async function registerRoutes(
   });
 
   app.post(api.orders.create.path, isAuthenticated, async (req: any, res) => {
-    const cartItems = await storage.getCartItems(req.user.claims.sub);
+    const cartItems = await storage.getCartItems(req.session.userId);
     if (cartItems.length === 0) return res.status(400).json({ message: "Cart is empty" });
 
     let total = 0;
@@ -358,13 +357,13 @@ export async function registerRoutes(
       };
     });
 
-    const order = await storage.createOrder(req.user.claims.sub, total.toString(), items);
-    await storage.clearCart(req.user.claims.sub);
+    const order = await storage.createOrder(req.session.userId, total.toString(), items);
+    await storage.clearCart(req.session.userId);
     res.status(201).json(order);
   });
 
   app.get(api.orders.list.path, isAuthenticated, async (req: any, res) => {
-    const orders = await storage.getOrders(req.user.claims.sub);
+    const orders = await storage.getOrders(req.session.userId);
     res.json(orders);
   });
 
@@ -374,7 +373,7 @@ export async function registerRoutes(
   });
 
   app.post(api.stories.create.path, isAuthenticated, async (req: any, res) => {
-    const role = await storage.getUserRole(req.user.claims.sub);
+    const role = await storage.getUserRole(req.session.userId);
     if (role !== 'vendor') return res.status(403).json({ message: "Only vendors can post stories" });
 
     try {
@@ -387,7 +386,7 @@ export async function registerRoutes(
   });
 
   app.delete("/api/stories/:id", isAuthenticated, async (req: any, res) => {
-    const role = await storage.getUserRole(req.user.claims.sub);
+    const role = await storage.getUserRole(req.session.userId);
     if (role !== 'vendor') return res.status(403).json({ message: "Only vendors can delete stories" });
     
     await storage.deleteStory(req.params.id);
@@ -404,7 +403,7 @@ export async function registerRoutes(
 
   app.post("/api/seed", isAuthenticated, async (req: any, res) => {
     try {
-      const role = await storage.getUserRole(req.user.claims.sub);
+      const role = await storage.getUserRole(req.session.userId);
       if (role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }

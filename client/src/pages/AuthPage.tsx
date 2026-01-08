@@ -1,23 +1,52 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-motorbuy";
 import { Link, useLocation } from "wouter";
-import { LogIn, UserPlus, Car, Store, Shield, User, Loader2, CheckCircle } from "lucide-react";
+import { LogIn, UserPlus, Car, Store, Shield, User, Loader2, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AuthPage() {
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user, isLoading, isAuthenticated, login, signup, logout, isLoggingIn, isSigningUp } = useAuth();
   const { data: roleData, isLoading: isRoleLoading } = useRole();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
 
-  const handleLogin = () => {
-    window.location.href = "/api/login";
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    firstName: "",
+    lastName: "",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (mode === "login") {
+        await login({ email: formData.email, password: formData.password });
+        toast({ title: "Welcome back!", description: "You have successfully logged in." });
+        setLocation("/");
+      } else {
+        await signup(formData);
+        toast({ title: "Account created!", description: "Welcome to MotorBuy." });
+        setLocation("/");
+      }
+    } catch (error: any) {
+      const message = error?.message || "An error occurred";
+      toast({ title: "Error", description: message, variant: "destructive" });
+    }
   };
 
   const handleLogout = () => {
-    window.location.href = "/api/logout";
+    logout();
+    toast({ title: "Logged out", description: "You have been logged out." });
   };
 
   if (isLoading) {
@@ -105,10 +134,6 @@ export default function AuthPage() {
                 </div>
               </CardContent>
             </Card>
-
-            {process.env.NODE_ENV === "development" && (
-              <RoleSwitcher currentRole={roleData?.role} />
-            )}
           </motion.div>
         </div>
       </div>
@@ -117,107 +142,144 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-8 md:py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-4xl mx-auto"
+          className="max-w-md mx-auto"
         >
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
-              <Car className="w-4 h-4" />
-              Kuwait's Premier Car Parts Marketplace
-            </div>
-            <h1 className="text-4xl lg:text-5xl font-display font-bold mb-4">
-              Welcome to MotorBuy
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Sign in to browse parts, manage your shop, or access admin features
+          <div className="text-center mb-8">
+            <Link href="/" className="inline-flex items-center gap-2 text-primary font-display font-bold text-2xl mb-4">
+              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-base">
+                M
+              </div>
+              MotorBuy
+            </Link>
+            <p className="text-muted-foreground">
+              {mode === "login" ? "Sign in to your account" : "Create a new account"}
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-            <Card className="relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-              <CardHeader>
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
-                  <LogIn className="w-6 h-6 text-primary" />
+          <Card>
+            <CardHeader>
+              <CardTitle>{mode === "login" ? "Sign In" : "Create Account"}</CardTitle>
+              <CardDescription>
+                {mode === "login" 
+                  ? "Enter your email and password to sign in" 
+                  : "Fill in your details to create an account"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {mode === "signup" && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input
+                        id="firstName"
+                        placeholder="John"
+                        value={formData.firstName}
+                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                        required
+                        data-testid="input-first-name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input
+                        id="lastName"
+                        placeholder="Doe"
+                        value={formData.lastName}
+                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                        required
+                        data-testid="input-last-name"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    required
+                    data-testid="input-email"
+                  />
                 </div>
-                <CardTitle>Sign In</CardTitle>
-                <CardDescription>
-                  Already have a Replit account? Sign in to access your MotorBuy dashboard.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button 
-                  className="w-full" 
-                  size="lg" 
-                  onClick={handleLogin}
-                  data-testid="button-sign-in"
-                >
-                  Sign In with Replit
-                </Button>
-              </CardContent>
-            </Card>
 
-            <Card className="relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-              <CardHeader>
-                <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center mb-4">
-                  <UserPlus className="w-6 h-6 text-accent-foreground" />
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder={mode === "signup" ? "At least 6 characters" : "Your password"}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      required
+                      minLength={mode === "signup" ? 6 : undefined}
+                      data-testid="input-password"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3"
+                      onClick={() => setShowPassword(!showPassword)}
+                      data-testid="button-toggle-password"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                  </div>
                 </div>
-                <CardTitle>Create Account</CardTitle>
-                <CardDescription>
-                  New to MotorBuy? Create a free Replit account to get started.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+
                 <Button 
-                  variant="outline" 
+                  type="submit" 
                   className="w-full" 
-                  size="lg" 
-                  onClick={handleLogin}
-                  data-testid="button-sign-up"
+                  size="lg"
+                  disabled={isLoggingIn || isSigningUp}
+                  data-testid="button-submit"
                 >
-                  Create Account
+                  {(isLoggingIn || isSigningUp) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {mode === "login" ? "Sign In" : "Create Account"}
                 </Button>
-              </CardContent>
-            </Card>
-          </div>
+              </form>
 
-          <div className="mt-16 grid md:grid-cols-3 gap-6 text-center">
-            <div className="p-6">
-              <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Car className="w-6 h-6 text-blue-500" />
+              <div className="mt-6 text-center text-sm">
+                {mode === "login" ? (
+                  <p>
+                    Don't have an account?{" "}
+                    <button 
+                      onClick={() => setMode("signup")} 
+                      className="text-primary font-medium hover:underline"
+                      data-testid="button-switch-to-signup"
+                    >
+                      Create one
+                    </button>
+                  </p>
+                ) : (
+                  <p>
+                    Already have an account?{" "}
+                    <button 
+                      onClick={() => setMode("login")} 
+                      className="text-primary font-medium hover:underline"
+                      data-testid="button-switch-to-login"
+                    >
+                      Sign in
+                    </button>
+                  </p>
+                )}
               </div>
-              <h3 className="font-bold mb-2">Customer</h3>
-              <p className="text-sm text-muted-foreground">
-                Browse parts, compare prices, and order from multiple vendors
-              </p>
-            </div>
-            <div className="p-6">
-              <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Store className="w-6 h-6 text-green-500" />
-              </div>
-              <h3 className="font-bold mb-2">Vendor</h3>
-              <p className="text-sm text-muted-foreground">
-                List your parts, manage inventory, and grow your business
-              </p>
-            </div>
-            <div className="p-6">
-              <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Shield className="w-6 h-6 text-purple-500" />
-              </div>
-              <h3 className="font-bold mb-2">Admin</h3>
-              <p className="text-sm text-muted-foreground">
-                Oversee the marketplace, approve vendors, and manage users
-              </p>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="text-center mt-8">
+          <div className="mt-8 text-center">
             <Link href="/">
-              <Button variant="ghost" data-testid="link-back-home">
+              <Button variant="ghost" data-testid="button-back-home">
                 Back to Home
               </Button>
             </Link>
@@ -225,67 +287,5 @@ export default function AuthPage() {
         </motion.div>
       </div>
     </div>
-  );
-}
-
-function RoleSwitcher({ currentRole }: { currentRole?: string }) {
-  const handleSwitchRole = async (role: string) => {
-    try {
-      const res = await fetch("/api/roles/switch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role }),
-        credentials: "include",
-      });
-      if (res.ok) {
-        window.location.reload();
-      }
-    } catch (e) {
-      console.error("Failed to switch role:", e);
-    }
-  };
-
-  return (
-    <Card className="mt-6 border-dashed border-yellow-500/50 bg-yellow-500/5">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm flex items-center gap-2">
-          <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
-            Dev Mode
-          </Badge>
-          Role Switcher
-        </CardTitle>
-        <CardDescription className="text-xs">
-          Switch roles to test different user experiences (development only)
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex gap-2 flex-wrap">
-          <Button
-            size="sm"
-            variant={currentRole === "customer" ? "default" : "outline"}
-            onClick={() => handleSwitchRole("customer")}
-            data-testid="button-switch-customer"
-          >
-            <Car className="w-4 h-4 mr-1" /> Customer
-          </Button>
-          <Button
-            size="sm"
-            variant={currentRole === "vendor" ? "default" : "outline"}
-            onClick={() => handleSwitchRole("vendor")}
-            data-testid="button-switch-vendor"
-          >
-            <Store className="w-4 h-4 mr-1" /> Vendor
-          </Button>
-          <Button
-            size="sm"
-            variant={currentRole === "admin" ? "default" : "outline"}
-            onClick={() => handleSwitchRole("admin")}
-            data-testid="button-switch-admin"
-          >
-            <Shield className="w-4 h-4 mr-1" /> Admin
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
   );
 }

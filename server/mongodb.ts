@@ -16,8 +16,8 @@ export async function connectMongoDB() {
 }
 
 const userSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  email: String,
+  email: { type: String, required: true, unique: true },
+  passwordHash: { type: String, required: true },
   firstName: String,
   lastName: String,
   profileImageUrl: String,
