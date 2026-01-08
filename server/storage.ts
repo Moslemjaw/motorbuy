@@ -92,16 +92,11 @@ export class DatabaseStorage implements IStorage {
   async getProducts(filters?: { categoryId?: number; vendorId?: number; search?: string; sortBy?: string }): Promise<Product[]> {
     let query = db.select().from(products);
     
-    // Simple filtering logic (drizzle-orm query builder would be more complex for dynamic filters in one chain)
-    // For simplicity, fetching all and filtering in memory or minimal SQL filters
-    // Ideally use where() with conditions
-    
     const conditions = [];
     if (filters?.categoryId) conditions.push(eq(products.categoryId, filters.categoryId));
     if (filters?.vendorId) conditions.push(eq(products.vendorId, filters.vendorId));
-    // Search not implemented in sql for brevity, normally ilike
     
-    let q = conditions.length ? query.where(sql`${sql.join(conditions, sql` AND `)}`) : query;
+    let q: any = conditions.length ? query.where(sql`${sql.join(conditions, sql` AND `)}`) : query;
 
     if (filters?.sortBy === 'price_asc') q = q.orderBy(products.price);
     else if (filters?.sortBy === 'price_desc') q = q.orderBy(desc(products.price));

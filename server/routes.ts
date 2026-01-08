@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import { api } from "@shared/routes";
 import { z } from "zod";
+import { db } from "./db";
+import { users } from "@shared/schema";
 
 export async function registerRoutes(
   httpServer: Server,

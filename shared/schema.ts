@@ -2,11 +2,8 @@ import { pgTable, text, serial, integer, boolean, timestamp, jsonb, decimal, pri
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
-// Import auth models to export them
 import { users } from "./models/auth";
 export * from "./models/auth";
-
-// === TABLE DEFINITIONS ===
 
 export const roles = pgTable("roles", {
   userId: text("user_id").notNull().references(() => users.id),
@@ -22,7 +19,7 @@ export const vendors = pgTable("vendors", {
   description: text("description").notNull(),
   logoUrl: text("logo_url"),
   isApproved: boolean("is_approved").default(false).notNull(),
-  commissionRate: decimal("commission_rate").default("0.05").notNull(), // 5% default
+  commissionRate: decimal("commission_rate").default("0.05").notNull(),
   walletBalance: decimal("wallet_balance").default("0").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -43,7 +40,7 @@ export const products = pgTable("products", {
   price: decimal("price").notNull(),
   stock: integer("stock").notNull().default(0),
   brand: text("brand").notNull(),
-  images: jsonb("images").$type<string[]>().notNull(), // Array of image URLs
+  images: jsonb("images").$type<string[]>().notNull(),
   warrantyInfo: text("warranty_info"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -61,7 +58,7 @@ export const orderItems = pgTable("order_items", {
   orderId: integer("order_id").notNull().references(() => orders.id),
   productId: integer("product_id").notNull().references(() => products.id),
   quantity: integer("quantity").notNull(),
-  price: decimal("price").notNull(), // Price at time of purchase
+  price: decimal("price").notNull(),
 });
 
 export const vendorStories = pgTable("vendor_stories", {
@@ -79,74 +76,46 @@ export const cartItems = pgTable("cart_items", {
   quantity: integer("quantity").notNull().default(1),
 });
 
-// === RELATIONS ===
 export const rolesRelations = relations(roles, ({ one }) => ({
-  user: one(users, {
-    fields: [roles.userId],
-    references: [users.id],
-  }),
+  user: one(users, { fields: [roles.userId], references: [users.id] }),
 }));
 
 export const vendorsRelations = relations(vendors, ({ one, many }) => ({
-  user: one(users, {
-    fields: [vendors.userId],
-    references: [users.id],
-  }),
+  user: one(users, { fields: [vendors.userId], references: [users.id] }),
   products: many(products),
   stories: many(vendorStories),
 }));
 
-export const productsRelations = relations(products, ({ one, many }) => ({
-  vendor: one(vendors, {
-    fields: [products.vendorId],
-    references: [vendors.id],
-  }),
-  category: one(categories, {
-    fields: [products.categoryId],
-    references: [categories.id],
-  }),
+export const productsRelations = relations(products, ({ one }) => ({
+  vendor: one(vendors, { fields: [products.vendorId], references: [vendors.id] }),
+  category: one(categories, { fields: [products.categoryId], references: [categories.id] }),
 }));
 
 export const ordersRelations = relations(orders, ({ one, many }) => ({
-  user: one(users, {
-    fields: [orders.userId],
-    references: [users.id],
-  }),
+  user: one(users, { fields: [orders.userId], references: [users.id] }),
   items: many(orderItems),
 }));
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({
-  order: one(orders, {
-    fields: [orderItems.orderId],
-    references: [orders.id],
-  }),
-  product: one(products, {
-    fields: [orderItems.productId],
-    references: [products.id],
-  }),
+  order: one(orders, { fields: [orderItems.orderId], references: [orders.id] }),
+  product: one(products, { fields: [orderItems.productId], references: [products.id] }),
 }));
 
 export const cartItemsRelations = relations(cartItems, ({ one }) => ({
-  user: one(users, {
-    fields: [cartItems.userId],
-    references: [users.id],
-  }),
-  product: one(products, {
-    fields: [cartItems.productId],
-    references: [products.id],
-  }),
+  user: one(users, { fields: [cartItems.userId], references: [users.id] }),
+  product: one(products, { fields: [cartItems.productId], references: [products.id] }),
 }));
 
-// === INSERTS & TYPES ===
 export const insertRoleSchema = createInsertSchema(roles);
 export const insertVendorSchema = createInsertSchema(vendors).omit({ id: true, isApproved: true, walletBalance: true, createdAt: true });
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true, createdAt: true });
-export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, total: true, status: true }); // Total and status managed by backend
+export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, total: true, status: true });
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({ id: true });
 export const insertStorySchema = createInsertSchema(vendorStories).omit({ id: true, createdAt: true });
 export const insertCartItemSchema = createInsertSchema(cartItems).omit({ id: true });
 
+export type User = typeof users.$inferSelect;
 export type Role = typeof roles.$inferSelect;
 export type Vendor = typeof vendors.$inferSelect;
 export type Category = typeof categories.$inferSelect;
@@ -155,3 +124,13 @@ export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type VendorStory = typeof vendorStories.$inferSelect;
 export type CartItem = typeof cartItems.$inferSelect;
+
+export type InsertUser = typeof users.$inferInsert;
+export type InsertRole = z.infer<typeof insertRoleSchema>;
+export type InsertVendor = z.infer<typeof insertVendorSchema>;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
+export type InsertStory = z.infer<typeof insertStorySchema>;
+export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
