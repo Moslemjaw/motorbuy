@@ -1,16 +1,15 @@
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useVendor, useProducts, useStories, useAddToCart } from "@/hooks/use-motorbuy";
+import { useVendor, useProducts, useStories } from "@/hooks/use-motorbuy";
 import { useRoute, Link } from "wouter";
-import { Store, MapPin, ShoppingCart, Grid3X3, Newspaper, Loader2 } from "lucide-react";
+import { Store, MapPin, Loader2, ImageIcon } from "lucide-react";
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
 import { formatKWD } from "@/lib/currency";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
-import type { Product } from "@shared/schema";
+import { ProductCard } from "@/components/ProductCard";
+import type { VendorStory } from "@shared/schema";
 
 export default function VendorProfile() {
   const [, params] = useRoute("/vendor/:id");
@@ -19,8 +18,7 @@ export default function VendorProfile() {
   const { data: vendor, isLoading: isVendorLoading } = useVendor(vendorId);
   const { data: allProducts, isLoading: isProductsLoading } = useProducts({ vendorId });
   const { data: allStories } = useStories();
-  const [activeTab, setActiveTab] = useState<"products" | "stories">("products");
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedStory, setSelectedStory] = useState<VendorStory | null>(null);
 
   const vendorProducts = allProducts?.filter(p => p.vendorId === vendorId) || [];
   const vendorStories = allStories?.filter(s => s.vendorId === vendorId) || [];
@@ -48,40 +46,40 @@ export default function VendorProfile() {
     <div className="min-h-screen bg-background font-body">
       <Navbar />
       
-      <div className="relative gradient-dark text-white py-20 mb-8">
+      <div className="relative gradient-dark text-white py-16 mb-8">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-primary/30 via-transparent to-transparent" />
-        <div className="max-w-4xl mx-auto px-4 relative z-10">
+        <div className="max-w-6xl mx-auto px-4 relative z-10">
           <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
-            <div className="w-36 h-36 md:w-44 md:h-44 rounded-full bg-gradient-to-br from-primary to-accent p-1 shadow-2xl shadow-primary/30 shrink-0">
+            <div className="w-32 h-32 md:w-36 md:h-36 rounded-full bg-gradient-to-br from-primary to-accent p-1 shadow-2xl shadow-primary/30 shrink-0">
               <div className="w-full h-full rounded-full bg-background overflow-hidden flex items-center justify-center">
                 {vendor.logoUrl ? (
                   <img src={vendor.logoUrl} alt={vendor.storeName} className="w-full h-full object-cover" />
                 ) : (
-                  <Store className="w-16 h-16 text-primary" />
+                  <Store className="w-12 h-12 text-primary" />
                 )}
               </div>
             </div>
             
             <div className="flex-1 text-center md:text-left">
-              <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
-                <h1 className="text-3xl font-display font-bold">{vendor.storeName}</h1>
+              <div className="flex flex-col md:flex-row md:items-center gap-3 mb-3">
+                <h1 className="text-2xl md:text-3xl font-display font-bold">{vendor.storeName}</h1>
                 {vendor.isApproved && (
                   <Badge className="w-fit mx-auto md:mx-0 bg-white/20 text-white border-white/30">Verified Seller</Badge>
                 )}
               </div>
               
-              <div className="flex justify-center md:justify-start gap-10 mb-5">
+              <div className="flex justify-center md:justify-start gap-8 mb-4">
                 <div className="text-center">
-                  <div className="font-bold text-2xl">{vendorProducts.length}</div>
+                  <div className="font-bold text-xl">{vendorProducts.length}</div>
                   <div className="text-white/60 text-sm">Products</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-bold text-2xl">{vendorStories.length}</div>
+                  <div className="font-bold text-xl">{vendorStories.length}</div>
                   <div className="text-white/60 text-sm">Stories</div>
                 </div>
               </div>
               
-              <p className="text-white/70 mb-5 max-w-md mx-auto md:mx-0 leading-relaxed">
+              <p className="text-white/70 mb-4 max-w-lg mx-auto md:mx-0 leading-relaxed text-sm">
                 {vendor.description}
               </p>
               
@@ -94,194 +92,103 @@ export default function VendorProfile() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 pb-8">
-
-        <div className="flex border-b mb-6">
-          <button
-            className={`flex-1 py-3 flex items-center justify-center gap-2 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === "products" 
-                ? "border-foreground text-foreground" 
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-            onClick={() => setActiveTab("products")}
-            data-testid="tab-products"
-          >
-            <Grid3X3 className="w-4 h-4" />
-            Products
-          </button>
-          <button
-            className={`flex-1 py-3 flex items-center justify-center gap-2 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === "stories" 
-                ? "border-foreground text-foreground" 
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-            onClick={() => setActiveTab("stories")}
-            data-testid="tab-stories"
-          >
-            <Newspaper className="w-4 h-4" />
-            Stories
-          </button>
-        </div>
-
-        {activeTab === "products" && (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-            {vendorProducts.length === 0 ? (
-              <div className="col-span-full text-center py-20 text-muted-foreground">
-                No products yet
-              </div>
-            ) : (
-              vendorProducts.map((product, index) => (
-                <motion.div 
-                  key={product.id}
+      <div className="max-w-6xl mx-auto px-4 pb-12">
+        {vendorStories.length > 0 && (
+          <div className="mb-10">
+            <h2 className="text-lg font-display font-bold mb-4 flex items-center gap-2">
+              <ImageIcon className="w-5 h-5" /> Latest Stories
+            </h2>
+            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+              {vendorStories.map((story, index) => (
+                <motion.div
+                  key={story.id}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.05 }}
-                  className="aspect-square bg-card rounded-xl relative group cursor-pointer overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
-                  onClick={() => setSelectedProduct(product)}
-                  data-testid={`product-grid-${product.id}`}
+                  className="shrink-0 cursor-pointer group"
+                  onClick={() => setSelectedStory(story)}
+                  data-testid={`story-thumb-${story.id}`}
                 >
-                  <img 
-                    src={product.images?.[0] || "https://placehold.co/300?text=Product"} 
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-end text-white p-4">
-                    <span className="font-bold text-sm text-center line-clamp-2 mb-1">{product.name}</span>
-                    <Badge className="bg-white/20 text-white border-0">{formatKWD(product.price)}</Badge>
+                  <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-primary to-accent p-0.5 group-hover:scale-105 transition-transform">
+                    <div className="w-full h-full rounded-full overflow-hidden bg-card">
+                      {story.imageUrl ? (
+                        <img src={story.imageUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-muted">
+                          <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
                   </div>
+                  <p className="text-xs text-center text-muted-foreground mt-2 max-w-20 md:max-w-24 line-clamp-1">
+                    {story.createdAt ? new Date(story.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : "Story"}
+                  </p>
                 </motion.div>
-              ))
-            )}
+              ))}
+            </div>
           </div>
         )}
 
-        {activeTab === "stories" && (
-          <div className="space-y-6">
-            {vendorStories.length === 0 ? (
-              <div className="text-center py-20 text-muted-foreground">
-                No stories yet
-              </div>
-            ) : (
-              vendorStories.map((story, index) => (
-                <motion.div 
-                  key={story.id}
+        <div>
+          <h2 className="text-lg font-display font-bold mb-6 flex items-center gap-2">
+            <Store className="w-5 h-5" /> All Products
+          </h2>
+          
+          {vendorProducts.length === 0 ? (
+            <div className="text-center py-20 text-muted-foreground">
+              <Store className="w-16 h-16 mx-auto mb-4 opacity-30" />
+              <p>No products yet</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {vendorProducts.map((product, index) => (
+                <motion.div
+                  key={product.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-card border rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow" 
-                  data-testid={`story-${story.id}`}
+                  transition={{ delay: index * 0.05 }}
                 >
-                  {story.imageUrl && (
-                    <div className="aspect-video overflow-hidden">
-                      <img src={story.imageUrl} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
-                    </div>
-                  )}
-                  <div className="p-6">
-                    <p className="text-foreground leading-relaxed">{story.content}</p>
-                    <p className="text-xs text-muted-foreground mt-4">
-                      {story.createdAt ? new Date(story.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : ""}
-                    </p>
-                  </div>
+                  <ProductCard product={{ ...product, vendor }} />
                 </motion.div>
-              ))
-            )}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      <ProductModal 
-        product={selectedProduct} 
-        vendor={vendor}
-        onClose={() => setSelectedProduct(null)} 
-      />
-    </div>
-  );
-}
-
-function ProductModal({ product, vendor, onClose }: { 
-  product: Product | null; 
-  vendor: { storeName: string };
-  onClose: () => void;
-}) {
-  const addToCartMutation = useAddToCart();
-  const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
-
-  if (!product) return null;
-
-  const handleAddToCart = () => {
-    if (!isAuthenticated) {
-      toast({ title: "Please login", description: "You need to be logged in to add items to cart", variant: "destructive" });
-      return;
-    }
-    
-    addToCartMutation.mutate({ productId: product.id, quantity: 1 }, {
-      onSuccess: () => {
-        toast({ title: "Added to cart", description: `${product.name} added to your cart` });
-        onClose();
-      },
-      onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" })
-    });
-  };
-
-  return (
-    <Dialog open={!!product} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-2xl">
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="aspect-square bg-muted rounded-lg overflow-hidden">
-            <img 
-              src={product.images?.[0] || "https://placehold.co/400"} 
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="flex flex-col">
-            <DialogHeader>
-              <DialogTitle className="text-xl">{product.name}</DialogTitle>
-            </DialogHeader>
-            
-            <div className="text-2xl font-bold text-primary my-2">
-              {formatKWD(product.price)}
-            </div>
-            
-            <p className="text-muted-foreground text-sm flex-1">
-              {product.description}
-            </p>
-            
-            <div className="space-y-3 mt-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Store className="w-4 h-4" />
-                <span>Sold by {vendor.storeName}</span>
-              </div>
-              
-              {product.brand && (
-                <Badge variant="secondary">Brand: {product.brand}</Badge>
+      <Dialog open={!!selectedStory} onOpenChange={() => setSelectedStory(null)}>
+        <DialogContent className="max-w-lg p-0 overflow-hidden">
+          {selectedStory && (
+            <div>
+              {selectedStory.imageUrl && (
+                <div className="aspect-square bg-muted">
+                  <img src={selectedStory.imageUrl} alt="" className="w-full h-full object-cover" />
+                </div>
               )}
-              
-              <div className="text-sm">
-                <span className={product.stock > 0 ? "text-green-600" : "text-destructive"}>
-                  {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
-                </span>
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
+                    {vendor.logoUrl ? (
+                      <img src={vendor.logoUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <Store className="w-5 h-5 text-primary" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-sm">{vendor.storeName}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {selectedStory.createdAt ? new Date(selectedStory.createdAt).toLocaleDateString('en-US', { 
+                        year: 'numeric', month: 'long', day: 'numeric' 
+                      }) : ""}
+                    </div>
+                  </div>
+                </div>
+                <p className="text-foreground leading-relaxed">{selectedStory.content}</p>
               </div>
             </div>
-            
-            <div className="mt-6 flex gap-2">
-              <Button 
-                className="flex-1 gap-2" 
-                onClick={handleAddToCart}
-                disabled={product.stock <= 0 || addToCartMutation.isPending}
-                data-testid="button-add-to-cart-modal"
-              >
-                <ShoppingCart className="w-4 h-4" />
-                {addToCartMutation.isPending ? "Adding..." : "Add to Cart"}
-              </Button>
-              <Link href={`/products/${product.id}`}>
-                <Button variant="outline">View Details</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
