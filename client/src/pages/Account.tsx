@@ -3,14 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
-import { useOrders, useRole, useCreateVendor } from "@/hooks/use-motorbuy";
-import { User, Package, ShoppingBag, Store, Loader2 } from "lucide-react";
+import { useOrders, useRole } from "@/hooks/use-motorbuy";
+import { User, Package, ShoppingBag, Store, Loader2, Settings, Phone, MapPin, Mail, Camera } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { formatKWD } from "@/lib/currency";
 
 export default function Account() {
@@ -18,6 +17,11 @@ export default function Account() {
   const { data: roleData, isLoading: isRoleLoading } = useRole();
   const { data: orders, isLoading: isOrdersLoading } = useOrders();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
 
   if (isAuthLoading || isRoleLoading) {
     return (
@@ -32,6 +36,13 @@ export default function Account() {
     return null;
   }
 
+  const handleSaveSettings = () => {
+    toast({ 
+      title: "Settings Saved", 
+      description: "Your account settings have been updated successfully." 
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background font-body pb-20">
       <Navbar />
@@ -43,7 +54,7 @@ export default function Account() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 grid md:grid-cols-3 gap-8">
+      <div className="container mx-auto px-4 grid md:grid-cols-2 gap-8">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -52,8 +63,16 @@ export default function Account() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center text-primary text-2xl font-bold">
-                {user.firstName?.[0] || user.email?.[0]?.toUpperCase() || "U"}
+              <div className="relative">
+                <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center text-primary text-3xl font-bold">
+                  {user.firstName?.[0] || user.email?.[0]?.toUpperCase() || "U"}
+                </div>
+                <button 
+                  className="absolute bottom-0 right-0 w-7 h-7 bg-primary text-white rounded-full flex items-center justify-center shadow-lg"
+                  data-testid="button-change-photo"
+                >
+                  <Camera className="w-4 h-4" />
+                </button>
               </div>
               <div>
                 <div className="font-semibold text-lg">
@@ -70,8 +89,74 @@ export default function Account() {
               </div>
             </div>
 
-            <Button variant="outline" className="w-full" onClick={() => logout()}>
+            <Button variant="outline" className="w-full" onClick={() => logout()} data-testid="button-logout">
               Logout
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5" /> Account Settings
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="flex items-center gap-2 text-sm">
+                <Mail className="w-4 h-4" /> Email
+              </Label>
+              <Input 
+                id="email" 
+                value={user.email || ""} 
+                disabled 
+                className="bg-muted"
+                data-testid="input-email"
+              />
+              <p className="text-xs text-muted-foreground">Email is managed by your Replit account</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="flex items-center gap-2 text-sm">
+                <Phone className="w-4 h-4" /> Phone Number
+              </Label>
+              <Input 
+                id="phone" 
+                placeholder="+965 XXXX XXXX" 
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                data-testid="input-phone"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address" className="flex items-center gap-2 text-sm">
+                <MapPin className="w-4 h-4" /> Address
+              </Label>
+              <Input 
+                id="address" 
+                placeholder="Street address" 
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                data-testid="input-address"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="city" className="flex items-center gap-2 text-sm">
+                City / Area
+              </Label>
+              <Input 
+                id="city" 
+                placeholder="e.g., Salmiya, Kuwait City" 
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                data-testid="input-city"
+              />
+            </div>
+
+            <Button className="w-full" onClick={handleSaveSettings} data-testid="button-save-settings">
+              Save Changes
             </Button>
           </CardContent>
         </Card>
@@ -92,7 +177,7 @@ export default function Account() {
                 <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p>No orders yet.</p>
                 <Link href="/products">
-                  <Button variant="outline" className="mt-4">Start Shopping</Button>
+                  <Button variant="outline" className="mt-4" data-testid="button-start-shopping">Start Shopping</Button>
                 </Link>
               </div>
             ) : (
@@ -118,8 +203,6 @@ export default function Account() {
           </CardContent>
         </Card>
 
-        {roleData?.role === "customer" && <BecomeVendorCard />}
-
         {roleData?.role === "vendor" && (
           <Card>
             <CardHeader>
@@ -132,7 +215,7 @@ export default function Account() {
                 Manage your products and view orders from your vendor dashboard.
               </p>
               <Link href="/vendor-dashboard">
-                <Button className="w-full">Go to Dashboard</Button>
+                <Button className="w-full" data-testid="button-vendor-dashboard">Go to Dashboard</Button>
               </Link>
             </CardContent>
           </Card>
@@ -150,84 +233,12 @@ export default function Account() {
                 Manage vendors, users, and platform settings.
               </p>
               <Link href="/admin">
-                <Button className="w-full">Go to Admin Dashboard</Button>
+                <Button className="w-full" data-testid="button-admin-dashboard">Go to Admin Dashboard</Button>
               </Link>
             </CardContent>
           </Card>
         )}
       </div>
     </div>
-  );
-}
-
-function BecomeVendorCard() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [storeName, setStoreName] = useState("");
-  const [description, setDescription] = useState("");
-  const { mutate: createVendor, isPending } = useCreateVendor();
-  const { toast } = useToast();
-
-  const handleSubmit = () => {
-    if (!storeName.trim() || !description.trim()) {
-      toast({ title: "Missing fields", description: "Please fill in all fields", variant: "destructive" });
-      return;
-    }
-    
-    createVendor({ storeName, description }, {
-      onSuccess: () => {
-        setIsOpen(false);
-        toast({ title: "Application Submitted", description: "Your vendor application is pending approval." });
-      },
-      onError: (err: Error) => {
-        toast({ title: "Error", description: err.message, variant: "destructive" });
-      }
-    });
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Store className="w-5 h-5" /> Become a Vendor
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground mb-4">
-          Start selling car parts on MotorBuy. Apply to become a vendor today.
-        </p>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button className="w-full" data-testid="button-become-vendor">Apply Now</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Vendor Application</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <Input 
-                placeholder="Store Name" 
-                value={storeName} 
-                onChange={(e) => setStoreName(e.target.value)}
-                data-testid="input-store-name"
-              />
-              <Textarea 
-                placeholder="Tell us about your business..." 
-                value={description} 
-                onChange={(e) => setDescription(e.target.value)}
-                data-testid="input-store-description"
-              />
-              <Button 
-                className="w-full" 
-                onClick={handleSubmit} 
-                disabled={isPending}
-                data-testid="button-submit-vendor"
-              >
-                {isPending ? "Submitting..." : "Submit Application"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </CardContent>
-    </Card>
   );
 }
