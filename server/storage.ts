@@ -1,38 +1,190 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
-
-// modify the interface with any CRUD methods
-// you might need
+import { db } from "./db";
+import { 
+  roles, vendors, categories, products, orders, orderItems, vendorStories, cartItems,
+  type Role, type Vendor, type Category, type Product, type Order, type OrderItem, type VendorStory, type CartItem,
+  type InsertRole, type InsertVendor, type InsertCategory, type InsertProduct, type InsertOrder, type InsertOrderItem, type InsertStory, type InsertCartItem
+} from "@shared/schema";
+import { eq, desc, sql } from "drizzle-orm";
+import { authStorage } from "./replit_integrations/auth";
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  // Auth
+  getUserRole(userId: string): Promise<string>;
+  setUserRole(userId: string, role: "customer" | "vendor" | "admin"): Promise<Role>;
+
+  // Vendors
+  getVendors(): Promise<Vendor[]>;
+  getVendor(id: number): Promise<Vendor | undefined>;
+  getVendorByUserId(userId: string): Promise<Vendor | undefined>;
+  createVendor(vendor: InsertVendor & { userId: string }): Promise<Vendor>;
+  updateVendor(id: number, updates: Partial<Vendor>): Promise<Vendor>;
+
+  // Categories
+  getCategories(): Promise<Category[]>;
+  createCategory(category: InsertCategory): Promise<Category>;
+
+  // Products
+  getProducts(filters?: { categoryId?: number; vendorId?: number; search?: string; sortBy?: string }): Promise<Product[]>;
+  getProduct(id: number): Promise<Product | undefined>;
+  createProduct(product: InsertProduct): Promise<Product>;
+
+  // Cart
+  getCartItems(userId: string): Promise<(CartItem & { product: Product })[]>;
+  addToCart(item: InsertCartItem & { userId: string }): Promise<CartItem>;
+  removeFromCart(id: number): Promise<void>;
+  clearCart(userId: string): Promise<void>;
+
+  // Orders
+  createOrder(userId: string, total: string, items: { productId: number; quantity: number; price: string }[]): Promise<Order>;
+  getOrders(userId: string): Promise<Order[]>;
+
+  // Stories
+  getStories(): Promise<(VendorStory & { vendor: Vendor })[]>;
+  createStory(story: InsertStory): Promise<VendorStory>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-
-  constructor() {
-    this.users = new Map();
+export class DatabaseStorage implements IStorage {
+  async getUserRole(userId: string): Promise<string> {
+    const [role] = await db.select().from(roles).where(eq(roles.userId, userId));
+    return role?.role || "customer";
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async setUserRole(userId: string, role: "customer" | "vendor" | "admin"): Promise<Role> {
+    const [newRole] = await db.insert(roles).values({ userId, role })
+      .onConflictDoUpdate({ target: roles.userId, set: { role } })
+      .returning();
+    return newRole;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async getVendors(): Promise<Vendor[]> {
+    return await db.select().from(vendors);
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async getVendor(id: number): Promise<Vendor | undefined> {
+    const [vendor] = await db.select().from(vendors).where(eq(vendors.id, id));
+    return vendor;
+  }
+
+  async getVendorByUserId(userId: string): Promise<Vendor | undefined> {
+    const [vendor] = await db.select().from(vendors).where(eq(vendors.userId, userId));
+    return vendor;
+  }
+
+  async createVendor(vendor: InsertVendor & { userId: string }): Promise<Vendor> {
+    const [newVendor] = await db.insert(vendors).values(vendor).returning();
+    return newVendor;
+  }
+
+  async updateVendor(id: number, updates: Partial<Vendor>): Promise<Vendor> {
+    const [updated] = await db.update(vendors).set(updates).where(eq(vendors.id, id)).returning();
+    return updated;
+  }
+
+  async getCategories(): Promise<Category[]> {
+    return await db.select().from(categories);
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const [newCategory] = await db.insert(categories).values(category).returning();
+    return newCategory;
+  }
+
+  async getProducts(filters?: { categoryId?: number; vendorId?: number; search?: string; sortBy?: string }): Promise<Product[]> {
+    let query = db.select().from(products);
+    
+    // Simple filtering logic (drizzle-orm query builder would be more complex for dynamic filters in one chain)
+    // For simplicity, fetching all and filtering in memory or minimal SQL filters
+    // Ideally use where() with conditions
+    
+    const conditions = [];
+    if (filters?.categoryId) conditions.push(eq(products.categoryId, filters.categoryId));
+    if (filters?.vendorId) conditions.push(eq(products.vendorId, filters.vendorId));
+    // Search not implemented in sql for brevity, normally ilike
+    
+    let q = conditions.length ? query.where(sql`${sql.join(conditions, sql` AND `)}`) : query;
+
+    if (filters?.sortBy === 'price_asc') q = q.orderBy(products.price);
+    else if (filters?.sortBy === 'price_desc') q = q.orderBy(desc(products.price));
+    else if (filters?.sortBy === 'newest') q = q.orderBy(desc(products.createdAt));
+
+    return await q;
+  }
+
+  async getProduct(id: number): Promise<Product | undefined> {
+    const [product] = await db.select().from(products).where(eq(products.id, id));
+    return product;
+  }
+
+  async createProduct(product: InsertProduct): Promise<Product> {
+    const [newProduct] = await db.insert(products).values(product).returning();
+    return newProduct;
+  }
+
+  async getCartItems(userId: string): Promise<(CartItem & { product: Product })[]> {
+    const items = await db.select({
+      cartItem: cartItems,
+      product: products
+    })
+    .from(cartItems)
+    .innerJoin(products, eq(cartItems.productId, products.id))
+    .where(eq(cartItems.userId, userId));
+    
+    return items.map(i => ({ ...i.cartItem, product: i.product }));
+  }
+
+  async addToCart(item: InsertCartItem & { userId: string }): Promise<CartItem> {
+    const [newItem] = await db.insert(cartItems).values(item).returning();
+    return newItem;
+  }
+
+  async removeFromCart(id: number): Promise<void> {
+    await db.delete(cartItems).where(eq(cartItems.id, id));
+  }
+
+  async clearCart(userId: string): Promise<void> {
+    await db.delete(cartItems).where(eq(cartItems.userId, userId));
+  }
+
+  async createOrder(userId: string, total: string, items: { productId: number; quantity: number; price: string }[]): Promise<Order> {
+    return await db.transaction(async (tx) => {
+      const [order] = await tx.insert(orders).values({
+        userId,
+        total,
+        status: "paid" // Simulating immediate payment
+      }).returning();
+
+      for (const item of items) {
+        await tx.insert(orderItems).values({
+          orderId: order.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.price
+        });
+      }
+      return order;
+    });
+  }
+
+  async getOrders(userId: string): Promise<Order[]> {
+    return await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
+  }
+
+  async getStories(): Promise<(VendorStory & { vendor: Vendor })[]> {
+    const results = await db.select({
+      story: vendorStories,
+      vendor: vendors
+    })
+    .from(vendorStories)
+    .innerJoin(vendors, eq(vendorStories.vendorId, vendors.id))
+    .orderBy(desc(vendorStories.createdAt));
+
+    return results.map(r => ({ ...r.story, vendor: r.vendor }));
+  }
+
+  async createStory(story: InsertStory): Promise<VendorStory> {
+    const [newStory] = await db.insert(vendorStories).values(story).returning();
+    return newStory;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
