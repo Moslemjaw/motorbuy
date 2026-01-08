@@ -82,20 +82,42 @@ export function Navbar() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <Link href="/account">
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>My Account</span>
-                  </DropdownMenuItem>
-                </Link>
-                
-                {role === 'vendor' && (
-                   <Link href="/vendor-dashboard">
-                    <DropdownMenuItem>
-                      <Store className="mr-2 h-4 w-4" />
-                      <span>Vendor Dashboard</span>
-                    </DropdownMenuItem>
-                  </Link>
+                {role === 'vendor' ? (
+                  <>
+                    <Link href="/vendor/account">
+                      <DropdownMenuItem>
+                        <User className="mr-2 h-4 w-4" />
+                        <span>My Account</span>
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link href="/vendor/store">
+                      <DropdownMenuItem>
+                        <Store className="mr-2 h-4 w-4" />
+                        <span>My Store</span>
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link href="/vendor/dashboard">
+                      <DropdownMenuItem>
+                        <Store className="mr-2 h-4 w-4" />
+                        <span>Dashboard</span>
+                      </DropdownMenuItem>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/account">
+                      <DropdownMenuItem>
+                        <User className="mr-2 h-4 w-4" />
+                        <span>My Account</span>
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link href="/orders">
+                      <DropdownMenuItem>
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        <span>Order History</span>
+                      </DropdownMenuItem>
+                    </Link>
+                  </>
                 )}
                 
                 {role === 'admin' && (

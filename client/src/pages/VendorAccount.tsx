@@ -64,6 +64,15 @@ export default function VendorAccount() {
     },
   });
 
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated) {
+      setLocation("/");
+    }
+    if (!isRoleLoading && roleData?.role !== "vendor") {
+      setLocation("/account");
+    }
+  }, [isAuthLoading, isAuthenticated, isRoleLoading, roleData, setLocation]);
+
   if (isAuthLoading || isRoleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -72,14 +81,12 @@ export default function VendorAccount() {
     );
   }
 
-  if (!isAuthenticated || !user) {
-    setLocation("/");
-    return null;
-  }
-
-  if (roleData?.role !== "vendor") {
-    setLocation("/account");
-    return null;
+  if (!isAuthenticated || !user || roleData?.role !== "vendor") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin w-8 h-8" />
+      </div>
+    );
   }
 
   const handlePhotoClick = () => fileInputRef.current?.click();

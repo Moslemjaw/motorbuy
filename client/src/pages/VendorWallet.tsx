@@ -11,6 +11,7 @@ import { formatKWD } from "@/lib/currency";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { PaymentRequest } from "@shared/schema";
+import { useEffect } from "react";
 
 export default function VendorWallet() {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
@@ -45,6 +46,15 @@ export default function VendorWallet() {
     },
   });
 
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated) {
+      setLocation("/");
+    }
+    if (!isRoleLoading && roleData?.role !== "vendor") {
+      setLocation("/");
+    }
+  }, [isAuthLoading, isAuthenticated, isRoleLoading, roleData, setLocation]);
+
   if (isAuthLoading || isRoleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -54,8 +64,11 @@ export default function VendorWallet() {
   }
 
   if (!isAuthenticated || !user || roleData?.role !== "vendor") {
-    setLocation("/");
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin w-8 h-8" />
+      </div>
+    );
   }
 
   const balance = walletData?.balance || myVendor?.walletBalance || "0";

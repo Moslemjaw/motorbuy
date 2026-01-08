@@ -74,6 +74,15 @@ export default function VendorStore() {
     },
   });
 
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated) {
+      setLocation("/");
+    }
+    if (!isRoleLoading && roleData?.role !== "vendor") {
+      setLocation("/account");
+    }
+  }, [isAuthLoading, isAuthenticated, isRoleLoading, roleData, setLocation]);
+
   if (isAuthLoading || isRoleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -83,8 +92,19 @@ export default function VendorStore() {
   }
 
   if (!isAuthenticated || !user || roleData?.role !== "vendor") {
-    setLocation("/");
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin w-8 h-8" />
+      </div>
+    );
+  }
+
+  if (!myVendor) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin w-8 h-8" />
+      </div>
+    );
   }
 
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

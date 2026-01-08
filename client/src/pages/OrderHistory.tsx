@@ -7,11 +7,18 @@ import { useOrders } from "@/hooks/use-motorbuy";
 import { Package, ShoppingBag, Loader2, ArrowLeft } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { formatKWD } from "@/lib/currency";
+import { useEffect } from "react";
 
 export default function OrderHistory() {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { data: orders, isLoading: isOrdersLoading } = useOrders();
   const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated) {
+      setLocation("/");
+    }
+  }, [isAuthLoading, isAuthenticated, setLocation]);
 
   if (isAuthLoading) {
     return (
@@ -22,8 +29,11 @@ export default function OrderHistory() {
   }
 
   if (!isAuthenticated || !user) {
-    setLocation("/");
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin w-8 h-8" />
+      </div>
+    );
   }
 
   return (
