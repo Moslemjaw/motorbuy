@@ -319,48 +319,51 @@ function VendorManagement() {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="border-b">
         <CardTitle className="flex items-center gap-2">
-          <Store className="w-5 h-5" /> Vendor Management
+          <Store className="w-5 h-5 text-primary" /> Vendor Management
+          {vendors && vendors.length > 0 && (
+            <Badge variant="secondary" className="ml-2">{vendors.length} vendors</Badge>
+          )}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         {!vendors || vendors.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">No vendors registered yet.</p>
+          <p className="text-center text-muted-foreground py-12">No vendors registered yet.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b text-left">
-                  <th className="pb-3 font-medium">Vendor</th>
-                  <th className="pb-3 font-medium">Status</th>
-                  <th className="pb-3 font-medium">Commission</th>
-                  <th className="pb-3 font-medium text-right">Gross Sales</th>
-                  <th className="pb-3 font-medium text-right">Pending Payout</th>
-                  <th className="pb-3 font-medium text-right">Lifetime Paid</th>
-                  <th className="pb-3 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {vendors.map((vendor) => (
-                  <tr key={vendor.id} className="border-b" data-testid={`vendor-row-${vendor.id}`}>
-                    <td className="py-4">
-                      <div className="font-medium">{vendor.storeName}</div>
-                      <div className="text-sm text-muted-foreground line-clamp-1">{vendor.description}</div>
-                    </td>
-                    <td className="py-4">
-                      <Badge variant={vendor.isApproved ? "default" : "secondary"}>
-                        {vendor.isApproved ? "Approved" : "Pending"}
-                      </Badge>
-                      {vendor.hasPendingRequest && (
-                        <Badge variant="destructive" className="ml-2">Payout Requested</Badge>
-                      )}
-                    </td>
-                    <td className="py-4">
+          <div className="divide-y">
+            {vendors.map((vendor) => (
+              <div 
+                key={vendor.id} 
+                className="p-4 md:p-6 hover-elevate transition-colors"
+                data-testid={`vendor-row-${vendor.id}`}
+              >
+                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                  <div className="flex items-start gap-4 flex-1 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Store className="w-6 h-6 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <h3 className="font-semibold text-base truncate">{vendor.storeName}</h3>
+                        <Badge variant={vendor.isApproved ? "default" : "secondary"} className="text-xs">
+                          {vendor.isApproved ? "Approved" : "Pending"}
+                        </Badge>
+                        {vendor.hasPendingRequest && (
+                          <Badge variant="destructive" className="text-xs">Payout Request</Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground line-clamp-1">{vendor.description}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-6">
+                    <div className="bg-muted/50 rounded-lg p-3 text-center">
+                      <div className="text-xs text-muted-foreground mb-1">Commission</div>
                       {editingVendor === vendor.id ? (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 justify-center">
                           <Select value={commissionType} onValueChange={setCommissionType}>
-                            <SelectTrigger className="w-24">
+                            <SelectTrigger className="w-16 h-8 text-xs">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -372,55 +375,68 @@ function VendorManagement() {
                             type="number"
                             value={commissionValue}
                             onChange={(e) => setCommissionValue(e.target.value)}
-                            className="w-20"
+                            className="w-14 h-8 text-xs"
                             min="0"
                             step="0.01"
                           />
-                          <Button size="icon" variant="ghost" onClick={() => saveCommission(vendor.id)} disabled={updateCommissionMutation.isPending}>
-                            <Save className="w-4 h-4" />
+                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => saveCommission(vendor.id)} disabled={updateCommissionMutation.isPending}>
+                            <Save className="w-3 h-3" />
                           </Button>
-                          <Button size="icon" variant="ghost" onClick={() => setEditingVendor(null)}>
-                            <X className="w-4 h-4" />
+                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingVendor(null)}>
+                            <X className="w-3 h-3" />
                           </Button>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2">
-                          <span>
-                            {vendor.commissionValue || "5"}
-                            {vendor.commissionType === "fixed" ? " KWD" : "%"}
+                        <div className="flex items-center justify-center gap-1">
+                          <span className="font-semibold text-sm">
+                            {vendor.commissionValue || "5"}{vendor.commissionType === "fixed" ? " KWD" : "%"}
                           </span>
-                          <Button size="icon" variant="ghost" onClick={() => startEditing(vendor)}>
+                          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => startEditing(vendor)}>
                             <Pencil className="w-3 h-3" />
                           </Button>
                         </div>
                       )}
-                    </td>
-                    <td className="py-4 text-right font-mono">
-                      {parseFloat(vendor.grossSalesKwd || "0").toFixed(3)} KWD
-                    </td>
-                    <td className="py-4 text-right font-mono">
-                      <span className={parseFloat(vendor.pendingPayoutKwd || "0") > 0 ? "text-amber-600 font-semibold" : ""}>
-                        {parseFloat(vendor.pendingPayoutKwd || "0").toFixed(3)} KWD
-                      </span>
-                    </td>
-                    <td className="py-4 text-right font-mono text-muted-foreground">
-                      {parseFloat(vendor.lifetimePayoutsKwd || "0").toFixed(3)} KWD
-                    </td>
-                    <td className="py-4 text-right">
-                      <Button
-                        size="sm"
-                        onClick={() => payVendorMutation.mutate(vendor.id)}
-                        disabled={payVendorMutation.isPending || parseFloat(vendor.pendingPayoutKwd || "0") <= 0}
-                        data-testid={`button-pay-vendor-${vendor.id}`}
-                      >
-                        <DollarSign className="w-4 h-4 mr-1" />
-                        Pay
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+
+                    <div className="bg-muted/50 rounded-lg p-3 text-center">
+                      <div className="text-xs text-muted-foreground mb-1">Gross Sales</div>
+                      <div className="font-semibold text-sm">
+                        {parseFloat(vendor.grossSalesKwd || "0").toFixed(3)}
+                        <span className="text-xs text-muted-foreground ml-1">KWD</span>
+                      </div>
+                    </div>
+
+                    <div className={`rounded-lg p-3 text-center ${parseFloat(vendor.pendingPayoutKwd || "0") > 0 ? "bg-amber-100 dark:bg-amber-950/30" : "bg-muted/50"}`}>
+                      <div className="text-xs text-muted-foreground mb-1">Pending</div>
+                      <div className={`font-semibold text-sm ${parseFloat(vendor.pendingPayoutKwd || "0") > 0 ? "text-amber-600 dark:text-amber-400" : ""}`}>
+                        {parseFloat(vendor.pendingPayoutKwd || "0").toFixed(3)}
+                        <span className="text-xs text-muted-foreground ml-1">KWD</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-muted/50 rounded-lg p-3 text-center">
+                      <div className="text-xs text-muted-foreground mb-1">Lifetime Paid</div>
+                      <div className="font-semibold text-sm text-green-600 dark:text-green-400">
+                        {parseFloat(vendor.lifetimePayoutsKwd || "0").toFixed(3)}
+                        <span className="text-xs text-muted-foreground ml-1">KWD</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end lg:justify-center">
+                    <Button
+                      onClick={() => payVendorMutation.mutate(vendor.id)}
+                      disabled={payVendorMutation.isPending || parseFloat(vendor.pendingPayoutKwd || "0") <= 0}
+                      className="w-full md:w-auto"
+                      data-testid={`button-pay-vendor-${vendor.id}`}
+                    >
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      Process Payout
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </CardContent>
