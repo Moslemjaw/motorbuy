@@ -1,33 +1,67 @@
-import { users, type User, type UpsertUser } from "@shared/models/auth";
-import { db } from "@server/db";
-import { eq } from "drizzle-orm";
+import { User } from "@server/mongodb";
 
-// Interface for auth storage operations
-// (IMPORTANT) These user operations are mandatory for Replit Auth.
+export interface UpsertUser {
+  id: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  profileImageUrl?: string;
+  bio?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+}
+
+export interface UserType {
+  id: string;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  profileImageUrl?: string | null;
+  bio?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+}
+
 export interface IAuthStorage {
-  getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
+  getUser(id: string): Promise<UserType | undefined>;
+  upsertUser(user: UpsertUser): Promise<UserType>;
+}
+
+function toPlainUser(doc: any): UserType | undefined {
+  if (!doc) return undefined;
+  const obj = doc.toObject ? doc.toObject() : doc;
+  return {
+    id: obj.id || obj._id?.toString(),
+    email: obj.email,
+    firstName: obj.firstName,
+    lastName: obj.lastName,
+    profileImageUrl: obj.profileImageUrl,
+    bio: obj.bio,
+    phone: obj.phone,
+    address: obj.address,
+    city: obj.city,
+    createdAt: obj.createdAt,
+    updatedAt: obj.updatedAt,
+  };
 }
 
 class AuthStorage implements IAuthStorage {
-  async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+  async getUser(id: string): Promise<UserType | undefined> {
+    const user = await User.findOne({ id });
+    return toPlainUser(user);
   }
 
-  async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    return user;
+  async upsertUser(userData: UpsertUser): Promise<UserType> {
+    const user = await User.findOneAndUpdate(
+      { id: userData.id },
+      { ...userData, updatedAt: new Date() },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    return toPlainUser(user)!;
   }
 }
 

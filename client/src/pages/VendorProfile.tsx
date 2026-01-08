@@ -13,7 +13,7 @@ import type { VendorStory } from "@shared/schema";
 
 export default function VendorProfile() {
   const [, params] = useRoute("/vendor/:id");
-  const vendorId = params ? parseInt(params.id) : 0;
+  const vendorId = params?.id || "";
   
   const { data: vendor, isLoading: isVendorLoading } = useVendor(vendorId);
   const { data: allProducts, isLoading: isProductsLoading } = useProducts({ vendorId });

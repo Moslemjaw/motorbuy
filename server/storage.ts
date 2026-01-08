@@ -1,228 +1,253 @@
-import { db } from "./db";
 import { 
-  roles, vendors, categories, products, orders, orderItems, vendorStories, cartItems, paymentRequests,
-  type Role, type Vendor, type Category, type Product, type Order, type OrderItem, type VendorStory, type CartItem, type PaymentRequest,
-  type InsertRole, type InsertVendor, type InsertCategory, type InsertProduct, type InsertOrder, type InsertOrderItem, type InsertStory, type InsertCartItem
-} from "@shared/schema";
-import { eq, desc, sql } from "drizzle-orm";
-import { authStorage } from "./replit_integrations/auth";
+  User, Role, Vendor, Category, Product, Order, OrderItem, VendorStory, CartItem, PaymentRequest 
+} from "./mongodb";
+import mongoose from "mongoose";
 
 export interface IStorage {
-  // Auth
   getUserRole(userId: string): Promise<string>;
-  setUserRole(userId: string, role: "customer" | "vendor" | "admin"): Promise<Role>;
-
-  // Vendors
-  getVendors(): Promise<Vendor[]>;
-  getVendor(id: number): Promise<Vendor | undefined>;
-  getVendorByUserId(userId: string): Promise<Vendor | undefined>;
-  createVendor(vendor: InsertVendor & { userId: string }): Promise<Vendor>;
-  updateVendor(id: number, updates: Partial<Vendor>): Promise<Vendor>;
-
-  // Categories
-  getCategories(): Promise<Category[]>;
-  createCategory(category: InsertCategory): Promise<Category>;
-
-  // Products
-  getProducts(filters?: { categoryId?: number; vendorId?: number; search?: string; sortBy?: string }): Promise<Product[]>;
-  getProduct(id: number): Promise<Product | undefined>;
-  createProduct(product: InsertProduct): Promise<Product>;
-
-  // Cart
-  getCartItems(userId: string): Promise<(CartItem & { product: Product })[]>;
-  addToCart(item: InsertCartItem & { userId: string }): Promise<CartItem>;
-  removeFromCart(id: number): Promise<void>;
+  setUserRole(userId: string, role: "customer" | "vendor" | "admin"): Promise<any>;
+  getVendors(): Promise<any[]>;
+  getVendor(id: string): Promise<any | undefined>;
+  getVendorByUserId(userId: string): Promise<any | undefined>;
+  createVendor(vendor: any): Promise<any>;
+  updateVendor(id: string, updates: any): Promise<any>;
+  getCategories(): Promise<any[]>;
+  createCategory(category: any): Promise<any>;
+  getProducts(filters?: { categoryId?: string; vendorId?: string; search?: string; sortBy?: string }): Promise<any[]>;
+  getProduct(id: string): Promise<any | undefined>;
+  createProduct(product: any): Promise<any>;
+  getCartItems(userId: string): Promise<any[]>;
+  addToCart(item: any): Promise<any>;
+  removeFromCart(id: string): Promise<void>;
   clearCart(userId: string): Promise<void>;
-
-  // Orders
-  createOrder(userId: string, total: string, items: { productId: number; quantity: number; price: string }[]): Promise<Order>;
-  getOrders(userId: string): Promise<Order[]>;
-
-  // Stories
-  getStories(): Promise<(VendorStory & { vendor: Vendor })[]>;
-  createStory(story: InsertStory): Promise<VendorStory>;
-  deleteStory(id: number): Promise<void>;
-
-  // Payment Requests
-  getPaymentRequests(vendorId: number): Promise<PaymentRequest[]>;
-  createPaymentRequest(vendorId: number, amount: string): Promise<PaymentRequest>;
-
-  // Vendor Orders
-  getVendorOrders(vendorId: number): Promise<Order[]>;
+  createOrder(userId: string, total: string, items: { productId: string; quantity: number; price: string }[]): Promise<any>;
+  getOrders(userId: string): Promise<any[]>;
+  getStories(): Promise<any[]>;
+  createStory(story: any): Promise<any>;
+  deleteStory(id: string): Promise<void>;
+  getPaymentRequests(vendorId: string): Promise<any[]>;
+  createPaymentRequest(vendorId: string, amount: string): Promise<any>;
+  getVendorOrders(vendorId: string): Promise<any[]>;
 }
 
-export class DatabaseStorage implements IStorage {
+function toPlainObject(doc: any): any {
+  if (!doc) return doc;
+  const obj = doc.toObject ? doc.toObject() : doc;
+  if (obj._id) {
+    obj.id = obj._id.toString();
+    delete obj._id;
+  }
+  delete obj.__v;
+  
+  if (obj.vendorId && obj.vendorId.toString) {
+    obj.vendorId = obj.vendorId.toString();
+  }
+  if (obj.categoryId && obj.categoryId.toString) {
+    obj.categoryId = obj.categoryId.toString();
+  }
+  if (obj.productId && obj.productId.toString) {
+    obj.productId = obj.productId.toString();
+  }
+  if (obj.orderId && obj.orderId.toString) {
+    obj.orderId = obj.orderId.toString();
+  }
+  
+  return obj;
+}
+
+export class MongoStorage implements IStorage {
   async getUserRole(userId: string): Promise<string> {
-    const [role] = await db.select().from(roles).where(eq(roles.userId, userId));
+    const role = await Role.findOne({ userId });
     return role?.role || "customer";
   }
 
-  async setUserRole(userId: string, role: "customer" | "vendor" | "admin"): Promise<Role> {
-    await db.delete(roles).where(eq(roles.userId, userId));
-    const [newRole] = await db.insert(roles).values({ userId, role }).returning();
-    return newRole;
+  async setUserRole(userId: string, role: "customer" | "vendor" | "admin"): Promise<any> {
+    await Role.deleteMany({ userId });
+    const newRole = await Role.create({ userId, role });
+    return toPlainObject(newRole);
   }
 
-  async getVendors(): Promise<Vendor[]> {
-    return await db.select().from(vendors);
+  async getVendors(): Promise<any[]> {
+    const vendors = await Vendor.find({});
+    return vendors.map(toPlainObject);
   }
 
-  async getVendor(id: number): Promise<Vendor | undefined> {
-    const [vendor] = await db.select().from(vendors).where(eq(vendors.id, id));
-    return vendor;
+  async getVendor(id: string): Promise<any | undefined> {
+    if (!mongoose.Types.ObjectId.isValid(id)) return undefined;
+    const vendor = await Vendor.findById(id);
+    return vendor ? toPlainObject(vendor) : undefined;
   }
 
-  async getVendorByUserId(userId: string): Promise<Vendor | undefined> {
-    const [vendor] = await db.select().from(vendors).where(eq(vendors.userId, userId));
-    return vendor;
+  async getVendorByUserId(userId: string): Promise<any | undefined> {
+    const vendor = await Vendor.findOne({ userId });
+    return vendor ? toPlainObject(vendor) : undefined;
   }
 
-  async createVendor(vendor: InsertVendor & { userId: string }): Promise<Vendor> {
-    const [newVendor] = await db.insert(vendors).values(vendor).returning();
-    return newVendor;
+  async createVendor(vendor: any): Promise<any> {
+    const newVendor = await Vendor.create(vendor);
+    return toPlainObject(newVendor);
   }
 
-  async updateVendor(id: number, updates: Partial<Vendor>): Promise<Vendor> {
-    const [updated] = await db.update(vendors).set(updates).where(eq(vendors.id, id)).returning();
-    return updated;
+  async updateVendor(id: string, updates: any): Promise<any> {
+    const updated = await Vendor.findByIdAndUpdate(id, updates, { new: true });
+    return toPlainObject(updated);
   }
 
-  async getCategories(): Promise<Category[]> {
-    return await db.select().from(categories);
+  async getCategories(): Promise<any[]> {
+    const categories = await Category.find({});
+    return categories.map(toPlainObject);
   }
 
-  async createCategory(category: InsertCategory): Promise<Category> {
-    const [newCategory] = await db.insert(categories).values(category).returning();
-    return newCategory;
+  async createCategory(category: any): Promise<any> {
+    const newCategory = await Category.create(category);
+    return toPlainObject(newCategory);
   }
 
-  async getProducts(filters?: { categoryId?: number; vendorId?: number; search?: string; sortBy?: string }): Promise<Product[]> {
-    let query = db.select().from(products);
+  async getProducts(filters?: { categoryId?: string; vendorId?: string; search?: string; sortBy?: string }): Promise<any[]> {
+    let query: any = {};
     
-    const conditions = [];
-    if (filters?.categoryId) conditions.push(eq(products.categoryId, filters.categoryId));
-    if (filters?.vendorId) conditions.push(eq(products.vendorId, filters.vendorId));
-    
-    let q: any = conditions.length ? query.where(sql`${sql.join(conditions, sql` AND `)}`) : query;
+    if (filters?.categoryId && mongoose.Types.ObjectId.isValid(filters.categoryId)) {
+      query.categoryId = new mongoose.Types.ObjectId(filters.categoryId);
+    }
+    if (filters?.vendorId && mongoose.Types.ObjectId.isValid(filters.vendorId)) {
+      query.vendorId = new mongoose.Types.ObjectId(filters.vendorId);
+    }
 
-    if (filters?.sortBy === 'price_asc') q = q.orderBy(products.price);
-    else if (filters?.sortBy === 'price_desc') q = q.orderBy(desc(products.price));
-    else if (filters?.sortBy === 'newest') q = q.orderBy(desc(products.createdAt));
+    let sortOption: any = {};
+    if (filters?.sortBy === 'price_asc') sortOption = { price: 1 };
+    else if (filters?.sortBy === 'price_desc') sortOption = { price: -1 };
+    else if (filters?.sortBy === 'newest') sortOption = { createdAt: -1 };
 
-    return await q;
+    const products = await Product.find(query).sort(sortOption);
+    return products.map(toPlainObject);
   }
 
-  async getProduct(id: number): Promise<Product | undefined> {
-    const [product] = await db.select().from(products).where(eq(products.id, id));
-    return product;
+  async getProduct(id: string): Promise<any | undefined> {
+    if (!mongoose.Types.ObjectId.isValid(id)) return undefined;
+    const product = await Product.findById(id);
+    return product ? toPlainObject(product) : undefined;
   }
 
-  async createProduct(product: InsertProduct): Promise<Product> {
-    const [newProduct] = await db.insert(products).values(product as any).returning();
-    return newProduct;
+  async createProduct(product: any): Promise<any> {
+    const productData = { ...product };
+    if (productData.vendorId && typeof productData.vendorId === 'string') {
+      productData.vendorId = new mongoose.Types.ObjectId(productData.vendorId);
+    }
+    if (productData.categoryId && typeof productData.categoryId === 'string') {
+      productData.categoryId = new mongoose.Types.ObjectId(productData.categoryId);
+    }
+    const newProduct = await Product.create(productData);
+    return toPlainObject(newProduct);
   }
 
-  async getCartItems(userId: string): Promise<(CartItem & { product: Product })[]> {
-    const items = await db.select({
-      cartItem: cartItems,
-      product: products
-    })
-    .from(cartItems)
-    .innerJoin(products, eq(cartItems.productId, products.id))
-    .where(eq(cartItems.userId, userId));
-    
-    return items.map(i => ({ ...i.cartItem, product: i.product }));
-  }
-
-  async addToCart(item: InsertCartItem & { userId: string }): Promise<CartItem> {
-    const [newItem] = await db.insert(cartItems).values(item).returning();
-    return newItem;
-  }
-
-  async removeFromCart(id: number): Promise<void> {
-    await db.delete(cartItems).where(eq(cartItems.id, id));
-  }
-
-  async clearCart(userId: string): Promise<void> {
-    await db.delete(cartItems).where(eq(cartItems.userId, userId));
-  }
-
-  async createOrder(userId: string, total: string, items: { productId: number; quantity: number; price: string }[]): Promise<Order> {
-    return await db.transaction(async (tx) => {
-      const [order] = await tx.insert(orders).values({
-        userId,
-        total,
-        status: "paid" // Simulating immediate payment
-      }).returning();
-
-      for (const item of items) {
-        await tx.insert(orderItems).values({
-          orderId: order.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          price: item.price
-        });
+  async getCartItems(userId: string): Promise<any[]> {
+    const items = await CartItem.find({ userId }).populate('productId');
+    return items.map(item => {
+      const obj = toPlainObject(item);
+      if (obj.productId && typeof obj.productId === 'object') {
+        obj.product = toPlainObject(obj.productId);
+        delete obj.productId;
       }
-      return order;
+      return obj;
     });
   }
 
-  async getOrders(userId: string): Promise<Order[]> {
-    return await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
+  async addToCart(item: any): Promise<any> {
+    const cartData = { ...item };
+    if (cartData.productId && typeof cartData.productId === 'string') {
+      cartData.productId = new mongoose.Types.ObjectId(cartData.productId);
+    }
+    const newItem = await CartItem.create(cartData);
+    return toPlainObject(newItem);
   }
 
-  async getStories(): Promise<(VendorStory & { vendor: Vendor })[]> {
-    const results = await db.select({
-      story: vendorStories,
-      vendor: vendors
-    })
-    .from(vendorStories)
-    .innerJoin(vendors, eq(vendorStories.vendorId, vendors.id))
-    .orderBy(desc(vendorStories.createdAt));
-
-    return results.map(r => ({ ...r.story, vendor: r.vendor }));
+  async removeFromCart(id: string): Promise<void> {
+    await CartItem.findByIdAndDelete(id);
   }
 
-  async createStory(story: InsertStory): Promise<VendorStory> {
-    const [newStory] = await db.insert(vendorStories).values(story).returning();
-    return newStory;
+  async clearCart(userId: string): Promise<void> {
+    await CartItem.deleteMany({ userId });
   }
 
-  async deleteStory(id: number): Promise<void> {
-    await db.delete(vendorStories).where(eq(vendorStories.id, id));
+  async createOrder(userId: string, total: string, items: { productId: string; quantity: number; price: string }[]): Promise<any> {
+    const order = await Order.create({
+      userId,
+      total,
+      status: "paid"
+    });
+
+    for (const item of items) {
+      await OrderItem.create({
+        orderId: order._id,
+        productId: new mongoose.Types.ObjectId(item.productId),
+        quantity: item.quantity,
+        price: item.price
+      });
+    }
+
+    return toPlainObject(order);
   }
 
-  async getPaymentRequests(vendorId: number): Promise<PaymentRequest[]> {
-    return await db.select().from(paymentRequests)
-      .where(eq(paymentRequests.vendorId, vendorId))
-      .orderBy(desc(paymentRequests.createdAt));
+  async getOrders(userId: string): Promise<any[]> {
+    const orders = await Order.find({ userId }).sort({ createdAt: -1 });
+    return orders.map(toPlainObject);
   }
 
-  async createPaymentRequest(vendorId: number, amount: string): Promise<PaymentRequest> {
-    const [request] = await db.insert(paymentRequests).values({
-      vendorId,
-      amount,
-    }).returning();
-    return request;
+  async getStories(): Promise<any[]> {
+    const stories = await VendorStory.find({}).populate('vendorId').sort({ createdAt: -1 });
+    return stories.map(story => {
+      const obj = toPlainObject(story);
+      if (obj.vendorId && typeof obj.vendorId === 'object') {
+        obj.vendor = toPlainObject(obj.vendorId);
+        obj.vendorId = obj.vendor.id;
+      }
+      return obj;
+    });
   }
 
-  async getVendorOrders(vendorId: number): Promise<Order[]> {
-    const vendorProducts = await db.select().from(products).where(eq(products.vendorId, vendorId));
-    const productIds = vendorProducts.map(p => p.id);
+  async createStory(story: any): Promise<any> {
+    const storyData = { ...story };
+    if (storyData.vendorId && typeof storyData.vendorId === 'string') {
+      storyData.vendorId = new mongoose.Types.ObjectId(storyData.vendorId);
+    }
+    const newStory = await VendorStory.create(storyData);
+    return toPlainObject(newStory);
+  }
+
+  async deleteStory(id: string): Promise<void> {
+    await VendorStory.findByIdAndDelete(id);
+  }
+
+  async getPaymentRequests(vendorId: string): Promise<any[]> {
+    if (!mongoose.Types.ObjectId.isValid(vendorId)) return [];
+    const requests = await PaymentRequest.find({ vendorId: new mongoose.Types.ObjectId(vendorId) }).sort({ createdAt: -1 });
+    return requests.map(toPlainObject);
+  }
+
+  async createPaymentRequest(vendorId: string, amount: string): Promise<any> {
+    const request = await PaymentRequest.create({
+      vendorId: new mongoose.Types.ObjectId(vendorId),
+      amount
+    });
+    return toPlainObject(request);
+  }
+
+  async getVendorOrders(vendorId: string): Promise<any[]> {
+    if (!mongoose.Types.ObjectId.isValid(vendorId)) return [];
+    
+    const vendorProducts = await Product.find({ vendorId: new mongoose.Types.ObjectId(vendorId) });
+    const productIds = vendorProducts.map(p => p._id);
     
     if (productIds.length === 0) return [];
     
-    const items = await db.select().from(orderItems).where(
-      sql`${orderItems.productId} IN ${productIds}`
-    );
+    const items = await OrderItem.find({ productId: { $in: productIds } });
+    const orderIds = Array.from(new Set(items.map(i => i.orderId.toString())));
     
-    const orderIds = [...new Set(items.map(i => i.orderId))];
     if (orderIds.length === 0) return [];
     
-    return await db.select().from(orders)
-      .where(sql`${orders.id} IN ${orderIds}`)
-      .orderBy(desc(orders.createdAt));
+    const orders = await Order.find({ _id: { $in: orderIds.map(id => new mongoose.Types.ObjectId(id)) } }).sort({ createdAt: -1 });
+    return orders.map(toPlainObject);
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new MongoStorage();

@@ -4,30 +4,21 @@ import { storage } from "./storage";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { api } from "@shared/routes";
-import { z } from "zod";
-import { db } from "./db";
-import { users } from "@shared/schema";
+import { User } from "./mongodb";
+import { authStorage } from "./replit_integrations/auth/storage";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Setup Auth FIRST
   await setupAuth(app);
   registerAuthRoutes(app);
-  
-  // Register Object Storage routes for file uploads
   registerObjectStorageRoutes(app);
 
-  // === APP ROUTES ===
-  
-  // Update user profile
   app.patch("/api/users/me", isAuthenticated, async (req: any, res) => {
     try {
       const { profileImageUrl, bio, phone, address, city } = req.body;
       const userId = req.user.claims.sub;
-      
-      const { eq } = await import("drizzle-orm");
       
       const updateData: Record<string, any> = { updatedAt: new Date() };
       if (profileImageUrl !== undefined) updateData.profileImageUrl = profileImageUrl;
@@ -36,10 +27,11 @@ export async function registerRoutes(
       if (address !== undefined) updateData.address = address;
       if (city !== undefined) updateData.city = city;
       
-      const [updated] = await db.update(users)
-        .set(updateData)
-        .where(eq(users.id, userId))
-        .returning();
+      const updated = await User.findOneAndUpdate(
+        { id: userId },
+        updateData,
+        { new: true }
+      );
       
       res.json(updated || { success: true });
     } catch (e) {
@@ -48,13 +40,11 @@ export async function registerRoutes(
     }
   });
 
-  // Roles
   app.get(api.roles.get.path, isAuthenticated, async (req: any, res) => {
     const role = await storage.getUserRole(req.user.claims.sub);
     res.json({ role });
   });
 
-  // Switch role (DEVELOPMENT ONLY - remove before production)
   if (process.env.NODE_ENV === "development") {
     app.post("/api/roles/switch", isAuthenticated, async (req: any, res) => {
       const { role } = req.body;
@@ -66,14 +56,13 @@ export async function registerRoutes(
     });
   }
 
-  // Vendors
   app.get(api.vendors.list.path, async (req, res) => {
     const vendors = await storage.getVendors();
     res.json(vendors);
   });
 
   app.get(api.vendors.get.path, async (req, res) => {
-    const vendor = await storage.getVendor(Number(req.params.id));
+    const vendor = await storage.getVendor(req.params.id);
     if (!vendor) return res.status(404).json({ message: "Vendor not found" });
     res.json(vendor);
   });
@@ -82,7 +71,6 @@ export async function registerRoutes(
     try {
       const input = api.vendors.create.input.parse(req.body);
       const vendor = await storage.createVendor({ ...input, userId: req.user.claims.sub });
-      // Also set user role to vendor
       await storage.setUserRole(req.user.claims.sub, "vendor");
       res.status(201).json(vendor);
     } catch (e) {
@@ -91,18 +79,16 @@ export async function registerRoutes(
   });
 
   app.patch(api.vendors.approve.path, isAuthenticated, async (req: any, res) => {
-    // Check if admin (omitted for speed, assume simple check later)
     const role = await storage.getUserRole(req.user.claims.sub);
     if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
 
-    const vendor = await storage.updateVendor(Number(req.params.id), req.body);
+    const vendor = await storage.updateVendor(req.params.id, req.body);
     res.json(vendor);
   });
 
-  // Vendor store update
   app.patch("/api/vendors/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const vendorId = Number(req.params.id);
+      const vendorId = req.params.id;
       const vendor = await storage.getVendor(vendorId);
       if (!vendor) return res.status(404).json({ message: "Vendor not found" });
       if (vendor.userId !== req.user.claims.sub) {
@@ -117,10 +103,8 @@ export async function registerRoutes(
     }
   });
 
-  // Vendor wallet
   app.get("/api/vendor/wallet", isAuthenticated, async (req: any, res) => {
     try {
-      const vendorId = Number(req.query.vendorId || req.query["1"]);
       const vendors = await storage.getVendors();
       const vendor = vendors.find(v => v.userId === req.user.claims.sub);
       if (!vendor) return res.status(404).json({ message: "Vendor not found" });
@@ -137,7 +121,6 @@ export async function registerRoutes(
     }
   });
 
-  // Request payment
   app.post("/api/vendor/wallet/request", isAuthenticated, async (req: any, res) => {
     try {
       const vendors = await storage.getVendors();
@@ -155,7 +138,6 @@ export async function registerRoutes(
     }
   });
 
-  // Vendor orders
   app.get("/api/vendor/orders", isAuthenticated, async (req: any, res) => {
     try {
       const vendors = await storage.getVendors();
@@ -170,20 +152,18 @@ export async function registerRoutes(
     }
   });
 
-  // Products
   app.get(api.products.list.path, async (req, res) => {
     const products = await storage.getProducts(req.query as any);
     res.json(products);
   });
 
   app.get(api.products.get.path, async (req, res) => {
-    const product = await storage.getProduct(Number(req.params.id));
+    const product = await storage.getProduct(req.params.id);
     if (!product) return res.status(404).json({ message: "Product not found" });
     res.json(product);
   });
 
   app.post(api.products.create.path, isAuthenticated, async (req: any, res) => {
-    // Verify vendor ownership
     const role = await storage.getUserRole(req.user.claims.sub);
     if (role !== 'vendor') return res.status(403).json({ message: "Only vendors can add products" });
 
@@ -196,13 +176,11 @@ export async function registerRoutes(
     }
   });
 
-  // Categories
   app.get(api.categories.list.path, async (req, res) => {
     const categories = await storage.getCategories();
     res.json(categories);
   });
 
-  // Cart
   app.get(api.cart.get.path, isAuthenticated, async (req: any, res) => {
     const items = await storage.getCartItems(req.user.claims.sub);
     res.json(items);
@@ -219,13 +197,11 @@ export async function registerRoutes(
   });
 
   app.delete(api.cart.remove.path, isAuthenticated, async (req: any, res) => {
-    await storage.removeFromCart(Number(req.params.id));
+    await storage.removeFromCart(req.params.id);
     res.status(204).send();
   });
 
-  // Orders
   app.post(api.orders.create.path, isAuthenticated, async (req: any, res) => {
-    // Get cart items to convert to order
     const cartItems = await storage.getCartItems(req.user.claims.sub);
     if (cartItems.length === 0) return res.status(400).json({ message: "Cart is empty" });
 
@@ -234,7 +210,7 @@ export async function registerRoutes(
       const price = parseFloat(item.product.price);
       total += price * item.quantity;
       return {
-        productId: item.productId,
+        productId: item.product.id,
         quantity: item.quantity,
         price: item.product.price
       };
@@ -250,7 +226,6 @@ export async function registerRoutes(
     res.json(orders);
   });
 
-  // Stories
   app.get(api.stories.list.path, async (req, res) => {
     const stories = await storage.getStories();
     res.json(stories);
@@ -273,27 +248,18 @@ export async function registerRoutes(
     const role = await storage.getUserRole(req.user.claims.sub);
     if (role !== 'vendor') return res.status(403).json({ message: "Only vendors can delete stories" });
     
-    await storage.deleteStory(Number(req.params.id));
+    await storage.deleteStory(req.params.id);
     res.status(204).send();
   });
 
-  // Seed Data
-  if ((await storage.getCategories()).length === 0) {
+  // Seed initial categories
+  const categories = await storage.getCategories();
+  if (categories.length === 0) {
     await storage.createCategory({ name: "Engine Parts", slug: "engine-parts", imageUrl: "https://placehold.co/100x100?text=Engine" });
     await storage.createCategory({ name: "Brakes", slug: "brakes", imageUrl: "https://placehold.co/100x100?text=Brakes" });
     await storage.createCategory({ name: "Suspension", slug: "suspension", imageUrl: "https://placehold.co/100x100?text=Suspension" });
   }
 
-  async function seedMore() {
-    const existingVendors = await storage.getVendors();
-    if (existingVendors.length === 0) {
-      // Create some vendors (using placeholder user IDs as they'll likely be created on first login, 
-      // but for seeding we'll assume some IDs or just create vendors tied to no-one if schema allows, 
-      // actually schema needs userId. We'll use a dummy ID for now or skip if we can't find a user)
-      // Better: Create them when we have a user, or just provide a dedicated seed route.
-    }
-  }
-  
   app.post("/api/seed", async (req, res) => {
     try {
       const existingProducts = await storage.getProducts();
@@ -303,7 +269,8 @@ export async function registerRoutes(
 
       const categories = await storage.getCategories();
       
-      const [user] = await db.select().from(users).limit(1);
+      const users = await User.find({}).limit(1);
+      const user = users[0];
       if (!user) {
         return res.status(400).json({ message: "Please log in first so I have a user to assign vendors to." });
       }

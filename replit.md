@@ -26,23 +26,28 @@ The frontend follows a pages-based architecture with reusable components. Custom
 - **Language**: TypeScript (ESM modules)
 - **API Design**: REST endpoints defined in `shared/routes.ts` with Zod validation
 - **Authentication**: Replit OpenID Connect integration with Passport.js
-- **Session Management**: PostgreSQL-backed sessions via connect-pg-simple
+- **Session Management**: Memory-based sessions via memorystore
 
 The backend uses a storage abstraction pattern (`server/storage.ts`) that implements an `IStorage` interface, making it easier to swap data sources if needed.
 
 ### Data Storage
-- **Database**: PostgreSQL
-- **ORM**: Drizzle ORM with drizzle-zod for schema validation
-- **Schema Location**: `shared/schema.ts` contains all table definitions
-- **Migrations**: Managed via `drizzle-kit push`
+- **Database**: MongoDB Atlas
+- **ODM**: Mongoose with custom schemas
+- **Schema Location**: `server/mongodb.ts` contains all Mongoose model definitions
+- **Types**: `shared/schema.ts` contains plain TypeScript interfaces with Zod validation
 
-Key tables: users, sessions, roles, vendors, categories, products, orders, orderItems, cartItems, vendorStories
+Key collections: users, roles, vendors, categories, products, orders, orderItems, cartItems, vendorStories, paymentRequests
+
+### ID Format
+- All IDs are MongoDB ObjectId strings (24-character hex strings)
+- The storage layer handles conversion between string IDs and ObjectId types
+- Frontend components and hooks use string IDs throughout
 
 ### Shared Code
 The `shared/` directory contains code used by both frontend and backend:
-- `schema.ts`: Database table definitions and TypeScript types
+- `schema.ts`: TypeScript interfaces and Zod schemas for type validation
 - `routes.ts`: API endpoint definitions with Zod schemas for type-safe requests/responses
-- `models/auth.ts`: User and session table definitions required by Replit Auth
+- `models/auth.ts`: User and session type definitions
 
 ### Build System
 - **Development**: tsx for running TypeScript directly
@@ -53,11 +58,11 @@ The `shared/` directory contains code used by both frontend and backend:
 
 ### Authentication
 - **Replit Auth**: OpenID Connect-based authentication via `openid-client` and Passport.js
-- Sessions stored in PostgreSQL using the `sessions` table
+- Sessions stored in memory using memorystore
 
 ### Database
-- **PostgreSQL**: Primary data store, connection via `DATABASE_URL` environment variable
-- **Required Tables**: The `sessions` and `users` tables are mandatory for Replit Auth
+- **MongoDB Atlas**: Primary data store, connection via `MONGODB_URI` environment variable
+- Collections are automatically created when first documents are inserted
 
 ### UI Libraries
 - **Radix UI**: Accessible component primitives (dialogs, dropdowns, forms, etc.)
@@ -65,14 +70,24 @@ The `shared/` directory contains code used by both frontend and backend:
 - **Lucide React**: Icon library
 
 ### Key NPM Packages
-- `drizzle-orm` / `drizzle-zod`: Database ORM and schema validation
+- `mongoose`: MongoDB ODM
 - `@tanstack/react-query`: Async state management
-- `express-session` / `connect-pg-simple`: Session handling
+- `express-session` / `memorystore`: Session handling
 - `framer-motion`: Animations
 - `wouter`: Client-side routing
 
 ### Environment Variables Required
-- `DATABASE_URL`: PostgreSQL connection string
+- `MONGODB_URI`: MongoDB Atlas connection string
 - `SESSION_SECRET`: Secret for signing session cookies
 - `ISSUER_URL`: OpenID Connect issuer (defaults to Replit's OIDC)
 - `REPL_ID`: Automatically set by Replit environment
+
+## Recent Changes
+
+### MongoDB Migration (Jan 8, 2026)
+- Migrated from PostgreSQL/Drizzle to MongoDB Atlas/Mongoose
+- Created Mongoose models for all collections in `server/mongodb.ts`
+- Rewrote storage layer in `server/storage.ts` to use MongoDB queries
+- Updated session storage to use memorystore instead of PostgreSQL
+- Converted all IDs to string format (MongoDB ObjectId)
+- Updated frontend hooks to handle string IDs

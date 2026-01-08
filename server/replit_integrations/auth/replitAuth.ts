@@ -5,7 +5,7 @@ import passport from "passport";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
-import connectPg from "connect-pg-simple";
+import createMemoryStore from "memorystore";
 import { authStorage } from "./storage";
 
 const getOidcConfig = memoize(
@@ -20,12 +20,9 @@ const getOidcConfig = memoize(
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-  const pgStore = connectPg(session);
-  const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
-    ttl: sessionTtl,
-    tableName: "sessions",
+  const MemoryStore = createMemoryStore(session);
+  const sessionStore = new MemoryStore({
+    checkPeriod: 86400000 // prune expired entries every 24h
   });
   return session({
     secret: process.env.SESSION_SECRET!,
@@ -78,10 +75,8 @@ export async function setupAuth(app: Express) {
     verified(null, user);
   };
 
-  // Keep track of registered strategies
   const registeredStrategies = new Set<string>();
 
-  // Helper function to ensure strategy exists for a domain
   const ensureStrategy = (domain: string) => {
     const strategyName = `replitauth:${domain}`;
     if (!registeredStrategies.has(strategyName)) {

@@ -28,7 +28,7 @@ export function useVendors() {
   });
 }
 
-export function useVendor(id: number) {
+export function useVendor(id: string) {
   return useQuery({
     queryKey: [api.vendors.get.path, id],
     queryFn: async () => {
@@ -71,7 +71,7 @@ export function useCreateVendor() {
 export function useApproveVendor() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, isApproved }: { id: number, isApproved: boolean }) => {
+    mutationFn: async ({ id, isApproved }: { id: string, isApproved: boolean }) => {
       const url = buildUrl(api.vendors.approve.path, { id });
       const res = await fetch(url, {
         method: api.vendors.approve.method,
@@ -106,7 +106,7 @@ export function useProducts(filters?: z.infer<typeof api.products.list.input>) {
   });
 }
 
-export function useProduct(id: number) {
+export function useProduct(id: string) {
   return useQuery({
     queryKey: [api.products.get.path, id],
     queryFn: async () => {
@@ -127,10 +127,7 @@ export function useCreateProduct() {
       // Ensure numeric fields are numbers
       const payload = {
         ...data,
-        price: Number(data.price), // backend expects decimal/number
         stock: Number(data.stock),
-        vendorId: Number(data.vendorId),
-        categoryId: Number(data.categoryId),
       };
       
       const res = await fetch(api.products.create.path, {
@@ -192,7 +189,7 @@ export function useAddToCart() {
 export function useRemoveFromCart() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async (id: string) => {
       const url = buildUrl(api.cart.remove.path, { id });
       const res = await fetch(url, { method: api.cart.remove.method, credentials: "include" });
       if (!res.ok) throw new Error("Failed to remove item");

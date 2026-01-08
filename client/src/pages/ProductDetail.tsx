@@ -12,7 +12,7 @@ import { motion } from "framer-motion";
 
 export default function ProductDetail() {
   const [, params] = useRoute("/products/:id");
-  const id = params ? parseInt(params.id) : 0;
+  const id = params?.id || "";
   
   const { data: product, isLoading } = useProduct(id);
   const addToCartMutation = useAddToCart();

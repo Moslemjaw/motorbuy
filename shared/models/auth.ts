@@ -1,33 +1,31 @@
-import { sql } from "drizzle-orm";
-import { index, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+export interface User {
+  id: string;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  profileImageUrl?: string | null;
+  bio?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+}
 
-// Session storage table.
-// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
-export const sessions = pgTable(
-  "sessions",
-  {
-    sid: varchar("sid").primaryKey(),
-    sess: jsonb("sess").notNull(),
-    expire: timestamp("expire").notNull(),
-  },
-  (table) => [index("IDX_session_expire").on(table.expire)]
-);
+export interface UpsertUser {
+  id: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  profileImageUrl?: string;
+  bio?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+}
 
-// User storage table.
-// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique(),
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
-  profileImageUrl: varchar("profile_image_url"),
-  bio: varchar("bio"),
-  phone: varchar("phone"),
-  address: varchar("address"),
-  city: varchar("city"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export type UpsertUser = typeof users.$inferInsert;
-export type User = typeof users.$inferSelect;
+export interface Session {
+  sid: string;
+  sess: any;
+  expire: Date;
+}
