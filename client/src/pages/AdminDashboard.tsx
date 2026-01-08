@@ -255,6 +255,10 @@ function UsersTab() {
   const assignRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
       const res = await apiRequest("POST", "/api/admin/users/role", { userId, role });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to update role");
+      }
       return res.json();
     },
     onSuccess: () => {
