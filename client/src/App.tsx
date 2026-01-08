@@ -13,6 +13,7 @@ import VendorDashboard from "@/pages/VendorDashboard";
 import Account from "@/pages/Account";
 import AdminDashboard from "@/pages/AdminDashboard";
 import Stories from "@/pages/Stories";
+import VendorProfile from "@/pages/VendorProfile";
 
 function Router() {
   return (
@@ -23,6 +24,7 @@ function Router() {
       <Route path="/vendors" component={VendorList} />
       <Route path="/cart" component={Cart} />
       <Route path="/vendor-dashboard" component={VendorDashboard} />
+      <Route path="/vendor/:id" component={VendorProfile} />
       <Route path="/account" component={Account} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/stories" component={Stories} />

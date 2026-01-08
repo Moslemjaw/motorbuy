@@ -37,8 +37,8 @@ export default function VendorList() {
                     </div>
                   </div>
                   <p className="text-muted-foreground mb-6 line-clamp-2">{vendor.description}</p>
-                  <Link href={`/products?vendorId=${vendor.id}`}>
-                    <Button variant="outline" className="w-full">View Products</Button>
+                  <Link href={`/vendor/${vendor.id}`}>
+                    <Button variant="outline" className="w-full">View Profile</Button>
                   </Link>
                 </CardContent>
               </Card>
