@@ -18,6 +18,7 @@ import VendorWallet from "@/pages/VendorWallet";
 import AdminDashboard from "@/pages/AdminDashboard";
 import Stories from "@/pages/Stories";
 import VendorProfile from "@/pages/VendorProfile";
+import AuthPage from "@/pages/AuthPage";
 
 function Router() {
   return (
@@ -29,6 +30,11 @@ function Router() {
       <Route path="/cart" component={Cart} />
       <Route path="/stories" component={Stories} />
       <Route path="/vendor/:id" component={VendorProfile} />
+      
+      {/* Auth routes */}
+      <Route path="/login" component={AuthPage} />
+      <Route path="/signup" component={AuthPage} />
+      <Route path="/auth" component={AuthPage} />
       
       {/* Customer routes */}
       <Route path="/account" component={CustomerAccount} />

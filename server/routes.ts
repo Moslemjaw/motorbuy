@@ -56,6 +56,47 @@ export async function registerRoutes(
     });
   }
 
+  app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.user.claims.sub);
+      if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
+
+      const users = await User.find({});
+      const usersWithRoles = await Promise.all(users.map(async (user) => {
+        const userRole = await storage.getUserRole(user.id);
+        return {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: userRole
+        };
+      }));
+      res.json(usersWithRoles);
+    } catch (e) {
+      console.error("Error fetching users:", e);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.post("/api/admin/users/role", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.user.claims.sub);
+      if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
+
+      const { userId, role: newRole } = req.body;
+      if (!["customer", "vendor", "admin"].includes(newRole)) {
+        return res.status(400).json({ message: "Invalid role" });
+      }
+      
+      await storage.setUserRole(userId, newRole);
+      res.json({ success: true, message: `Role updated to ${newRole}` });
+    } catch (e) {
+      console.error("Error updating user role:", e);
+      res.status(500).json({ message: "Failed to update role" });
+    }
+  });
+
   app.get(api.vendors.list.path, async (req, res) => {
     const vendors = await storage.getVendors();
     res.json(vendors);

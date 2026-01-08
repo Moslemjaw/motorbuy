@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRole, useVendors, useProducts, useApproveVendor } from "@/hooks/use-motorbuy";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { Users, Store, Package, Settings, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
@@ -50,8 +52,11 @@ export default function AdminDashboard() {
       </div>
 
       <div className="container mx-auto px-4">
-        <Tabs defaultValue="vendors">
+        <Tabs defaultValue="users">
           <TabsList className="mb-6">
+            <TabsTrigger value="users" className="gap-2">
+              <Users className="w-4 h-4" /> Users
+            </TabsTrigger>
             <TabsTrigger value="vendors" className="gap-2">
               <Store className="w-4 h-4" /> Vendors
             </TabsTrigger>
@@ -62,6 +67,10 @@ export default function AdminDashboard() {
               <Settings className="w-4 h-4" /> Settings
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="users">
+            <UsersTab />
+          </TabsContent>
 
           <TabsContent value="vendors">
             <VendorsTab />
@@ -85,7 +94,7 @@ function VendorsTab() {
   const { mutate: approveVendor, isPending } = useApproveVendor();
   const { toast } = useToast();
 
-  const handleApprove = (id: number, isApproved: boolean) => {
+  const handleApprove = (id: string, isApproved: boolean) => {
     approveVendor({ id, isApproved }, {
       onSuccess: () => {
         toast({ title: "Success", description: `Vendor ${isApproved ? "approved" : "disabled"}` });
@@ -215,6 +224,106 @@ function ProductsTab() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+interface UserWithRole {
+  id: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  role: string;
+}
+
+function UsersTab() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  const { data: users, isLoading } = useQuery<UserWithRole[]>({
+    queryKey: ["/api/admin/users"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/users", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch users");
+      return res.json();
+    },
+  });
+
+  const assignRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      const res = await apiRequest("POST", "/api/admin/users/role", { userId, role });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "Success", description: "User role updated" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const handleRoleChange = (userId: string, role: string) => {
+    assignRoleMutation.mutate({ userId, role });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="w-5 h-5" /> User Management
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {!users || users.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">No users found.</p>
+        ) : (
+          <div className="space-y-4">
+            {users.map((user) => (
+              <div 
+                key={user.id} 
+                className="flex items-center justify-between p-4 border rounded-lg"
+                data-testid={`user-row-${user.id}`}
+              >
+                <div>
+                  <div className="font-semibold">
+                    {user.firstName || user.lastName ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : "User"}
+                  </div>
+                  <div className="text-sm text-muted-foreground">{user.email || user.id}</div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant={user.role === "admin" ? "default" : "secondary"} className="capitalize">
+                    {user.role}
+                  </Badge>
+                  <div className="flex gap-1">
+                    {["customer", "vendor", "admin"].map((role) => (
+                      <Button
+                        key={role}
+                        size="sm"
+                        variant={user.role === role ? "default" : "outline"}
+                        onClick={() => handleRoleChange(user.id, role)}
+                        disabled={assignRoleMutation.isPending}
+                        className="capitalize text-xs"
+                        data-testid={`button-assign-${role}-${user.id}`}
+                      >
+                        {role}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </CardContent>
