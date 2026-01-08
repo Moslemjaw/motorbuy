@@ -41,47 +41,51 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Link href={`/products/${product.id}`} className="block group">
-      <Card className="h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border-border/50 bg-card">
-        <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+      <Card className="h-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-2 border-border bg-card">
+        <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-muted to-muted/50">
           <img 
             src={mainImage} 
             alt={product.name} 
-            className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+            className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           {product.stock <= 0 && (
-            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">Out of Stock</span>
+            <div className="absolute inset-0 bg-black/70 flex items-center justify-center backdrop-blur-sm">
+              <span className="text-white font-bold text-lg px-4 py-2 bg-destructive/80 rounded-full">Out of Stock</span>
             </div>
           )}
-        </div>
-        
-        <CardContent className="p-4">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="font-display font-semibold text-lg line-clamp-1 group-hover:text-primary transition-colors">
-              {product.name}
-            </h3>
-            <Badge variant="secondary" className="font-mono ml-2 shrink-0">
+          <div className="absolute top-3 right-3">
+            <Badge className="bg-white/90 text-foreground font-bold shadow-lg backdrop-blur-sm">
               {formatKWD(product.price)}
             </Badge>
           </div>
+        </div>
+        
+        <CardContent className="p-5">
+          <h3 className="font-display font-bold text-lg line-clamp-1 group-hover:text-primary transition-colors mb-2">
+            {product.name}
+          </h3>
           
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+          <p className="text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
             {product.description}
           </p>
           
           {product.vendor && (
-            <div className="text-xs text-muted-foreground flex items-center gap-1">
-              <span>Sold by</span>
+            <div className="text-xs text-muted-foreground flex items-center gap-2 pb-2">
+              <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-primary text-[10px] font-bold">
+                {product.vendor.storeName?.[0]}
+              </div>
               <span className="font-medium text-foreground">{product.vendor.storeName}</span>
             </div>
           )}
         </CardContent>
         
-        <CardFooter className="p-4 pt-0">
+        <CardFooter className="p-5 pt-0">
           <Button 
-            className="w-full gap-2" 
+            className="w-full gap-2 rounded-xl h-11 shadow-md shadow-primary/10" 
             onClick={handleAddToCart}
             disabled={product.stock <= 0 || isPending}
+            data-testid={`button-add-cart-${product.id}`}
           >
             <ShoppingCart className="w-4 h-4" />
             {isPending ? "Adding..." : "Add to Cart"}
