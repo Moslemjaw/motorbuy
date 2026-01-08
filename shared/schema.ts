@@ -40,6 +40,7 @@ export const products = pgTable("products", {
   name: text("name").notNull(),
   description: text("description").notNull(),
   price: decimal("price").notNull(),
+  compareAtPrice: decimal("compare_at_price"),
   stock: integer("stock").notNull().default(0),
   brand: text("brand").notNull(),
   images: jsonb("images").$type<string[]>().notNull(),

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAddToCart } from "@/hooks/use-motorbuy";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Percent } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { formatKWD } from "@/lib/currency";
 
@@ -36,8 +36,12 @@ export function ProductCard({ product }: ProductCardProps) {
   };
   
   const isPending = addToCartMutation.isPending;
-
   const mainImage = product.images?.[0] || "https://placehold.co/600x400?text=No+Image";
+
+  const currentPrice = parseFloat(product.price);
+  const comparePrice = product.compareAtPrice ? parseFloat(product.compareAtPrice) : null;
+  const hasDiscount = comparePrice && comparePrice > currentPrice;
+  const discountPercent = hasDiscount ? Math.round(((comparePrice - currentPrice) / comparePrice) * 100) : 0;
 
   return (
     <Link href={`/products/${product.id}`} className="block group">
@@ -54,10 +58,25 @@ export function ProductCard({ product }: ProductCardProps) {
               <span className="text-white font-bold text-lg px-4 py-2 bg-destructive/80 rounded-full">Out of Stock</span>
             </div>
           )}
-          <div className="absolute top-3 right-3">
+          
+          {hasDiscount && (
+            <div className="absolute top-3 left-3">
+              <Badge className="bg-red-500 text-white font-bold shadow-lg border-0 gap-1">
+                <Percent className="w-3 h-3" />
+                {discountPercent}% OFF
+              </Badge>
+            </div>
+          )}
+          
+          <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
             <Badge className="bg-white/90 text-foreground font-bold shadow-lg backdrop-blur-sm">
               {formatKWD(product.price)}
             </Badge>
+            {hasDiscount && (
+              <Badge variant="secondary" className="bg-white/70 text-muted-foreground font-normal line-through text-xs">
+                {formatKWD(product.compareAtPrice!)}
+              </Badge>
+            )}
           </div>
         </div>
         
