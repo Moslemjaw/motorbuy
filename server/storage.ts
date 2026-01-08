@@ -50,9 +50,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async setUserRole(userId: string, role: "customer" | "vendor" | "admin"): Promise<Role> {
-    const [newRole] = await db.insert(roles).values({ userId, role })
-      .onConflictDoUpdate({ target: roles.userId, set: { role } })
-      .returning();
+    await db.delete(roles).where(eq(roles.userId, userId));
+    const [newRole] = await db.insert(roles).values({ userId, role }).returning();
     return newRole;
   }
 
