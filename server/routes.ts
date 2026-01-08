@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { api } from "@shared/routes";
-import { User } from "./mongodb";
+import { User, PaymentRequest } from "./mongodb";
 import { authStorage } from "./replit_integrations/auth/storage";
 
 export async function registerRoutes(
@@ -44,17 +44,6 @@ export async function registerRoutes(
     const role = await storage.getUserRole(req.user.claims.sub);
     res.json({ role });
   });
-
-  if (process.env.NODE_ENV === "development") {
-    app.post("/api/roles/switch", isAuthenticated, async (req: any, res) => {
-      const { role } = req.body;
-      if (!["customer", "vendor", "admin"].includes(role)) {
-        return res.status(400).json({ message: "Invalid role" });
-      }
-      await storage.setUserRole(req.user.claims.sub, role);
-      res.json({ role, message: `Switched to ${role} role` });
-    });
-  }
 
   app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
     try {
@@ -144,6 +133,109 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/vendors/financials", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.user.claims.sub);
+      if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
+
+      const vendors = await storage.getVendors();
+      const vendorsWithRequests = await Promise.all(vendors.map(async (vendor) => {
+        const paymentRequests = await storage.getPaymentRequests(vendor.id);
+        const pendingRequest = paymentRequests.find(r => r.status === 'pending');
+        return {
+          ...vendor,
+          hasPendingRequest: !!pendingRequest,
+          pendingRequestAmount: pendingRequest?.amount || null,
+          pendingRequestId: pendingRequest?.id || null,
+        };
+      }));
+      res.json(vendorsWithRequests);
+    } catch (e) {
+      console.error("Error fetching vendor financials:", e);
+      res.status(500).json({ message: "Failed to fetch vendor financials" });
+    }
+  });
+
+  app.patch("/api/admin/vendors/:id/commission", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.user.claims.sub);
+      if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
+
+      const { commissionType, commissionValue } = req.body;
+      if (!["percentage", "fixed"].includes(commissionType)) {
+        return res.status(400).json({ message: "Invalid commission type" });
+      }
+      if (isNaN(parseFloat(commissionValue)) || parseFloat(commissionValue) < 0) {
+        return res.status(400).json({ message: "Invalid commission value" });
+      }
+
+      const vendor = await storage.updateVendor(req.params.id, { commissionType, commissionValue });
+      res.json(vendor);
+    } catch (e) {
+      console.error("Error updating commission:", e);
+      res.status(500).json({ message: "Failed to update commission" });
+    }
+  });
+
+  app.post("/api/admin/vendors/:id/payout", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.user.claims.sub);
+      if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
+
+      const vendor = await storage.getVendor(req.params.id);
+      if (!vendor) return res.status(404).json({ message: "Vendor not found" });
+
+      const pendingAmount = parseFloat(vendor.pendingPayoutKwd);
+      if (pendingAmount <= 0) {
+        return res.status(400).json({ message: "No pending payout to process" });
+      }
+
+      const newLifetime = parseFloat(vendor.lifetimePayoutsKwd) + pendingAmount;
+      await storage.updateVendor(req.params.id, {
+        pendingPayoutKwd: "0",
+        lifetimePayoutsKwd: newLifetime.toFixed(3),
+      });
+
+      const pendingRequests = (await storage.getPaymentRequests(vendor.id)).filter(r => r.status === 'pending');
+      for (const request of pendingRequests) {
+        await PaymentRequest.findByIdAndUpdate(request.id, {
+          status: 'paid',
+          processedBy: req.user.claims.sub,
+          processedAt: new Date(),
+        });
+      }
+
+      res.json({ success: true, message: `Paid ${pendingAmount.toFixed(3)} KWD to vendor` });
+    } catch (e) {
+      console.error("Error processing payout:", e);
+      res.status(500).json({ message: "Failed to process payout" });
+    }
+  });
+
+  app.get("/api/admin/payout-requests", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.user.claims.sub);
+      if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
+
+      const requests = await PaymentRequest.find({ status: 'pending' }).sort({ createdAt: -1 });
+      const requestsWithVendor = await Promise.all(requests.map(async (req) => {
+        const vendor = await storage.getVendor(req.vendorId.toString());
+        return {
+          id: req._id.toString(),
+          vendorId: req.vendorId.toString(),
+          vendorName: vendor?.storeName || 'Unknown',
+          amount: req.amount,
+          status: req.status,
+          createdAt: req.createdAt,
+        };
+      }));
+      res.json(requestsWithVendor);
+    } catch (e) {
+      console.error("Error fetching payout requests:", e);
+      res.status(500).json({ message: "Failed to fetch payout requests" });
+    }
+  });
+
   app.get("/api/vendor/wallet", isAuthenticated, async (req: any, res) => {
     try {
       const vendors = await storage.getVendors();
@@ -152,8 +244,11 @@ export async function registerRoutes(
       
       const paymentRequests = await storage.getPaymentRequests(vendor.id);
       res.json({
-        balance: vendor.walletBalance,
-        commissionRate: vendor.commissionRate,
+        grossSalesKwd: vendor.grossSalesKwd,
+        pendingPayoutKwd: vendor.pendingPayoutKwd,
+        lifetimePayoutsKwd: vendor.lifetimePayoutsKwd,
+        commissionType: vendor.commissionType,
+        commissionValue: vendor.commissionValue,
         paymentRequests,
       });
     } catch (e) {

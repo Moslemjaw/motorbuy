@@ -42,8 +42,11 @@ const vendorSchema = new mongoose.Schema({
   coverImageUrl: String,
   bio: String,
   isApproved: { type: Boolean, default: false },
-  commissionRate: { type: String, default: "0.05" },
-  walletBalance: { type: String, default: "0" },
+  commissionType: { type: String, enum: ["percentage", "fixed"], default: "percentage" },
+  commissionValue: { type: String, default: "5" },
+  grossSalesKwd: { type: String, default: "0" },
+  pendingPayoutKwd: { type: String, default: "0" },
+  lifetimePayoutsKwd: { type: String, default: "0" },
   createdAt: { type: Date, default: Date.now },
 });
 
@@ -98,6 +101,8 @@ const paymentRequestSchema = new mongoose.Schema({
   vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor", required: true },
   amount: { type: String, required: true },
   status: { type: String, enum: ["pending", "approved", "paid", "rejected"], default: "pending" },
+  notes: String,
+  processedBy: String,
   createdAt: { type: Date, default: Date.now },
   processedAt: Date,
 });

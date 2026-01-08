@@ -130,34 +130,6 @@ export function Navbar() {
                 )}
                 
                 <DropdownMenuSeparator />
-                
-                <DropdownMenuLabel className="text-xs text-muted-foreground font-normal pt-2">
-                  Test as different role:
-                </DropdownMenuLabel>
-                <div className="grid grid-cols-3 gap-1 px-2 pb-2">
-                  {[
-                    { key: "customer", label: "Cust", icon: User },
-                    { key: "vendor", label: "Vendor", icon: Store },
-                    { key: "admin", label: "Admin", icon: ShieldCheck },
-                  ].map(({ key, label, icon: Icon }) => (
-                    <Button
-                      key={key}
-                      size="sm"
-                      variant={role === key ? "default" : "outline"}
-                      className="text-xs h-8 px-2"
-                      onClick={async () => {
-                        await apiRequest("POST", "/api/roles/switch", { role: key });
-                        queryClient.invalidateQueries({ queryKey: ["/api/roles"] });
-                      }}
-                      data-testid={`switch-role-${key}`}
-                    >
-                      <Icon className="w-3 h-3 mr-1" />
-                      {label}
-                    </Button>
-                  ))}
-                </div>
-                
-                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => logout()} className="text-destructive">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>

@@ -2,14 +2,32 @@ import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useRole, useVendors, useProducts, useApproveVendor } from "@/hooks/use-motorbuy";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useRole } from "@/hooks/use-motorbuy";
+import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useAuth } from "@/hooks/use-auth";
-import { Users, Store, Package, Settings, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Users, Store, DollarSign, Bell, CheckCircle, Loader2, Pencil, X, Save } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import type { Vendor } from "@shared/schema";
+
+interface VendorFinancials extends Vendor {
+  hasPendingRequest: boolean;
+  pendingRequestAmount: string | null;
+  pendingRequestId: string | null;
+}
+
+interface PayoutRequest {
+  id: string;
+  vendorId: string;
+  vendorName: string;
+  amount: string;
+  status: string;
+  createdAt: string;
+}
 
 export default function AdminDashboard() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
@@ -47,69 +65,250 @@ export default function AdminDashboard() {
       <div className="bg-primary/10 py-12 mb-8 border-b border-primary/20">
         <div className="container mx-auto px-4">
           <h1 className="text-3xl font-display font-bold mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage vendors, products, and platform settings.</p>
+          <p className="text-muted-foreground">Manage vendors, commissions, and payouts.</p>
         </div>
       </div>
 
-      <div className="container mx-auto px-4">
-        <Tabs defaultValue="users">
-          <TabsList className="mb-6">
-            <TabsTrigger value="users" className="gap-2">
-              <Users className="w-4 h-4" /> Users
-            </TabsTrigger>
-            <TabsTrigger value="vendors" className="gap-2">
-              <Store className="w-4 h-4" /> Vendors
-            </TabsTrigger>
-            <TabsTrigger value="products" className="gap-2">
-              <Package className="w-4 h-4" /> Products
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2">
-              <Settings className="w-4 h-4" /> Settings
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="users">
-            <UsersTab />
-          </TabsContent>
-
-          <TabsContent value="vendors">
-            <VendorsTab />
-          </TabsContent>
-
-          <TabsContent value="products">
-            <ProductsTab />
-          </TabsContent>
-
-          <TabsContent value="settings">
-            <SettingsTab />
-          </TabsContent>
-        </Tabs>
+      <div className="container mx-auto px-4 space-y-8">
+        <SummaryCards />
+        <PayoutRequestsPanel />
+        <VendorManagement />
       </div>
     </div>
   );
 }
 
-function VendorsTab() {
-  const { data: vendors, isLoading } = useVendors();
-  const { mutate: approveVendor, isPending } = useApproveVendor();
+function SummaryCards() {
+  const { data: vendors } = useQuery<VendorFinancials[]>({
+    queryKey: ["/api/admin/vendors/financials"],
+  });
+  const { data: payoutRequests } = useQuery<PayoutRequest[]>({
+    queryKey: ["/api/admin/payout-requests"],
+  });
+
+  const totalVendors = vendors?.length || 0;
+  const approvedVendors = vendors?.filter(v => v.isApproved).length || 0;
+  const pendingPayouts = payoutRequests?.length || 0;
+  const totalPendingAmount = vendors?.reduce((sum, v) => sum + parseFloat(v.pendingPayoutKwd || "0"), 0) || 0;
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+          <CardTitle className="text-sm font-medium">Total Vendors</CardTitle>
+          <Store className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{totalVendors}</div>
+          <p className="text-xs text-muted-foreground">{approvedVendors} approved</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+          <CardTitle className="text-sm font-medium">Payout Requests</CardTitle>
+          <Bell className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{pendingPayouts}</div>
+          <p className="text-xs text-muted-foreground">pending approval</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+          <CardTitle className="text-sm font-medium">Total Pending Payouts</CardTitle>
+          <DollarSign className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{totalPendingAmount.toFixed(3)} KWD</div>
+          <p className="text-xs text-muted-foreground">across all vendors</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+          <CardTitle className="text-sm font-medium">Users</CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">-</div>
+          <p className="text-xs text-muted-foreground">registered users</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function PayoutRequestsPanel() {
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const handleApprove = (id: string, isApproved: boolean) => {
-    approveVendor({ id, isApproved }, {
-      onSuccess: () => {
-        toast({ title: "Success", description: `Vendor ${isApproved ? "approved" : "disabled"}` });
-      },
-      onError: (err: Error) => {
-        toast({ title: "Error", description: err.message, variant: "destructive" });
+  const { data: payoutRequests, isLoading } = useQuery<PayoutRequest[]>({
+    queryKey: ["/api/admin/payout-requests"],
+  });
+
+  const payVendorMutation = useMutation({
+    mutationFn: async (vendorId: string) => {
+      const res = await apiRequest("POST", `/api/admin/vendors/${vendorId}/payout`, {});
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to process payout");
       }
-    });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/payout-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/vendors/financials"] });
+      toast({ title: "Success", description: "Payout processed successfully" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="w-5 h-5" /> Payout Requests
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex justify-center py-8">
+          <Loader2 className="animate-spin" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!payoutRequests || payoutRequests.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="w-5 h-5" /> Payout Requests
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-center text-muted-foreground py-4">No pending payout requests.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Bell className="w-5 h-5" /> Payout Requests
+          <Badge variant="destructive" className="ml-2">{payoutRequests.length} pending</Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {payoutRequests.map((request) => (
+            <div 
+              key={request.id} 
+              className="flex items-center justify-between p-4 border rounded-lg bg-amber-50 dark:bg-amber-950/20"
+              data-testid={`payout-request-${request.id}`}
+            >
+              <div>
+                <div className="font-semibold">{request.vendorName}</div>
+                <div className="text-sm text-muted-foreground">
+                  Requested: {parseFloat(request.amount).toFixed(3)} KWD
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {new Date(request.createdAt).toLocaleDateString()}
+                </div>
+              </div>
+              <Button 
+                onClick={() => payVendorMutation.mutate(request.vendorId)}
+                disabled={payVendorMutation.isPending}
+                data-testid={`button-pay-${request.vendorId}`}
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Pay Vendor
+              </Button>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function VendorManagement() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [editingVendor, setEditingVendor] = useState<string | null>(null);
+  const [commissionType, setCommissionType] = useState<string>("percentage");
+  const [commissionValue, setCommissionValue] = useState<string>("");
+
+  const { data: vendors, isLoading } = useQuery<VendorFinancials[]>({
+    queryKey: ["/api/admin/vendors/financials"],
+  });
+
+  const updateCommissionMutation = useMutation({
+    mutationFn: async ({ vendorId, commissionType, commissionValue }: { vendorId: string; commissionType: string; commissionValue: string }) => {
+      const res = await apiRequest("PATCH", `/api/admin/vendors/${vendorId}/commission`, { commissionType, commissionValue });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to update commission");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/vendors/financials"] });
+      setEditingVendor(null);
+      toast({ title: "Success", description: "Commission updated" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const payVendorMutation = useMutation({
+    mutationFn: async (vendorId: string) => {
+      const res = await apiRequest("POST", `/api/admin/vendors/${vendorId}/payout`, {});
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to process payout");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/vendors/financials"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/payout-requests"] });
+      toast({ title: "Success", description: "Payout processed" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const startEditing = (vendor: VendorFinancials) => {
+    setEditingVendor(vendor.id);
+    setCommissionType(vendor.commissionType || "percentage");
+    setCommissionValue(vendor.commissionValue || "5");
+  };
+
+  const saveCommission = (vendorId: string) => {
+    updateCommissionMutation.mutate({ vendorId, commissionType, commissionValue });
   };
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="animate-spin" />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Store className="w-5 h-5" /> Vendor Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex justify-center py-8">
+          <Loader2 className="animate-spin" />
+        </CardContent>
+      </Card>
     );
   }
 
@@ -124,244 +323,101 @@ function VendorsTab() {
         {!vendors || vendors.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">No vendors registered yet.</p>
         ) : (
-          <div className="space-y-4">
-            {vendors.map((vendor) => (
-              <div 
-                key={vendor.id} 
-                className="flex items-center justify-between p-4 border rounded-lg"
-                data-testid={`vendor-row-${vendor.id}`}
-              >
-                <div>
-                  <div className="font-semibold">{vendor.storeName}</div>
-                  <div className="text-sm text-muted-foreground line-clamp-1">{vendor.description}</div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant={vendor.isApproved ? "default" : "secondary"}>
-                    {vendor.isApproved ? "Approved" : "Pending"}
-                  </Badge>
-                  <div className="text-sm text-muted-foreground">
-                    Commission: {(Number(vendor.commissionRate) * 100).toFixed(0)}%
-                  </div>
-                  <div className="flex gap-2">
-                    {!vendor.isApproved ? (
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleApprove(vendor.id, true)} 
-                        disabled={isPending}
-                        data-testid={`button-approve-${vendor.id}`}
-                      >
-                        <CheckCircle className="w-4 h-4 mr-1" /> Approve
-                      </Button>
-                    ) : (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleApprove(vendor.id, false)} 
-                        disabled={isPending}
-                        data-testid={`button-disable-${vendor.id}`}
-                      >
-                        <XCircle className="w-4 h-4 mr-1" /> Disable
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function ProductsTab() {
-  const { data: products, isLoading } = useProducts();
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="animate-spin" />
-      </div>
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Package className="w-5 h-5" /> All Products
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {!products || products.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">No products listed yet.</p>
-        ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b text-left">
-                  <th className="pb-3 font-medium">Product</th>
-                  <th className="pb-3 font-medium">Price</th>
-                  <th className="pb-3 font-medium">Stock</th>
-                  <th className="pb-3 font-medium">Vendor ID</th>
+                  <th className="pb-3 font-medium">Vendor</th>
+                  <th className="pb-3 font-medium">Status</th>
+                  <th className="pb-3 font-medium">Commission</th>
+                  <th className="pb-3 font-medium text-right">Gross Sales</th>
+                  <th className="pb-3 font-medium text-right">Pending Payout</th>
+                  <th className="pb-3 font-medium text-right">Lifetime Paid</th>
+                  <th className="pb-3 font-medium text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {products.map((product) => (
-                  <tr key={product.id} className="border-b" data-testid={`product-row-${product.id}`}>
-                    <td className="py-3">
-                      <div className="font-medium">{product.name}</div>
-                      <div className="text-sm text-muted-foreground">{product.brand}</div>
+                {vendors.map((vendor) => (
+                  <tr key={vendor.id} className="border-b" data-testid={`vendor-row-${vendor.id}`}>
+                    <td className="py-4">
+                      <div className="font-medium">{vendor.storeName}</div>
+                      <div className="text-sm text-muted-foreground line-clamp-1">{vendor.description}</div>
                     </td>
-                    <td className="py-3">${Number(product.price).toFixed(2)}</td>
-                    <td className="py-3">
-                      <Badge variant={product.stock > 0 ? "secondary" : "destructive"}>
-                        {product.stock}
+                    <td className="py-4">
+                      <Badge variant={vendor.isApproved ? "default" : "secondary"}>
+                        {vendor.isApproved ? "Approved" : "Pending"}
                       </Badge>
+                      {vendor.hasPendingRequest && (
+                        <Badge variant="destructive" className="ml-2">Payout Requested</Badge>
+                      )}
                     </td>
-                    <td className="py-3 text-muted-foreground">#{product.vendorId}</td>
+                    <td className="py-4">
+                      {editingVendor === vendor.id ? (
+                        <div className="flex items-center gap-2">
+                          <Select value={commissionType} onValueChange={setCommissionType}>
+                            <SelectTrigger className="w-24">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="percentage">%</SelectItem>
+                              <SelectItem value="fixed">KWD</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            type="number"
+                            value={commissionValue}
+                            onChange={(e) => setCommissionValue(e.target.value)}
+                            className="w-20"
+                            min="0"
+                            step="0.01"
+                          />
+                          <Button size="icon" variant="ghost" onClick={() => saveCommission(vendor.id)} disabled={updateCommissionMutation.isPending}>
+                            <Save className="w-4 h-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={() => setEditingVendor(null)}>
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span>
+                            {vendor.commissionValue || "5"}
+                            {vendor.commissionType === "fixed" ? " KWD" : "%"}
+                          </span>
+                          <Button size="icon" variant="ghost" onClick={() => startEditing(vendor)}>
+                            <Pencil className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-4 text-right font-mono">
+                      {parseFloat(vendor.grossSalesKwd || "0").toFixed(3)} KWD
+                    </td>
+                    <td className="py-4 text-right font-mono">
+                      <span className={parseFloat(vendor.pendingPayoutKwd || "0") > 0 ? "text-amber-600 font-semibold" : ""}>
+                        {parseFloat(vendor.pendingPayoutKwd || "0").toFixed(3)} KWD
+                      </span>
+                    </td>
+                    <td className="py-4 text-right font-mono text-muted-foreground">
+                      {parseFloat(vendor.lifetimePayoutsKwd || "0").toFixed(3)} KWD
+                    </td>
+                    <td className="py-4 text-right">
+                      <Button
+                        size="sm"
+                        onClick={() => payVendorMutation.mutate(vendor.id)}
+                        disabled={payVendorMutation.isPending || parseFloat(vendor.pendingPayoutKwd || "0") <= 0}
+                        data-testid={`button-pay-vendor-${vendor.id}`}
+                      >
+                        <DollarSign className="w-4 h-4 mr-1" />
+                        Pay
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-      </CardContent>
-    </Card>
-  );
-}
-
-interface UserWithRole {
-  id: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-  role: string;
-}
-
-function UsersTab() {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  
-  const { data: users, isLoading } = useQuery<UserWithRole[]>({
-    queryKey: ["/api/admin/users"],
-    queryFn: async () => {
-      const res = await fetch("/api/admin/users", { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch users");
-      return res.json();
-    },
-  });
-
-  const assignRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      const res = await apiRequest("POST", "/api/admin/users/role", { userId, role });
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Failed to update role");
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-      toast({ title: "Success", description: "User role updated" });
-    },
-    onError: (err: Error) => {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    },
-  });
-
-  const handleRoleChange = (userId: string, role: string) => {
-    assignRoleMutation.mutate({ userId, role });
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="animate-spin" />
-      </div>
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="w-5 h-5" /> User Management
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {!users || users.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">No users found.</p>
-        ) : (
-          <div className="space-y-4">
-            {users.map((user) => (
-              <div 
-                key={user.id} 
-                className="flex items-center justify-between p-4 border rounded-lg"
-                data-testid={`user-row-${user.id}`}
-              >
-                <div>
-                  <div className="font-semibold">
-                    {user.firstName || user.lastName ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : "User"}
-                  </div>
-                  <div className="text-sm text-muted-foreground">{user.email || user.id}</div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant={user.role === "admin" ? "default" : "secondary"} className="capitalize">
-                    {user.role}
-                  </Badge>
-                  <div className="flex gap-1">
-                    {["customer", "vendor", "admin"].map((role) => (
-                      <Button
-                        key={role}
-                        size="sm"
-                        variant={user.role === role ? "default" : "outline"}
-                        onClick={() => handleRoleChange(user.id, role)}
-                        disabled={assignRoleMutation.isPending}
-                        className="capitalize text-xs"
-                        data-testid={`button-assign-${role}-${user.id}`}
-                      >
-                        {role}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function SettingsTab() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Settings className="w-5 h-5" /> Platform Settings
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="p-4 border rounded-lg">
-          <h3 className="font-medium mb-2">Commission Rate</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Default commission rate applied to new vendors. Individual rates can be adjusted per vendor.
-          </p>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold">5%</span>
-            <Badge variant="secondary">Default</Badge>
-          </div>
-        </div>
-
-        <div className="p-4 border rounded-lg">
-          <h3 className="font-medium mb-2">Payment Gateway</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Payment processing is ready for integration. Configure your gateway credentials in environment variables.
-          </p>
-          <Badge variant="outline">Ready for Integration</Badge>
-        </div>
       </CardContent>
     </Card>
   );

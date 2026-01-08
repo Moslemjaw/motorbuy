@@ -28,8 +28,11 @@ export interface Vendor {
   coverImageUrl?: string | null;
   bio?: string | null;
   isApproved: boolean;
-  commissionRate: string;
-  walletBalance: string;
+  commissionType: "percentage" | "fixed";
+  commissionValue: string;
+  grossSalesKwd: string;
+  pendingPayoutKwd: string;
+  lifetimePayoutsKwd: string;
   createdAt?: Date | null;
 }
 
@@ -91,6 +94,8 @@ export interface PaymentRequest {
   vendorId: string;
   amount: string;
   status: "pending" | "approved" | "paid" | "rejected";
+  notes?: string | null;
+  processedBy?: string | null;
   createdAt?: Date | null;
   processedAt?: Date | null;
 }
