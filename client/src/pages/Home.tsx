@@ -2,7 +2,7 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { useCategories, useStories, useProducts, useVendors } from "@/hooks/use-motorbuy";
 import { ProductCard } from "@/components/ProductCard";
-import { ArrowRight, Star, Settings, Wrench, Shield, ChevronRight, Zap, Users, Package, TrendingUp } from "lucide-react";
+import { ArrowRight, Star, Settings, Wrench, Shield, ChevronRight, Users, Package, TrendingUp } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 
@@ -25,7 +25,7 @@ export default function Home() {
     <div className="min-h-screen bg-background font-body">
       <Navbar />
 
-      <section className="relative overflow-hidden gradient-dark text-white py-28 lg:py-40">
+      <section className="relative overflow-hidden gradient-dark text-white py-16 lg:py-24">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 right-0 w-2/3 h-full bg-gradient-to-l from-primary/20 to-transparent -skew-x-12 translate-x-1/4" />
           <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-gradient-to-tr from-accent/10 to-transparent rounded-full blur-3xl" />
@@ -33,17 +33,6 @@ export default function Home() {
         
         <div className="container relative z-10 px-4 mx-auto">
           <div className="max-w-3xl">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-sm font-medium mb-6">
-                <Zap className="w-4 h-4 text-accent" />
-                Kuwait's Premier Auto Parts Marketplace
-              </span>
-            </motion.div>
-            
             <motion.h1 
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
