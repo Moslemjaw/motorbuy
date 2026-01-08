@@ -29,16 +29,19 @@ export async function registerRoutes(
       
       const { eq } = await import("drizzle-orm");
       
-      await db.update(users).set({
-        profileImageUrl,
-        bio,
-        phone,
-        address,
-        city,
-        updatedAt: new Date(),
-      }).where(eq(users.id, userId));
+      const updateData: Record<string, any> = { updatedAt: new Date() };
+      if (profileImageUrl !== undefined) updateData.profileImageUrl = profileImageUrl;
+      if (bio !== undefined) updateData.bio = bio;
+      if (phone !== undefined) updateData.phone = phone;
+      if (address !== undefined) updateData.address = address;
+      if (city !== undefined) updateData.city = city;
       
-      res.json({ success: true });
+      const [updated] = await db.update(users)
+        .set(updateData)
+        .where(eq(users.id, userId))
+        .returning();
+      
+      res.json(updated || { success: true });
     } catch (e) {
       console.error("Error updating profile:", e);
       res.status(500).json({ message: "Failed to update profile" });

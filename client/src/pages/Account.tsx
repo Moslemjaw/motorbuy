@@ -4,13 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useOrders, useRole } from "@/hooks/use-motorbuy";
-import { User, Package, ShoppingBag, Store, Loader2, Settings, Phone, MapPin, Mail, Camera } from "lucide-react";
+import { User, Package, ShoppingBag, Store, Loader2, Settings, Phone, MapPin, Mail, Camera, FileText } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { formatKWD } from "@/lib/currency";
+import { useUpload } from "@/hooks/use-upload";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function Account() {
   const { user, isAuthenticated, isLoading: isAuthLoading, logout } = useAuth();
@@ -18,10 +22,37 @@ export default function Account() {
   const { data: orders, isLoading: isOrdersLoading } = useOrders();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [address, setAddress] = useState(user?.address || "");
+  const [city, setCity] = useState(user?.city || "");
+  const [bio, setBio] = useState(user?.bio || "");
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(user?.profileImageUrl || null);
+
+  const { uploadFile, isUploading } = useUpload({
+    onSuccess: (response) => {
+      const publicUrl = response.objectPath;
+      setProfileImageUrl(publicUrl);
+      toast({ title: "Photo Uploaded", description: "Your profile photo has been uploaded." });
+    },
+    onError: (error) => {
+      toast({ title: "Upload Failed", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: { profileImageUrl?: string; bio?: string; phone?: string; address?: string; city?: string }) => {
+      return apiRequest("PATCH", "/api/users/me", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      toast({ title: "Settings Saved", description: "Your account settings have been updated successfully." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to save settings.", variant: "destructive" });
+    },
+  });
 
   if (isAuthLoading || isRoleLoading) {
     return (
@@ -36,12 +67,29 @@ export default function Account() {
     return null;
   }
 
-  const handleSaveSettings = () => {
-    toast({ 
-      title: "Settings Saved", 
-      description: "Your account settings have been updated successfully." 
-    });
+  const handlePhotoClick = () => {
+    fileInputRef.current?.click();
   };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await uploadFile(file);
+    }
+  };
+
+  const handleSaveSettings = () => {
+    const updates: Record<string, string> = {};
+    if (profileImageUrl) updates.profileImageUrl = profileImageUrl;
+    if (bio) updates.bio = bio;
+    if (phone) updates.phone = phone;
+    if (address) updates.address = address;
+    if (city) updates.city = city;
+    
+    updateProfileMutation.mutate(updates);
+  };
+
+  const displayImage = profileImageUrl || user.profileImageUrl;
 
   return (
     <div className="min-h-screen bg-background font-body pb-20">
@@ -64,14 +112,36 @@ export default function Account() {
           <CardContent className="space-y-4">
             <div className="flex items-center gap-4">
               <div className="relative">
-                <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center text-primary text-3xl font-bold">
-                  {user.firstName?.[0] || user.email?.[0]?.toUpperCase() || "U"}
-                </div>
+                {displayImage ? (
+                  <img 
+                    src={displayImage} 
+                    alt="Profile" 
+                    className="w-20 h-20 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center text-primary text-3xl font-bold">
+                    {user.firstName?.[0] || user.email?.[0]?.toUpperCase() || "U"}
+                  </div>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileChange}
+                  data-testid="input-photo-file"
+                />
                 <button 
-                  className="absolute bottom-0 right-0 w-7 h-7 bg-primary text-white rounded-full flex items-center justify-center shadow-lg"
+                  onClick={handlePhotoClick}
+                  disabled={isUploading}
+                  className="absolute bottom-0 right-0 w-7 h-7 bg-primary text-white rounded-full flex items-center justify-center shadow-lg disabled:opacity-50"
                   data-testid="button-change-photo"
                 >
-                  <Camera className="w-4 h-4" />
+                  {isUploading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Camera className="w-4 h-4" />
+                  )}
                 </button>
               </div>
               <div>
@@ -117,6 +187,20 @@ export default function Account() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="bio" className="flex items-center gap-2 text-sm">
+                <FileText className="w-4 h-4" /> Bio
+              </Label>
+              <Textarea 
+                id="bio" 
+                placeholder="Tell us about yourself..." 
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                className="min-h-[80px]"
+                data-testid="input-bio"
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="phone" className="flex items-center gap-2 text-sm">
                 <Phone className="w-4 h-4" /> Phone Number
               </Label>
@@ -143,7 +227,7 @@ export default function Account() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="city" className="flex items-center gap-2 text-sm">
+              <Label htmlFor="city" className="text-sm">
                 City / Area
               </Label>
               <Input 
@@ -155,8 +239,13 @@ export default function Account() {
               />
             </div>
 
-            <Button className="w-full" onClick={handleSaveSettings} data-testid="button-save-settings">
-              Save Changes
+            <Button 
+              className="w-full" 
+              onClick={handleSaveSettings} 
+              disabled={updateProfileMutation.isPending}
+              data-testid="button-save-settings"
+            >
+              {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </CardContent>
         </Card>
