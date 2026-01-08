@@ -95,7 +95,7 @@ export default function VendorDashboard() {
   });
 
   const deleteStoryMutation = useMutation({
-    mutationFn: async (id: number) => apiRequest("DELETE", `/api/stories/${id}`),
+    mutationFn: async (id: string) => apiRequest("DELETE", `/api/stories/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
       toast({ title: "Story Deleted" });
