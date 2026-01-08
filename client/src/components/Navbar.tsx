@@ -81,7 +81,7 @@ export function Navbar() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <Link href="/dashboard">
+                <Link href="/account">
                   <DropdownMenuItem>
                     <User className="mr-2 h-4 w-4" />
                     <span>My Account</span>
@@ -98,7 +98,7 @@ export function Navbar() {
                 )}
                 
                 {role === 'admin' && (
-                  <Link href="/admin-dashboard">
+                  <Link href="/admin">
                     <DropdownMenuItem>
                       <ShieldCheck className="mr-2 h-4 w-4" />
                       <span>Admin Portal</span>

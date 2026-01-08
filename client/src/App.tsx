@@ -10,6 +10,9 @@ import ProductDetail from "@/pages/ProductDetail";
 import VendorList from "@/pages/VendorList";
 import Cart from "@/pages/Cart";
 import VendorDashboard from "@/pages/VendorDashboard";
+import Account from "@/pages/Account";
+import AdminDashboard from "@/pages/AdminDashboard";
+import Stories from "@/pages/Stories";
 
 function Router() {
   return (
@@ -20,6 +23,9 @@ function Router() {
       <Route path="/vendors" component={VendorList} />
       <Route path="/cart" component={Cart} />
       <Route path="/vendor-dashboard" component={VendorDashboard} />
+      <Route path="/account" component={Account} />
+      <Route path="/admin" component={AdminDashboard} />
+      <Route path="/stories" component={Stories} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />

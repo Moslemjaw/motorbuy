@@ -174,43 +174,47 @@ export async function registerRoutes(
   
   app.post("/api/seed", async (req, res) => {
     try {
-      const cats = await storage.getCategories();
-      if (cats.length === 0) {
-        await storage.createCategory({ name: "Engine Parts", slug: "engine-parts", imageUrl: "https://placehold.co/100x100?text=Engine" });
-        await storage.createCategory({ name: "Brakes", slug: "brakes", imageUrl: "https://placehold.co/100x100?text=Brakes" });
-        await storage.createCategory({ name: "Suspension", slug: "suspension", imageUrl: "https://placehold.co/100x100?text=Suspension" });
+      const existingProducts = await storage.getProducts();
+      if (existingProducts.length > 0) {
+        return res.json({ message: "Data already exists, skipping seed." });
       }
-      
+
       const categories = await storage.getCategories();
-      
-      // We need a user to tie vendors to. Let's see if there are any users.
-      // Since this is a dev tool, we'll try to find any user or just wait.
-      // For now, I'll create a few vendors if a user exists.
       
       const [user] = await db.select().from(users).limit(1);
       if (!user) {
         return res.status(400).json({ message: "Please log in first so I have a user to assign vendors to." });
       }
 
-      const v1 = await storage.createVendor({
-        userId: user.id,
-        storeName: "AutoPro Parts",
-        description: "Specializing in high-performance engine components.",
-        logoUrl: "https://placehold.co/100x100?text=AutoPro",
-      });
+      const existingVendors = await storage.getVendors();
+      let v1, v2;
+      
+      if (existingVendors.length === 0) {
+        v1 = await storage.createVendor({
+          userId: user.id,
+          storeName: "AutoPro Parts",
+          description: "Specializing in high-performance engine components.",
+          logoUrl: "https://placehold.co/100x100?text=AutoPro",
+        });
+        await storage.updateVendor(v1.id, { isApproved: true });
 
-      const v2 = await storage.createVendor({
-        userId: user.id,
-        storeName: "BrakeMaster",
-        description: "Your one-stop shop for everything brakes.",
-        logoUrl: "https://placehold.co/100x100?text=BrakeMaster",
-      });
+        v2 = await storage.createVendor({
+          userId: user.id,
+          storeName: "BrakeMaster",
+          description: "Your one-stop shop for everything brakes.",
+          logoUrl: "https://placehold.co/100x100?text=BrakeMaster",
+        });
+        await storage.updateVendor(v2.id, { isApproved: true });
+      } else {
+        v1 = existingVendors[0];
+        v2 = existingVendors[1] || existingVendors[0];
+      }
 
       await storage.createProduct({
         vendorId: v1.id,
         categoryId: categories[0].id,
         name: "Performance V8 Piston Set",
-        description: "Forged aluminum pistons for high-output engines.",
+        description: "Forged aluminum pistons for high-output engines. Compatible with most V8 engines.",
         price: "450.00",
         stock: 5,
         brand: "SpeedMaster",
@@ -219,10 +223,22 @@ export async function registerRoutes(
       });
 
       await storage.createProduct({
+        vendorId: v1.id,
+        categoryId: categories[0].id,
+        name: "Turbocharger Kit",
+        description: "Complete turbo upgrade kit with intercooler and piping.",
+        price: "1250.00",
+        stock: 3,
+        brand: "TurboWorks",
+        images: ["https://placehold.co/400x300?text=Turbo"],
+        warrantyInfo: "1 year warranty",
+      });
+
+      await storage.createProduct({
         vendorId: v2.id,
         categoryId: categories[1].id,
         name: "Ceramic Brake Pad Set",
-        description: "Low-dust, high-performance ceramic brake pads.",
+        description: "Low-dust, high-performance ceramic brake pads for smooth stopping.",
         price: "85.00",
         stock: 20,
         brand: "StopTech",
@@ -230,13 +246,43 @@ export async function registerRoutes(
         warrantyInfo: "Lifetime warranty against defects",
       });
 
+      await storage.createProduct({
+        vendorId: v2.id,
+        categoryId: categories[1].id,
+        name: "Slotted Brake Rotors",
+        description: "Performance slotted rotors for improved heat dissipation.",
+        price: "180.00",
+        stock: 10,
+        brand: "Brembo",
+        images: ["https://placehold.co/400x300?text=Rotors"],
+        warrantyInfo: "2 year warranty",
+      });
+
+      await storage.createProduct({
+        vendorId: v1.id,
+        categoryId: categories[2].id,
+        name: "Coilover Suspension Kit",
+        description: "Adjustable height coilover kit for sport tuning.",
+        price: "890.00",
+        stock: 4,
+        brand: "KW",
+        images: ["https://placehold.co/400x300?text=Coilovers"],
+        warrantyInfo: "1 year warranty",
+      });
+
       await storage.createStory({
         vendorId: v1.id,
-        content: "New performance pistons just arrived! Upgrade your engine today.",
+        content: "New performance pistons just arrived! Upgrade your engine today with our best-selling forged aluminum piston sets.",
         imageUrl: "https://placehold.co/600x400?text=New+Arrivals",
       });
 
-      res.json({ message: "Seeded successfully" });
+      await storage.createStory({
+        vendorId: v2.id,
+        content: "Brake sale this weekend! 15% off all ceramic brake pads. Dont miss out on this limited offer.",
+        imageUrl: "https://placehold.co/600x400?text=Brake+Sale",
+      });
+
+      res.json({ message: "Seeded successfully with products and stories" });
     } catch (e) {
       console.error(e);
       res.status(500).json({ message: "Seeding failed" });

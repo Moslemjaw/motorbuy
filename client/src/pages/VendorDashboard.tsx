@@ -76,8 +76,8 @@ function VendorDashboardContent({ userId }: { userId: string }) {
   const handleCreateProduct = () => {
     createProduct({
         ...newProduct,
-        vendorId,
-        price: Number(newProduct.price), // schema expects number/decimal
+        vendorId: vendorId,
+        price: newProduct.price,
         stock: Number(newProduct.stock),
         categoryId: Number(newProduct.categoryId),
         images: ["https://placehold.co/600x400"], // Placeholder

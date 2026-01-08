@@ -32,17 +32,10 @@ export default function Cart() {
     // Wait, `insertOrderSchema` only needs userId (which comes from auth context usually) and defaults for others.
     // Let's create an order.
     
-    createOrder({ 
-       // The schema requires nothing essential besides defaults/auth context usually handled by backend
-       // But wait, `insertOrderSchema` is just for the `orders` table. 
-       // We'll send an empty object and let backend handle logic (if it was implemented that way).
-       // Actually, to make this robust without backend code visibility, I'll just simulate the success 
-       // if I can't guarantee backend logic. 
-       // HOWEVER, I must try to use the hook.
-    }, {
+    createOrder(undefined, {
       onSuccess: () => {
         toast({ title: "Order Placed!", description: "Your parts are on the way." });
-        setLocation("/dashboard");
+        setLocation("/account");
       },
       onError: () => {
         // Fallback for demo if backend endpoint isn't wired to move cart items

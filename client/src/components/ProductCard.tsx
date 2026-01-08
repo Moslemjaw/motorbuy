@@ -13,7 +13,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const { addToCart, isPending } = useAddToCart();
+  const addToCartMutation = useAddToCart();
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
 
@@ -24,15 +24,17 @@ export function ProductCard({ product }: ProductCardProps) {
         return;
     }
     
-    addToCart({ productId: product.id, quantity: 1 }, {
+    addToCartMutation.mutate({ productId: product.id, quantity: 1 }, {
       onSuccess: () => {
         toast({ title: "Added to cart", description: `${product.name} added to your cart` });
       },
-      onError: (err) => {
+      onError: (err: Error) => {
         toast({ title: "Error", description: err.message, variant: "destructive" });
       }
     });
   };
+  
+  const isPending = addToCartMutation.isPending;
 
   const mainImage = product.images?.[0] || "https://placehold.co/600x400?text=No+Image";
 

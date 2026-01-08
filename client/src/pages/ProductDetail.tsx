@@ -13,9 +13,10 @@ export default function ProductDetail() {
   const id = params ? parseInt(params.id) : 0;
   
   const { data: product, isLoading } = useProduct(id);
-  const { addToCart, isPending } = useAddToCart();
+  const addToCartMutation = useAddToCart();
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
+  const isPending = addToCartMutation.isPending;
 
   const handleAddToCart = () => {
     if (!isAuthenticated) {
@@ -24,9 +25,9 @@ export default function ProductDetail() {
     }
     if (!product) return;
     
-    addToCart({ productId: product.id, quantity: 1 }, {
+    addToCartMutation.mutate({ productId: product.id, quantity: 1 }, {
       onSuccess: () => toast({ title: "Added to cart", description: `${product.name} added` }),
-      onError: (err) => toast({ title: "Error", description: err.message, variant: "destructive" })
+      onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" })
     });
   };
 
@@ -59,9 +60,9 @@ export default function ProductDetail() {
               <Badge variant="secondary" className="text-primary font-medium px-3 py-1">
                 In Stock: {product.stock}
               </Badge>
-              {product.category && (
+              {product.categoryId && (
                 <Badge variant="outline" className="text-muted-foreground">
-                  {product.category.name}
+                  Category #{product.categoryId}
                 </Badge>
               )}
             </div>
@@ -84,16 +85,16 @@ export default function ProductDetail() {
 
             {/* Meta */}
             <div className="grid gap-6">
-              {product.vendor && (
+              {product.vendorId && (
                 <div className="flex items-center gap-4 bg-accent/20 p-4 rounded-xl">
                   <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center text-primary">
                     <Store className="w-6 h-6" />
                   </div>
                   <div>
                     <div className="text-sm text-muted-foreground">Sold by</div>
-                    <div className="font-bold text-lg">{product.vendor.storeName}</div>
+                    <div className="font-bold text-lg">Vendor #{product.vendorId}</div>
                   </div>
-                  <Link href={`/vendors/${product.vendor.id}`} className="ml-auto">
+                  <Link href={`/vendors/${product.vendorId}`} className="ml-auto">
                     <Button variant="ghost" size="sm">Visit Shop</Button>
                   </Link>
                 </div>

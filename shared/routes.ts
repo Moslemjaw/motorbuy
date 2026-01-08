@@ -60,7 +60,7 @@ export const api = {
     create: {
       method: 'POST' as const,
       path: '/api/vendors',
-      input: insertVendorSchema,
+      input: z.object({ storeName: z.string(), description: z.string(), logoUrl: z.string().optional() }),
       responses: {
         201: z.custom<typeof vendors.$inferSelect>(),
         400: errorSchemas.validation,
@@ -124,14 +124,14 @@ export const api = {
       method: 'GET' as const,
       path: '/api/cart',
       responses: {
-        200: z.array(z.custom<typeof cartItems.$inferSelect & { product: typeof products.$inferSelect }>()), // Enriched cart items
+        200: z.array(z.custom<typeof cartItems.$inferSelect & { product: typeof products.$inferSelect }>()),
         401: errorSchemas.unauthorized
       }
     },
     add: {
       method: 'POST' as const,
       path: '/api/cart',
-      input: insertCartItemSchema,
+      input: z.object({ productId: z.number(), quantity: z.number().optional() }),
       responses: {
         201: z.custom<typeof cartItems.$inferSelect>(),
         401: errorSchemas.unauthorized
