@@ -38,9 +38,9 @@ export function ProductCard({ product }: ProductCardProps) {
   const isPending = addToCartMutation.isPending;
   const mainImage = product.images?.[0] || "https://placehold.co/600x400?text=No+Image";
 
-  const currentPrice = parseFloat(product.price);
+  const currentPrice = parseFloat(product.price) || 0;
   const comparePrice = product.compareAtPrice ? parseFloat(product.compareAtPrice) : null;
-  const hasDiscount = comparePrice && comparePrice > currentPrice;
+  const hasDiscount = comparePrice !== null && !isNaN(comparePrice) && comparePrice > currentPrice && currentPrice > 0;
   const discountPercent = hasDiscount ? Math.round(((comparePrice - currentPrice) / comparePrice) * 100) : 0;
 
   return (

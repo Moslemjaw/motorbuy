@@ -51,10 +51,11 @@ export default function ProductDetail() {
 
   const mainImage = product.images?.[0] || "https://placehold.co/800x600?text=No+Image";
 
-  const currentPrice = parseFloat(product.price);
+  const currentPrice = parseFloat(product.price) || 0;
   const comparePrice = product.compareAtPrice ? parseFloat(product.compareAtPrice) : null;
-  const hasDiscount = comparePrice && comparePrice > currentPrice;
+  const hasDiscount = comparePrice !== null && !isNaN(comparePrice) && comparePrice > currentPrice && currentPrice > 0;
   const discountPercent = hasDiscount ? Math.round(((comparePrice - currentPrice) / comparePrice) * 100) : 0;
+  const savings = hasDiscount ? (comparePrice - currentPrice).toFixed(3) : "0";
 
   return (
     <div className="min-h-screen bg-background font-body">
@@ -129,7 +130,7 @@ export default function ProductDetail() {
               </div>
               {hasDiscount && (
                 <div className="text-sm text-green-600 font-medium mt-1">
-                  You save {formatKWD((comparePrice - currentPrice).toFixed(3))}
+                  You save {formatKWD(savings)}
                 </div>
               )}
             </div>
