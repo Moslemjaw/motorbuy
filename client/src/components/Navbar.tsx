@@ -134,9 +134,9 @@ export function Navbar() {
                 <DropdownMenuLabel className="text-xs text-muted-foreground font-normal pt-2">
                   Test as different role:
                 </DropdownMenuLabel>
-                <div className="flex gap-1 px-2 pb-2">
+                <div className="grid grid-cols-3 gap-1 px-2 pb-2">
                   {[
-                    { key: "customer", label: "Customer", icon: User },
+                    { key: "customer", label: "Cust", icon: User },
                     { key: "vendor", label: "Vendor", icon: Store },
                     { key: "admin", label: "Admin", icon: ShieldCheck },
                   ].map(({ key, label, icon: Icon }) => (
@@ -144,7 +144,7 @@ export function Navbar() {
                       key={key}
                       size="sm"
                       variant={role === key ? "default" : "outline"}
-                      className="flex-1 text-xs h-8"
+                      className="text-xs h-8 px-2"
                       onClick={async () => {
                         await apiRequest("POST", "/api/roles/switch", { role: key });
                         queryClient.invalidateQueries({ queryKey: ["/api/roles"] });
