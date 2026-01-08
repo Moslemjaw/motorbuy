@@ -160,5 +160,86 @@ export async function registerRoutes(
     await storage.createCategory({ name: "Suspension", slug: "suspension", imageUrl: "https://placehold.co/100x100?text=Suspension" });
   }
 
+  async function seedMore() {
+    const existingVendors = await storage.getVendors();
+    if (existingVendors.length === 0) {
+      // Create some vendors (using placeholder user IDs as they'll likely be created on first login, 
+      // but for seeding we'll assume some IDs or just create vendors tied to no-one if schema allows, 
+      // actually schema needs userId. We'll use a dummy ID for now or skip if we can't find a user)
+      // Better: Create them when we have a user, or just provide a dedicated seed route.
+    }
+  }
+  
+  app.post("/api/seed", async (req, res) => {
+    try {
+      const cats = await storage.getCategories();
+      if (cats.length === 0) {
+        await storage.createCategory({ name: "Engine Parts", slug: "engine-parts", imageUrl: "https://placehold.co/100x100?text=Engine" });
+        await storage.createCategory({ name: "Brakes", slug: "brakes", imageUrl: "https://placehold.co/100x100?text=Brakes" });
+        await storage.createCategory({ name: "Suspension", slug: "suspension", imageUrl: "https://placehold.co/100x100?text=Suspension" });
+      }
+      
+      const categories = await storage.getCategories();
+      
+      // We need a user to tie vendors to. Let's see if there are any users.
+      // Since this is a dev tool, we'll try to find any user or just wait.
+      // For now, I'll create a few vendors if a user exists.
+      
+      const [user] = await db.select().from(users).limit(1);
+      if (!user) {
+        return res.status(400).json({ message: "Please log in first so I have a user to assign vendors to." });
+      }
+
+      const v1 = await storage.createVendor({
+        userId: user.id,
+        storeName: "AutoPro Parts",
+        description: "Specializing in high-performance engine components.",
+        logoUrl: "https://placehold.co/100x100?text=AutoPro",
+      });
+
+      const v2 = await storage.createVendor({
+        userId: user.id,
+        storeName: "BrakeMaster",
+        description: "Your one-stop shop for everything brakes.",
+        logoUrl: "https://placehold.co/100x100?text=BrakeMaster",
+      });
+
+      await storage.createProduct({
+        vendorId: v1.id,
+        categoryId: categories[0].id,
+        name: "Performance V8 Piston Set",
+        description: "Forged aluminum pistons for high-output engines.",
+        price: "450.00",
+        stock: 5,
+        brand: "SpeedMaster",
+        images: ["https://placehold.co/400x300?text=Pistons"],
+        warrantyInfo: "2 years limited warranty",
+      });
+
+      await storage.createProduct({
+        vendorId: v2.id,
+        categoryId: categories[1].id,
+        name: "Ceramic Brake Pad Set",
+        description: "Low-dust, high-performance ceramic brake pads.",
+        price: "85.00",
+        stock: 20,
+        brand: "StopTech",
+        images: ["https://placehold.co/400x300?text=Brake+Pads"],
+        warrantyInfo: "Lifetime warranty against defects",
+      });
+
+      await storage.createStory({
+        vendorId: v1.id,
+        content: "New performance pistons just arrived! Upgrade your engine today.",
+        imageUrl: "https://placehold.co/600x400?text=New+Arrivals",
+      });
+
+      res.json({ message: "Seeded successfully" });
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({ message: "Seeding failed" });
+    }
+  });
+
   return httpServer;
 }
