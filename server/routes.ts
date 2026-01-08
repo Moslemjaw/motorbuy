@@ -402,121 +402,27 @@ export async function registerRoutes(
     await storage.createCategory({ name: "Suspension", slug: "suspension", imageUrl: "https://placehold.co/100x100?text=Suspension" });
   }
 
-  app.post("/api/seed", async (req, res) => {
+  app.post("/api/seed", isAuthenticated, async (req: any, res) => {
     try {
+      const role = await storage.getUserRole(req.user.claims.sub);
+      if (role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
       const existingProducts = await storage.getProducts();
       if (existingProducts.length > 0) {
-        return res.json({ message: "Data already exists, skipping seed." });
+        return res.status(400).json({ message: "Database already has data. Clear it first before seeding." });
       }
 
-      const categories = await storage.getCategories();
-      
-      const users = await User.find({}).limit(1);
-      const user = users[0];
-      if (!user) {
-        return res.status(400).json({ message: "Please log in first so I have a user to assign vendors to." });
-      }
-
-      const existingVendors = await storage.getVendors();
-      let v1, v2;
-      
-      if (existingVendors.length === 0) {
-        v1 = await storage.createVendor({
-          userId: user.id,
-          storeName: "AutoPro Parts",
-          description: "Specializing in high-performance engine components.",
-          logoUrl: "https://placehold.co/100x100?text=AutoPro",
-        });
-        await storage.updateVendor(v1.id, { isApproved: true });
-
-        v2 = await storage.createVendor({
-          userId: user.id,
-          storeName: "BrakeMaster",
-          description: "Your one-stop shop for everything brakes.",
-          logoUrl: "https://placehold.co/100x100?text=BrakeMaster",
-        });
-        await storage.updateVendor(v2.id, { isApproved: true });
-      } else {
-        v1 = existingVendors[0];
-        v2 = existingVendors[1] || existingVendors[0];
-      }
-
-      await storage.createProduct({
-        vendorId: v1.id,
-        categoryId: categories[0].id,
-        name: "Performance V8 Piston Set",
-        description: "Forged aluminum pistons for high-output engines. Compatible with most V8 engines.",
-        price: "450.00",
-        stock: 5,
-        brand: "SpeedMaster",
-        images: ["https://placehold.co/400x300?text=Pistons"],
-        warrantyInfo: "2 years limited warranty",
+      const { seedDatabase } = await import("./seed");
+      const result = await seedDatabase();
+      res.json({ 
+        message: "Database seeded successfully with demo data",
+        ...result
       });
-
-      await storage.createProduct({
-        vendorId: v1.id,
-        categoryId: categories[0].id,
-        name: "Turbocharger Kit",
-        description: "Complete turbo upgrade kit with intercooler and piping.",
-        price: "1250.00",
-        stock: 3,
-        brand: "TurboWorks",
-        images: ["https://placehold.co/400x300?text=Turbo"],
-        warrantyInfo: "1 year warranty",
-      });
-
-      await storage.createProduct({
-        vendorId: v2.id,
-        categoryId: categories[1].id,
-        name: "Ceramic Brake Pad Set",
-        description: "Low-dust, high-performance ceramic brake pads for smooth stopping.",
-        price: "85.00",
-        stock: 20,
-        brand: "StopTech",
-        images: ["https://placehold.co/400x300?text=Brake+Pads"],
-        warrantyInfo: "Lifetime warranty against defects",
-      });
-
-      await storage.createProduct({
-        vendorId: v2.id,
-        categoryId: categories[1].id,
-        name: "Slotted Brake Rotors",
-        description: "Performance slotted rotors for improved heat dissipation.",
-        price: "180.00",
-        stock: 10,
-        brand: "Brembo",
-        images: ["https://placehold.co/400x300?text=Rotors"],
-        warrantyInfo: "2 year warranty",
-      });
-
-      await storage.createProduct({
-        vendorId: v1.id,
-        categoryId: categories[2].id,
-        name: "Coilover Suspension Kit",
-        description: "Adjustable height coilover kit for sport tuning.",
-        price: "890.00",
-        stock: 4,
-        brand: "KW",
-        images: ["https://placehold.co/400x300?text=Coilovers"],
-        warrantyInfo: "1 year warranty",
-      });
-
-      await storage.createStory({
-        vendorId: v1.id,
-        content: "New performance pistons just arrived! Upgrade your engine today with our best-selling forged aluminum piston sets.",
-        imageUrl: "https://placehold.co/600x400?text=New+Arrivals",
-      });
-
-      await storage.createStory({
-        vendorId: v2.id,
-        content: "Brake sale this weekend! 15% off all ceramic brake pads. Dont miss out on this limited offer.",
-        imageUrl: "https://placehold.co/600x400?text=Brake+Sale",
-      });
-
-      res.json({ message: "Seeded successfully with products and stories" });
     } catch (e) {
-      console.error(e);
-      res.status(500).json({ message: "Seeding failed" });
+      console.error("Seeding error:", e);
+      res.status(500).json({ message: "Seeding failed", error: String(e) });
     }
   });
 
