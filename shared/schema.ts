@@ -18,6 +18,8 @@ export const vendors = pgTable("vendors", {
   storeName: text("store_name").notNull(),
   description: text("description").notNull(),
   logoUrl: text("logo_url"),
+  coverImageUrl: text("cover_image_url"),
+  bio: text("bio"),
   isApproved: boolean("is_approved").default(false).notNull(),
   commissionRate: decimal("commission_rate").default("0.05").notNull(),
   walletBalance: decimal("wallet_balance").default("0").notNull(),

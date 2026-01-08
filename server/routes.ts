@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import { db } from "./db";
@@ -14,8 +15,35 @@ export async function registerRoutes(
   // Setup Auth FIRST
   await setupAuth(app);
   registerAuthRoutes(app);
+  
+  // Register Object Storage routes for file uploads
+  registerObjectStorageRoutes(app);
 
   // === APP ROUTES ===
+  
+  // Update user profile
+  app.patch("/api/users/me", isAuthenticated, async (req: any, res) => {
+    try {
+      const { profileImageUrl, bio, phone, address, city } = req.body;
+      const userId = req.user.claims.sub;
+      
+      const { eq } = await import("drizzle-orm");
+      
+      await db.update(users).set({
+        profileImageUrl,
+        bio,
+        phone,
+        address,
+        city,
+        updatedAt: new Date(),
+      }).where(eq(users.id, userId));
+      
+      res.json({ success: true });
+    } catch (e) {
+      console.error("Error updating profile:", e);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
 
   // Roles
   app.get(api.roles.get.path, isAuthenticated, async (req: any, res) => {
