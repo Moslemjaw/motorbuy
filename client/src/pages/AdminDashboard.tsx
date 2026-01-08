@@ -107,7 +107,9 @@ export default function AdminDashboard() {
       </div>
 
       <div className="container mx-auto px-4">
-        <Tabs defaultValue="analytics" className="space-y-6">
+        <TopSummaryCards />
+        
+        <Tabs defaultValue="analytics" className="space-y-6 mt-6">
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-1 h-auto p-1">
             <TabsTrigger value="analytics" className="gap-2 py-2" data-testid="tab-analytics">
               <BarChart3 className="w-4 h-4" />
@@ -152,6 +154,72 @@ export default function AdminDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+    </div>
+  );
+}
+
+function TopSummaryCards() {
+  const { data: vendors } = useQuery<VendorFinancials[]>({
+    queryKey: ["/api/admin/vendors/financials"],
+  });
+  const { data: payoutRequests } = useQuery<PayoutRequest[]>({
+    queryKey: ["/api/admin/payout-requests"],
+  });
+  const { data: analytics } = useQuery<Analytics>({
+    queryKey: ["/api/admin/analytics"],
+  });
+
+  const totalVendors = vendors?.length || 0;
+  const approvedVendors = vendors?.filter(v => v.isApproved).length || 0;
+  const pendingPayouts = payoutRequests?.length || 0;
+  const totalPendingAmount = vendors?.reduce((sum, v) => sum + parseFloat(v.pendingPayoutKwd || "0"), 0) || 0;
+  const totalUsers = analytics?.totalUsers || 0;
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+          <CardTitle className="text-sm font-medium">Total Vendors</CardTitle>
+          <Store className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold" data-testid="text-total-vendors">{totalVendors}</div>
+          <p className="text-xs text-muted-foreground">{approvedVendors} approved</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+          <CardTitle className="text-sm font-medium">Payout Requests</CardTitle>
+          <Bell className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold" data-testid="text-payout-requests">{pendingPayouts}</div>
+          <p className="text-xs text-muted-foreground">pending approval</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+          <CardTitle className="text-sm font-medium">Total Pending Payouts</CardTitle>
+          <DollarSign className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold" data-testid="text-pending-payouts">{totalPendingAmount.toFixed(3)} KWD</div>
+          <p className="text-xs text-muted-foreground">across all vendors</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
+          <CardTitle className="text-sm font-medium">Users</CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold" data-testid="text-total-users">{totalUsers}</div>
+          <p className="text-xs text-muted-foreground">registered users</p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
