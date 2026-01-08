@@ -37,11 +37,11 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 h-14 md:h-16 flex items-center justify-between gap-2">
         <div className="flex items-center gap-4 md:gap-8">
-          <Link href="/" className="font-display font-bold text-xl md:text-2xl text-primary flex items-center gap-2">
-            <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm md:text-base">
+          <Link href="/" className="font-display font-bold text-lg md:text-2xl text-primary flex items-center gap-1.5 md:gap-2">
+            <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs md:text-base">
               M
             </div>
-            <span className="hidden xs:inline">MotorBuy</span>
+            <span>MotorBuy</span>
           </Link>
           
           <div className="hidden md:flex gap-6">
