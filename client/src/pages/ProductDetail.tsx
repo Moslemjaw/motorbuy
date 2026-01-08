@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useProduct, useAddToCart } from "@/hooks/use-motorbuy";
 import { useRoute } from "wouter";
-import { ShoppingCart, Truck, ShieldCheck, ArrowLeft, Store, Package, Loader2, CheckCircle } from "lucide-react";
+import { ShoppingCart, Truck, ShieldCheck, ArrowLeft, Store, Package, Loader2, CheckCircle, Percent } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
@@ -51,6 +51,11 @@ export default function ProductDetail() {
 
   const mainImage = product.images?.[0] || "https://placehold.co/800x600?text=No+Image";
 
+  const currentPrice = parseFloat(product.price);
+  const comparePrice = product.compareAtPrice ? parseFloat(product.compareAtPrice) : null;
+  const hasDiscount = comparePrice && comparePrice > currentPrice;
+  const discountPercent = hasDiscount ? Math.round(((comparePrice - currentPrice) / comparePrice) * 100) : 0;
+
   return (
     <div className="min-h-screen bg-background font-body">
       <Navbar />
@@ -91,6 +96,12 @@ export default function ProductDetail() {
             transition={{ delay: 0.1 }}
           >
             <div className="flex flex-wrap items-center gap-2 mb-4">
+              {hasDiscount && (
+                <Badge className="bg-red-500 text-white border-0 gap-1">
+                  <Percent className="w-3 h-3" />
+                  {discountPercent}% OFF
+                </Badge>
+              )}
               {product.stock > 0 ? (
                 <Badge className="bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
                   <CheckCircle className="w-3 h-3 mr-1" /> In Stock ({product.stock})
@@ -105,8 +116,22 @@ export default function ProductDetail() {
 
             <h1 className="text-3xl lg:text-4xl font-display font-bold mb-4">{product.name}</h1>
             
-            <div className="text-4xl font-bold text-primary mb-6">
-              {formatKWD(product.price)}
+            <div className="mb-6">
+              <div className="flex items-baseline gap-3">
+                <span className="text-4xl font-bold text-primary">
+                  {formatKWD(product.price)}
+                </span>
+                {hasDiscount && (
+                  <span className="text-xl text-muted-foreground line-through">
+                    {formatKWD(product.compareAtPrice!)}
+                  </span>
+                )}
+              </div>
+              {hasDiscount && (
+                <div className="text-sm text-green-600 font-medium mt-1">
+                  You save {formatKWD((comparePrice - currentPrice).toFixed(3))}
+                </div>
+              )}
             </div>
 
             <p className="text-lg text-muted-foreground mb-8 leading-relaxed">

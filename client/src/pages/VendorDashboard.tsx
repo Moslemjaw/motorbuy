@@ -44,6 +44,7 @@ export default function VendorDashboard() {
   const [productName, setProductName] = useState("");
   const [productDesc, setProductDesc] = useState("");
   const [productPrice, setProductPrice] = useState("");
+  const [productComparePrice, setProductComparePrice] = useState("");
   const [productStock, setProductStock] = useState("");
   const [productBrand, setProductBrand] = useState("");
   const [productCategory, setProductCategory] = useState("");
@@ -77,8 +78,8 @@ export default function VendorDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({ title: "Product Added" });
-      setProductName(""); setProductDesc(""); setProductPrice(""); setProductStock("");
-      setProductBrand(""); setProductCategory(""); setProductImages([]); setProductWarranty("");
+      setProductName(""); setProductDesc(""); setProductPrice(""); setProductComparePrice("");
+      setProductStock(""); setProductBrand(""); setProductCategory(""); setProductImages([]); setProductWarranty("");
     },
     onError: () => toast({ title: "Error", description: "Failed to add product.", variant: "destructive" }),
   });
@@ -126,6 +127,7 @@ export default function VendorDashboard() {
       name: productName,
       description: productDesc,
       price: productPrice,
+      compareAtPrice: productComparePrice || null,
       stock: parseInt(productStock) || 0,
       brand: productBrand,
       images: productImages.length > 0 ? productImages : ["https://placehold.co/400x300?text=Product"],
@@ -225,13 +227,17 @@ export default function VendorDashboard() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Price (KWD) *</Label>
+                      <Label>Sale Price (KWD) *</Label>
                       <Input type="number" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} placeholder="0.000" data-testid="input-product-price" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Stock</Label>
-                      <Input type="number" value={productStock} onChange={(e) => setProductStock(e.target.value)} placeholder="0" data-testid="input-product-stock" />
+                      <Label>Original Price (KWD)</Label>
+                      <Input type="number" value={productComparePrice} onChange={(e) => setProductComparePrice(e.target.value)} placeholder="For discounts" data-testid="input-compare-price" />
                     </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Stock</Label>
+                    <Input type="number" value={productStock} onChange={(e) => setProductStock(e.target.value)} placeholder="0" data-testid="input-product-stock" />
                   </div>
                   <div className="space-y-2">
                     <Label>Brand</Label>
