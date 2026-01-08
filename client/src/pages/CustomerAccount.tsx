@@ -109,14 +109,14 @@ export default function CustomerAccount() {
     <div className="min-h-screen bg-background font-body pb-20">
       <Navbar />
       
-      <div className="bg-primary/10 py-12 mb-8 border-b border-primary/20">
+      <div className="bg-primary/10 py-6 md:py-12 mb-6 md:mb-8 border-b border-primary/20">
         <div className="container mx-auto px-4">
-          <h1 className="text-3xl font-display font-bold mb-2">My Account</h1>
-          <p className="text-muted-foreground">Manage your profile and settings.</p>
+          <h1 className="text-2xl md:text-3xl font-display font-bold mb-1 md:mb-2">My Account</h1>
+          <p className="text-sm md:text-base text-muted-foreground">Manage your profile and settings.</p>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 grid md:grid-cols-2 gap-8">
+      <div className="container mx-auto px-4 grid md:grid-cols-2 gap-6 md:gap-8">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -124,23 +124,23 @@ export default function CustomerAccount() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="relative">
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="relative shrink-0">
                 {displayImage ? (
-                  <img src={displayImage} alt="Profile" className="w-20 h-20 rounded-full object-cover" />
+                  <img src={displayImage} alt="Profile" className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover" />
                 ) : (
-                  <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center text-primary text-3xl font-bold">
+                  <div className="w-16 h-16 md:w-20 md:h-20 bg-primary/20 rounded-full flex items-center justify-center text-primary text-2xl md:text-3xl font-bold">
                     {user.firstName?.[0] || user.email?.[0]?.toUpperCase() || "U"}
                   </div>
                 )}
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} data-testid="input-photo-file" />
-                <button onClick={handlePhotoClick} disabled={isUploading} className="absolute bottom-0 right-0 w-7 h-7 bg-primary text-white rounded-full flex items-center justify-center shadow-lg disabled:opacity-50" data-testid="button-change-photo">
-                  {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                <button onClick={handlePhotoClick} disabled={isUploading} className="absolute bottom-0 right-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-white rounded-full flex items-center justify-center shadow-lg disabled:opacity-50" data-testid="button-change-photo">
+                  {isUploading ? <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" /> : <Camera className="w-3 h-3 md:w-4 md:h-4" />}
                 </button>
               </div>
-              <div>
-                <div className="font-semibold text-lg">{user.firstName} {user.lastName}</div>
-                <div className="text-sm text-muted-foreground">{user.email}</div>
+              <div className="min-w-0">
+                <div className="font-semibold text-base md:text-lg truncate">{user.firstName} {user.lastName}</div>
+                <div className="text-xs md:text-sm text-muted-foreground truncate">{user.email}</div>
               </div>
             </div>
             

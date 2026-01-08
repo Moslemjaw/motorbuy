@@ -80,12 +80,12 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
         </div>
         
-        <CardContent className="p-5">
-          <h3 className="font-display font-bold text-lg line-clamp-1 group-hover:text-primary transition-colors mb-2">
+        <CardContent className="p-3 md:p-5">
+          <h3 className="font-display font-bold text-base md:text-lg line-clamp-1 group-hover:text-primary transition-colors mb-1 md:mb-2">
             {product.name}
           </h3>
           
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
+          <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 mb-3 md:mb-4 leading-relaxed">
             {product.description}
           </p>
           
@@ -99,9 +99,9 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
         </CardContent>
         
-        <CardFooter className="p-5 pt-0">
+        <CardFooter className="p-3 md:p-5 pt-0">
           <Button 
-            className="w-full gap-2 rounded-xl h-11 shadow-md shadow-primary/10" 
+            className="w-full gap-2 rounded-xl h-10 md:h-11 text-sm md:text-base shadow-md shadow-primary/10" 
             onClick={handleAddToCart}
             disabled={product.stock <= 0 || isPending}
             data-testid={`button-add-cart-${product.id}`}

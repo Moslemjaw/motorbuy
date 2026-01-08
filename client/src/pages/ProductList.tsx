@@ -18,8 +18,8 @@ export default function ProductList() {
   
   const filters = {
     search: search || undefined,
-    categoryId: categoryId === "all" ? undefined : Number(categoryId),
-    sortBy: sortBy as any
+    categoryId: categoryId === "all" ? undefined : categoryId,
+    sortBy: sortBy as 'price_asc' | 'price_desc' | 'newest'
   };
 
   const { data: products, isLoading } = useProducts(filters);
@@ -35,7 +35,7 @@ export default function ProductList() {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <section className="relative gradient-dark text-white py-16 overflow-hidden">
+      <section className="relative gradient-dark text-white py-8 md:py-16 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
@@ -43,16 +43,16 @@ export default function ProductList() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center">
-                <Package className="w-6 h-6" />
+            <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-white/10 flex items-center justify-center">
+                <Package className="w-5 h-5 md:w-6 md:h-6" />
               </div>
               <Badge className="bg-white/10 border-white/20 text-white">
                 {products?.length || 0} Products
               </Badge>
             </div>
-            <h1 className="text-4xl lg:text-5xl font-display font-bold mb-4">Browse Parts</h1>
-            <p className="text-white/70 text-lg max-w-xl">
+            <h1 className="text-2xl md:text-4xl lg:text-5xl font-display font-bold mb-2 md:mb-4">Browse Parts</h1>
+            <p className="text-white/70 text-sm md:text-lg max-w-xl">
               Find exactly what you need for your vehicle from trusted vendors.
             </p>
           </motion.div>
@@ -136,7 +136,7 @@ export default function ProductList() {
             </Button>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
             {products?.map((product, index) => (
               <motion.div
                 key={product.id}

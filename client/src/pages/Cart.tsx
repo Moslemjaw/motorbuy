@@ -71,18 +71,18 @@ export default function Cart() {
             </Link>
           </motion.div>
         ) : (
-          <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-4">
+          <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
+            <div className="lg:col-span-2 space-y-3 md:space-y-4">
               {cartItems.map((item, index) => (
                 <motion.div 
                   key={item.id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="flex gap-5 p-5 bg-card border rounded-2xl items-center hover:shadow-lg transition-shadow"
+                  className="flex gap-3 md:gap-5 p-3 md:p-5 bg-card border rounded-xl md:rounded-2xl items-center hover:shadow-lg transition-shadow"
                   data-testid={`cart-item-${item.id}`}
                 >
-                  <div className="w-24 h-24 bg-gradient-to-br from-muted to-muted/50 rounded-xl shrink-0 overflow-hidden">
+                  <div className="w-16 h-16 md:w-24 md:h-24 bg-gradient-to-br from-muted to-muted/50 rounded-lg md:rounded-xl shrink-0 overflow-hidden">
                     <img 
                       src={item.product.images?.[0] || "https://placehold.co/100"} 
                       alt={item.product.name}
@@ -90,21 +90,22 @@ export default function Cart() {
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-display font-bold text-lg truncate">{item.product.name}</h3>
+                    <h3 className="font-display font-bold text-sm md:text-lg truncate">{item.product.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="secondary" className="text-xs">Qty: {item.quantity}</Badge>
                     </div>
+                    <div className="font-bold text-base md:hidden mt-1">{formatKWD(Number(item.product.price) * item.quantity)}</div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <div className="font-bold text-xl mb-2">{formatKWD(Number(item.product.price) * item.quantity)}</div>
+                  <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                    <div className="font-bold text-xl mb-2 hidden md:block">{formatKWD(Number(item.product.price) * item.quantity)}</div>
                     <Button 
                       variant="ghost" 
                       size="icon"
-                      className="text-destructive hover:bg-destructive/10"
+                      className="text-destructive hover:bg-destructive/10 h-11 w-11"
                       onClick={() => removeItem(item.id)}
                       data-testid={`button-remove-${item.id}`}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-5 h-5" />
                     </Button>
                   </div>
                 </motion.div>

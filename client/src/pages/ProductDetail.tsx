@@ -58,10 +58,10 @@ export default function ProductDetail() {
   const savings = hasDiscount ? (comparePrice - currentPrice).toFixed(3) : "0";
 
   return (
-    <div className="min-h-screen bg-background font-body">
+    <div className="min-h-screen bg-background font-body pb-24 md:pb-0">
       <Navbar />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 md:py-8">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -115,7 +115,7 @@ export default function ProductDetail() {
               )}
             </div>
 
-            <h1 className="text-3xl lg:text-4xl font-display font-bold mb-4">{product.name}</h1>
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold mb-4">{product.name}</h1>
             
             <div className="mb-6">
               <div className="flex items-baseline gap-3">
@@ -139,7 +139,7 @@ export default function ProductDetail() {
               {product.description}
             </p>
 
-            <div className="flex gap-4 mb-8">
+            <div className="hidden md:flex gap-4 mb-8">
               <Button 
                 size="lg" 
                 className="flex-1 h-14 text-lg rounded-xl gap-2 shadow-lg shadow-primary/20" 
@@ -200,12 +200,33 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      <footer className="gradient-dark text-white py-12 mt-16">
+      <footer className="hidden md:block gradient-dark text-white py-12 mt-16">
         <div className="container mx-auto px-4 text-center">
           <div className="font-display font-bold text-2xl mb-2">MotorBuy</div>
           <p className="text-white/50 text-sm">Kuwait's premier auto parts marketplace</p>
         </div>
       </footer>
+
+      <div className="fixed bottom-0 left-0 right-0 md:hidden bg-background border-t shadow-lg z-50">
+        <div className="container mx-auto px-4 py-3 flex items-center gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="text-lg font-bold text-primary">{formatKWD(product.price)}</div>
+            {hasDiscount && (
+              <div className="text-xs text-muted-foreground line-through">{formatKWD(product.compareAtPrice!)}</div>
+            )}
+          </div>
+          <Button 
+            size="lg"
+            className="flex-1 h-12 gap-2 shadow-lg shadow-primary/20" 
+            onClick={handleAddToCart} 
+            disabled={isPending || product.stock <= 0}
+            data-testid="button-add-to-cart-mobile"
+          >
+            <ShoppingCart className="w-5 h-5" />
+            {isPending ? "Adding..." : "Add to Cart"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -46,11 +46,11 @@ export default function VendorProfile() {
     <div className="min-h-screen bg-background font-body">
       <Navbar />
       
-      <div className="relative gradient-dark text-white py-16 mb-8">
+      <div className="relative gradient-dark text-white py-8 md:py-16 mb-6 md:mb-8">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-primary/30 via-transparent to-transparent" />
         <div className="max-w-6xl mx-auto px-4 relative z-10">
-          <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
-            <div className="w-32 h-32 md:w-36 md:h-36 rounded-full bg-gradient-to-br from-primary to-accent p-1 shadow-2xl shadow-primary/30 shrink-0">
+          <div className="flex flex-col md:flex-row gap-4 md:gap-8 items-center md:items-start">
+            <div className="w-24 h-24 md:w-36 md:h-36 rounded-full bg-gradient-to-br from-primary to-accent p-1 shadow-2xl shadow-primary/30 shrink-0">
               <div className="w-full h-full rounded-full bg-background overflow-hidden flex items-center justify-center">
                 {vendor.logoUrl ? (
                   <img src={vendor.logoUrl} alt={vendor.storeName} className="w-full h-full object-cover" />
@@ -140,7 +140,7 @@ export default function VendorProfile() {
               <p>No products yet</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
               {vendorProducts.map((product, index) => (
                 <motion.div
                   key={product.id}

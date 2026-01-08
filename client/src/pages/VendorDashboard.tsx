@@ -151,24 +151,24 @@ export default function VendorDashboard() {
     <div className="min-h-screen bg-background font-body pb-20">
       <Navbar />
       
-      <div className="bg-primary/10 py-12 mb-8 border-b border-primary/20">
+      <div className="bg-primary/10 py-6 md:py-12 mb-6 md:mb-8 border-b border-primary/20">
         <div className="container mx-auto px-4">
           <Link href="/vendor/account">
-            <Button variant="ghost" size="sm" className="mb-4" data-testid="button-back">
-              <ArrowLeft className="w-4 h-4 mr-2" /> Back to Account
+            <Button variant="ghost" size="sm" className="mb-3 md:mb-4" data-testid="button-back">
+              <ArrowLeft className="w-4 h-4 mr-2" /> Back
             </Button>
           </Link>
-          <h1 className="text-3xl font-display font-bold mb-2">Vendor Dashboard</h1>
-          <p className="text-muted-foreground">Manage orders, products, and stories.</p>
+          <h1 className="text-2xl md:text-3xl font-display font-bold mb-1 md:mb-2">Vendor Dashboard</h1>
+          <p className="text-sm md:text-base text-muted-foreground">Manage orders, products, and stories.</p>
         </div>
       </div>
 
       <div className="container mx-auto px-4">
         <Tabs defaultValue="orders" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="orders" data-testid="tab-orders">Orders</TabsTrigger>
-            <TabsTrigger value="products" data-testid="tab-products">Add Products</TabsTrigger>
-            <TabsTrigger value="stories" data-testid="tab-stories">Stories</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 mb-6 h-auto">
+            <TabsTrigger value="orders" className="py-3 text-xs md:text-sm" data-testid="tab-orders">Orders</TabsTrigger>
+            <TabsTrigger value="products" className="py-3 text-xs md:text-sm" data-testid="tab-products">Products</TabsTrigger>
+            <TabsTrigger value="stories" className="py-3 text-xs md:text-sm" data-testid="tab-stories">Stories</TabsTrigger>
           </TabsList>
 
           <TabsContent value="orders">
@@ -189,15 +189,15 @@ export default function VendorDashboard() {
                 ) : (
                   <div className="space-y-3">
                     {vendorOrders.map((order) => (
-                      <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg" data-testid={`vendor-order-${order.id}`}>
+                      <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 md:p-4 border rounded-lg" data-testid={`vendor-order-${order.id}`}>
                         <div>
-                          <div className="font-medium">Order #{order.id}</div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="font-medium text-sm md:text-base">Order #{String(order.id).slice(-8)}</div>
+                          <div className="text-xs md:text-sm text-muted-foreground">
                             {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
                           </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                          <span className="font-bold">{formatKWD(order.total)}</span>
+                        <div className="flex items-center gap-2 md:gap-4">
+                          <span className="font-bold text-sm md:text-base">{formatKWD(order.total)}</span>
                           <Badge variant={order.status === "delivered" ? "default" : "secondary"}>{order.status}</Badge>
                         </div>
                       </div>
