@@ -1,9 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole, useCart } from "@/hooks/use-motorbuy";
-import { ShoppingCart, Menu, User, Store, ShieldCheck, LogOut, RefreshCw } from "lucide-react";
+import { ShoppingCart, Menu, User, Store, ShieldCheck, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,9 +10,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
@@ -113,31 +109,31 @@ export function Navbar() {
                 
                 <DropdownMenuSeparator />
                 
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    <span>Switch Role</span>
-                    <Badge variant="outline" className="ml-2 text-xs">{role}</Badge>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    {["customer", "vendor", "admin"].map((r) => (
-                      <DropdownMenuItem 
-                        key={r}
-                        onClick={async () => {
-                          await apiRequest("POST", "/api/roles/switch", { role: r });
-                          queryClient.invalidateQueries({ queryKey: ["/api/roles"] });
-                        }}
-                        className={role === r ? "bg-accent" : ""}
-                        data-testid={`switch-role-${r}`}
-                      >
-                        {r === "customer" && <User className="mr-2 h-4 w-4" />}
-                        {r === "vendor" && <Store className="mr-2 h-4 w-4" />}
-                        {r === "admin" && <ShieldCheck className="mr-2 h-4 w-4" />}
-                        <span className="capitalize">{r}</span>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
+                <DropdownMenuLabel className="text-xs text-muted-foreground font-normal pt-2">
+                  Test as different role:
+                </DropdownMenuLabel>
+                <div className="flex gap-1 px-2 pb-2">
+                  {[
+                    { key: "customer", label: "Customer", icon: User },
+                    { key: "vendor", label: "Vendor", icon: Store },
+                    { key: "admin", label: "Admin", icon: ShieldCheck },
+                  ].map(({ key, label, icon: Icon }) => (
+                    <Button
+                      key={key}
+                      size="sm"
+                      variant={role === key ? "default" : "outline"}
+                      className="flex-1 text-xs h-8"
+                      onClick={async () => {
+                        await apiRequest("POST", "/api/roles/switch", { role: key });
+                        queryClient.invalidateQueries({ queryKey: ["/api/roles"] });
+                      }}
+                      data-testid={`switch-role-${key}`}
+                    >
+                      <Icon className="w-3 h-3 mr-1" />
+                      {label}
+                    </Button>
+                  ))}
+                </div>
                 
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => logout()} className="text-destructive">
