@@ -85,6 +85,81 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/analytics", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
+      const analytics = await storage.getAnalytics();
+      res.json(analytics);
+    } catch (e) {
+      console.error("Error fetching analytics:", e);
+      res.status(500).json({ message: "Failed to fetch analytics" });
+    }
+  });
+
+  app.post("/api/admin/categories", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
+      const { name, slug, imageUrl } = req.body;
+      if (!name || !slug) return res.status(400).json({ message: "Name and slug are required" });
+      const category = await storage.createCategory({ name, slug, imageUrl: imageUrl || `https://placehold.co/100x100?text=${encodeURIComponent(name)}` });
+      res.status(201).json(category);
+    } catch (e) {
+      console.error("Error creating category:", e);
+      res.status(500).json({ message: "Failed to create category" });
+    }
+  });
+
+  app.patch("/api/admin/categories/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
+      const updated = await storage.updateCategory(req.params.id, req.body);
+      if (!updated) return res.status(404).json({ message: "Category not found" });
+      res.json(updated);
+    } catch (e) {
+      console.error("Error updating category:", e);
+      res.status(500).json({ message: "Failed to update category" });
+    }
+  });
+
+  app.delete("/api/admin/categories/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
+      await storage.deleteCategory(req.params.id);
+      res.status(204).send();
+    } catch (e) {
+      console.error("Error deleting category:", e);
+      res.status(500).json({ message: "Failed to delete category" });
+    }
+  });
+
+  app.post("/api/admin/vendors", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
+      const { storeName, description, userId } = req.body;
+      if (!storeName) return res.status(400).json({ message: "Store name is required" });
+      const vendor = await storage.createVendor({
+        storeName,
+        description: description || "",
+        userId: userId || `admin-created-${Date.now()}`,
+        isApproved: true,
+        commissionType: "percentage",
+        commissionValue: "5",
+        grossSalesKwd: "0",
+        pendingPayoutKwd: "0",
+        lifetimePayoutsKwd: "0",
+      });
+      res.status(201).json(vendor);
+    } catch (e) {
+      console.error("Error creating vendor:", e);
+      res.status(500).json({ message: "Failed to create vendor" });
+    }
+  });
+
   app.get(api.vendors.list.path, async (req, res) => {
     const vendors = await storage.getVendors();
     res.json(vendors);

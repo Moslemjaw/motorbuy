@@ -13,6 +13,11 @@ export interface IStorage {
   updateVendor(id: string, updates: any): Promise<any>;
   getCategories(): Promise<any[]>;
   createCategory(category: any): Promise<any>;
+  updateCategory(id: string, updates: any): Promise<any>;
+  deleteCategory(id: string): Promise<void>;
+  getAllUsers(): Promise<any[]>;
+  getAnalytics(): Promise<any>;
+  getAllOrders(): Promise<any[]>;
   getProducts(filters?: { categoryId?: string; vendorId?: string; search?: string; sortBy?: string }): Promise<any[]>;
   getProduct(id: string): Promise<any | undefined>;
   createProduct(product: any): Promise<any>;
@@ -101,6 +106,87 @@ export class MongoStorage implements IStorage {
   async createCategory(category: any): Promise<any> {
     const newCategory = await Category.create(category);
     return toPlainObject(newCategory);
+  }
+
+  async updateCategory(id: string, updates: any): Promise<any> {
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    const updated = await Category.findByIdAndUpdate(id, updates, { new: true });
+    return toPlainObject(updated);
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    if (!mongoose.Types.ObjectId.isValid(id)) return;
+    await Category.findByIdAndDelete(id);
+  }
+
+  async getAllUsers(): Promise<any[]> {
+    const users = await User.find({});
+    const usersWithRoles = await Promise.all(users.map(async (user: any) => {
+      const role = await Role.findOne({ userId: user._id.toString() });
+      return {
+        id: user._id.toString(),
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        profileImageUrl: user.profileImageUrl,
+        createdAt: user.createdAt,
+        role: role?.role || "customer"
+      };
+    }));
+    return usersWithRoles;
+  }
+
+  async getAnalytics(): Promise<any> {
+    const orders = await Order.find({});
+    const orderItems = await OrderItem.find({}).populate('productId');
+    const vendors = await Vendor.find({});
+    const products = await Product.find({});
+    const users = await User.find({});
+    const categories = await Category.find({});
+
+    const totalRevenue = orders.reduce((sum, o: any) => sum + parseFloat(o.total || "0"), 0);
+    const totalOrders = orders.length;
+    const totalProducts = products.length;
+    const totalUsers = users.length;
+    const totalVendors = vendors.length;
+    const totalCategories = categories.length;
+
+    const salesByCategory: Record<string, number> = {};
+    const salesByVendor: Record<string, number> = {};
+    
+    for (const item of orderItems) {
+      const product = item.productId as any;
+      if (product) {
+        const catId = product.categoryId?.toString() || 'unknown';
+        const vendorId = product.vendorId?.toString() || 'unknown';
+        const amount = parseFloat((item as any).price || "0") * ((item as any).quantity || 1);
+        
+        salesByCategory[catId] = (salesByCategory[catId] || 0) + amount;
+        salesByVendor[vendorId] = (salesByVendor[vendorId] || 0) + amount;
+      }
+    }
+
+    const recentOrders = orders
+      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 10)
+      .map(toPlainObject);
+
+    return {
+      totalRevenue: totalRevenue.toFixed(3),
+      totalOrders,
+      totalProducts,
+      totalUsers,
+      totalVendors,
+      totalCategories,
+      salesByCategory,
+      salesByVendor,
+      recentOrders
+    };
+  }
+
+  async getAllOrders(): Promise<any[]> {
+    const orders = await Order.find({}).sort({ createdAt: -1 });
+    return orders.map(toPlainObject);
   }
 
   async getProducts(filters?: { categoryId?: string; vendorId?: string; search?: string; sortBy?: string }): Promise<any[]> {
