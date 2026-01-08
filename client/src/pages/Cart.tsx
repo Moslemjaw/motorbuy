@@ -4,6 +4,7 @@ import { useCart, useRemoveFromCart, useCreateOrder } from "@/hooks/use-motorbuy
 import { Trash2, ShoppingBag, ArrowRight, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
+import { formatKWD } from "@/lib/currency";
 
 export default function Cart() {
   const { data: cartItems, isLoading } = useCart();
@@ -79,7 +80,7 @@ export default function Cart() {
                     <p className="text-muted-foreground text-sm">Qty: {item.quantity}</p>
                   </div>
                   <div className="text-right">
-                    <div className="font-bold text-lg mb-2">${(Number(item.product.price) * item.quantity).toFixed(2)}</div>
+                    <div className="font-bold text-lg mb-2">{formatKWD(Number(item.product.price) * item.quantity)}</div>
                     <Button 
                       variant="ghost" 
                       size="sm" 
@@ -99,7 +100,7 @@ export default function Cart() {
                 <div className="space-y-2 mb-6 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>{formatKWD(total)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Shipping</span>
@@ -107,7 +108,7 @@ export default function Cart() {
                   </div>
                   <div className="border-t pt-2 mt-2 flex justify-between font-bold text-lg">
                     <span>Total</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>{formatKWD(total)}</span>
                   </div>
                 </div>
                 

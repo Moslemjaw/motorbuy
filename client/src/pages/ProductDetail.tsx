@@ -7,6 +7,7 @@ import { ShoppingCart, Truck, ShieldCheck, ArrowLeft, Store } from "lucide-react
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { formatKWD } from "@/lib/currency";
 
 export default function ProductDetail() {
   const [, params] = useRoute("/products/:id");
@@ -69,7 +70,7 @@ export default function ProductDetail() {
 
             <h1 className="text-4xl font-display font-bold mb-2">{product.name}</h1>
             <div className="text-3xl font-bold text-primary mb-6">
-              ${Number(product.price).toFixed(2)}
+              {formatKWD(product.price)}
             </div>
 
             <p className="text-lg text-muted-foreground mb-8 leading-relaxed">

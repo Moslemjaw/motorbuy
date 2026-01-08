@@ -11,6 +11,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { formatKWD } from "@/lib/currency";
 
 export default function Account() {
   const { user, isAuthenticated, isLoading: isAuthLoading, logout } = useAuth();
@@ -105,7 +106,7 @@ export default function Account() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold">${Number(order.total).toFixed(2)}</div>
+                      <div className="font-bold">{formatKWD(order.total)}</div>
                       <Badge variant={order.status === "delivered" ? "default" : "secondary"}>
                         {order.status}
                       </Badge>

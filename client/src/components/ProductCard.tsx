@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { ShoppingCart } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { formatKWD } from "@/lib/currency";
 
 interface ProductCardProps {
   product: Product & { vendor?: Vendor };
@@ -60,7 +61,7 @@ export function ProductCard({ product }: ProductCardProps) {
               {product.name}
             </h3>
             <Badge variant="secondary" className="font-mono ml-2 shrink-0">
-              ${Number(product.price).toFixed(2)}
+              {formatKWD(product.price)}
             </Badge>
           </div>
           
