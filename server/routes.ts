@@ -23,6 +23,18 @@ export async function registerRoutes(
     res.json({ role });
   });
 
+  // Switch role (DEVELOPMENT ONLY - remove before production)
+  if (process.env.NODE_ENV === "development") {
+    app.post("/api/roles/switch", isAuthenticated, async (req: any, res) => {
+      const { role } = req.body;
+      if (!["customer", "vendor", "admin"].includes(role)) {
+        return res.status(400).json({ message: "Invalid role" });
+      }
+      await storage.setUserRole(req.user.claims.sub, role);
+      res.json({ role, message: `Switched to ${role} role` });
+    });
+  }
+
   // Vendors
   app.get(api.vendors.list.path, async (req, res) => {
     const vendors = await storage.getVendors();

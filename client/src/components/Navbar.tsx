@@ -1,8 +1,9 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole, useCart } from "@/hooks/use-motorbuy";
-import { ShoppingCart, Menu, User, Store, ShieldCheck, LogOut } from "lucide-react";
+import { ShoppingCart, Menu, User, Store, ShieldCheck, LogOut, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,9 +11,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export function Navbar() {
   const [location] = useLocation();
@@ -105,6 +110,34 @@ export function Navbar() {
                     </DropdownMenuItem>
                   </Link>
                 )}
+                
+                <DropdownMenuSeparator />
+                
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    <span>Switch Role</span>
+                    <Badge variant="outline" className="ml-2 text-xs">{role}</Badge>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {["customer", "vendor", "admin"].map((r) => (
+                      <DropdownMenuItem 
+                        key={r}
+                        onClick={async () => {
+                          await apiRequest("POST", "/api/roles/switch", { role: r });
+                          queryClient.invalidateQueries({ queryKey: ["/api/roles"] });
+                        }}
+                        className={role === r ? "bg-accent" : ""}
+                        data-testid={`switch-role-${r}`}
+                      >
+                        {r === "customer" && <User className="mr-2 h-4 w-4" />}
+                        {r === "vendor" && <Store className="mr-2 h-4 w-4" />}
+                        {r === "admin" && <ShieldCheck className="mr-2 h-4 w-4" />}
+                        <span className="capitalize">{r}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
                 
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => logout()} className="text-destructive">
