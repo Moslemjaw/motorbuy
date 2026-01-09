@@ -1,7 +1,6 @@
 import { Navbar } from "@/components/Navbar";
 import { LoadingPage } from "@/components/LoadingPage";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useCart, useRemoveFromCart, useCreateOrder, useUpdateCartQuantity } from "@/hooks/use-motorbuy";
 import { useLanguage } from "@/lib/i18n";
@@ -10,36 +9,123 @@ import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { formatKWD } from "@/lib/currency";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Cart() {
-  const { data: cartItems, isLoading } = useCart();
-  const { mutate: removeItem } = useRemoveFromCart();
+  const { isAuthenticated } = useAuth();
+  const { data: cartItems, isLoading, error } = useCart();
+  const { mutate: removeItem, isPending: isRemoving } = useRemoveFromCart();
   const { mutate: updateQuantity, isPending: isUpdating } = useUpdateCartQuantity();
   const { mutate: createOrder, isPending: isOrdering } = useCreateOrder();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const { t, isRTL } = useLanguage();
 
-  const total = cartItems?.reduce((sum, item) => sum + (Number(item.product.price) * item.quantity), 0) || 0;
+  // Redirect to auth if not authenticated
+  if (!isAuthenticated && !isLoading) {
+    setLocation("/auth");
+    return null;
+  }
+
+  const total = cartItems?.reduce((sum, item) => {
+    if (!item.product) return sum;
+    return sum + (Number(item.product.price) * item.quantity);
+  }, 0) || 0;
 
   const handleCheckout = () => {
+    if (!cartItems || cartItems.length === 0) {
+      toast({ 
+        title: t("cart.empty"), 
+        description: t("cart.emptyDesc"), 
+        variant: "destructive" 
+      });
+      return;
+    }
+
     createOrder(undefined, {
       onSuccess: () => {
-        toast({ title: t("cart.orderPlaced"), description: t("cart.orderPlacedDesc") });
-        setLocation("/account");
+        toast({ 
+          title: t("cart.orderPlaced"), 
+          description: t("cart.orderPlacedDesc") 
+        });
+        setTimeout(() => {
+          setLocation("/orders");
+        }, 1000);
       },
-      onError: () => {
-        toast({ title: t("cart.checkoutSim"), description: t("cart.checkoutSimDesc") });
+      onError: (error: any) => {
+        const message = error?.message || t("cart.checkoutSimDesc");
+        toast({ 
+          title: t("cart.checkoutSim") || "Checkout Error", 
+          description: message, 
+          variant: "destructive" 
+        });
       }
     });
   };
 
-  if (isLoading) return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <LoadingPage message="Loading cart..." />
-    </div>
-  );
+  const handleRemoveItem = (itemId: string, productName: string) => {
+    removeItem(itemId, {
+      onSuccess: () => {
+        toast({ 
+          title: t("cart.itemRemoved") || "Item Removed", 
+          description: `${productName} ${t("cart.removedFromCart") || "removed from cart"}` 
+        });
+      },
+      onError: () => {
+        toast({ 
+          title: t("auth.error"), 
+          description: t("cart.removeError") || "Failed to remove item", 
+          variant: "destructive" 
+        });
+      }
+    });
+  };
+
+  const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
+    if (newQuantity < 1) {
+      toast({ 
+        title: t("cart.invalidQuantity") || "Invalid Quantity", 
+        description: t("cart.quantityMustBePositive") || "Quantity must be at least 1", 
+        variant: "destructive" 
+      });
+      return;
+    }
+    updateQuantity({ id: itemId, quantity: newQuantity }, {
+      onError: () => {
+        toast({ 
+          title: t("auth.error"), 
+          description: t("cart.updateError") || "Failed to update quantity", 
+          variant: "destructive" 
+        });
+      }
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <LoadingPage message="Loading cart..." />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-10">
+          <div className="text-center py-24">
+            <h2 className="text-2xl font-display font-bold mb-3">{t("auth.error")}</h2>
+            <p className="text-muted-foreground mb-8">{String(error)}</p>
+            <Link href="/products">
+              <Button>{t("cart.startShopping")}</Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
 
@@ -55,7 +141,7 @@ export default function Cart() {
         >
           <h1 className="text-3xl lg:text-4xl font-display font-bold mb-2">{t("cart.title")}</h1>
           <p className="text-muted-foreground">
-            {cartItems?.length 
+            {cartItems && cartItems.length > 0
               ? `${cartItems.length} ${cartItems.length > 1 ? t("cart.items") : t("cart.item")}` 
               : t("cart.empty")}
           </p>
@@ -83,83 +169,96 @@ export default function Cart() {
         ) : (
           <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
             <div className="lg:col-span-2 space-y-3 md:space-y-4">
-              {cartItems.map((item, index) => (
-                <motion.div 
-                  key={item.id}
-                  initial={{ opacity: 0, x: isRTL ? 20 : -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="flex gap-3 md:gap-5 p-3 md:p-5 bg-card border rounded-xl md:rounded-2xl items-center hover:shadow-lg transition-shadow"
-                  data-testid={`cart-item-${item.id}`}
-                >
-                  <div className="w-16 h-16 md:w-24 md:h-24 bg-gradient-to-br from-muted to-muted/50 rounded-lg md:rounded-xl shrink-0 overflow-hidden">
-                    <img 
-                      src={item.product.images?.[0] || "https://placehold.co/100"} 
-                      alt={item.product.name}
-                      className="w-full h-full object-cover" 
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-display font-bold text-sm md:text-lg truncate">{item.product.name}</h3>
-                    <div className="flex items-center gap-3 mt-2">
-                      <div className="flex items-center gap-1 border rounded-lg">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => {
-                            if (item.quantity > 1) {
-                              updateQuantity({ id: item.id, quantity: item.quantity - 1 });
-                            }
-                          }}
-                          disabled={isUpdating || item.quantity <= 1}
-                          data-testid={`button-decrease-${item.id}`}
-                        >
-                          <Minus className="w-4 h-4" />
-                        </Button>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={item.quantity}
-                          onChange={(e) => {
-                            const qty = parseInt(e.target.value) || 1;
-                            if (qty > 0) {
-                              updateQuantity({ id: item.id, quantity: qty });
-                            }
-                          }}
-                          className="w-16 h-8 text-center border-0 focus-visible:ring-0"
-                          disabled={isUpdating}
-                          data-testid={`input-quantity-${item.id}`}
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => updateQuantity({ id: item.id, quantity: item.quantity + 1 })}
-                          disabled={isUpdating}
-                          data-testid={`button-increase-${item.id}`}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
+              {cartItems.map((item, index) => {
+                if (!item.product) return null;
+                
+                return (
+                  <motion.div 
+                    key={item.id}
+                    initial={{ opacity: 0, x: isRTL ? 20 : -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="flex gap-3 md:gap-5 p-3 md:p-5 bg-card border rounded-xl md:rounded-2xl items-center hover:shadow-lg transition-shadow"
+                    data-testid={`cart-item-${item.id}`}
+                  >
+                    <div className="w-16 h-16 md:w-24 md:h-24 bg-gradient-to-br from-muted to-muted/50 rounded-lg md:rounded-xl shrink-0 overflow-hidden">
+                      <img 
+                        src={item.product.images?.[0] || "https://placehold.co/100"} 
+                        alt={item.product.name}
+                        className="w-full h-full object-cover" 
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <Link href={`/products/${item.product.id}`}>
+                        <h3 className="font-display font-bold text-sm md:text-lg truncate hover:text-primary transition-colors cursor-pointer">
+                          {item.product.name}
+                        </h3>
+                      </Link>
+                      <div className="flex items-center gap-3 mt-2">
+                        <div className="flex items-center gap-1 border rounded-lg">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                            disabled={isUpdating || item.quantity <= 1}
+                            data-testid={`button-decrease-${item.id}`}
+                          >
+                            <Minus className="w-4 h-4" />
+                          </Button>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const qty = parseInt(e.target.value) || 1;
+                              handleUpdateQuantity(item.id, qty);
+                            }}
+                            className="w-16 h-8 text-center border-0 focus-visible:ring-0"
+                            disabled={isUpdating}
+                            data-testid={`input-quantity-${item.id}`}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                            disabled={isUpdating}
+                            data-testid={`button-increase-${item.id}`}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="font-bold text-base md:hidden mt-2">
+                        {formatKWD(Number(item.product.price) * item.quantity)}
                       </div>
                     </div>
-                    <div className="font-bold text-base md:hidden mt-2">{formatKWD(Number(item.product.price) * item.quantity)}</div>
-                  </div>
-                  <div className="text-right shrink-0 flex flex-col items-end gap-2">
-                    <div className="font-bold text-xl hidden md:block">{formatKWD(Number(item.product.price) * item.quantity)}</div>
-                    <div className="text-sm text-muted-foreground hidden md:block">{formatKWD(item.product.price)} each</div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="text-destructive hover:bg-destructive/10 h-11 w-11"
-                      onClick={() => removeItem(item.id)}
-                      data-testid={`button-remove-${item.id}`}
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </Button>
-                  </div>
-                </motion.div>
-              ))}
+                    <div className="text-right shrink-0 flex flex-col items-end gap-2">
+                      <div className="font-bold text-xl hidden md:block">
+                        {formatKWD(Number(item.product.price) * item.quantity)}
+                      </div>
+                      <div className="text-sm text-muted-foreground hidden md:block">
+                        {formatKWD(item.product.price)} each
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="text-destructive hover:bg-destructive/10 h-11 w-11"
+                        onClick={() => handleRemoveItem(item.id, item.product.name)}
+                        disabled={isRemoving}
+                        data-testid={`button-remove-${item.id}`}
+                      >
+                        {isRemoving ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-5 h-5" />
+                        )}
+                      </Button>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
             
             <div className="lg:col-span-1">
@@ -188,11 +287,14 @@ export default function Cart() {
                 <Button 
                   className="w-full h-14 text-lg rounded-xl shadow-lg shadow-primary/20" 
                   onClick={handleCheckout} 
-                  disabled={isOrdering}
+                  disabled={isOrdering || cartItems.length === 0}
                   data-testid="button-checkout"
                 >
                   {isOrdering ? (
-                    <Loader2 className="animate-spin w-5 h-5" />
+                    <>
+                      <Loader2 className="animate-spin w-5 h-5 mr-2" />
+                      {t("cart.processing") || "Processing..."}
+                    </>
                   ) : (
                     <>{t("cart.checkout")} <ArrowIcon className={`w-5 h-5 ${isRTL ? 'mr-2' : 'ml-2'}`} /></>
                   )}
@@ -221,7 +323,7 @@ export default function Cart() {
       <footer className="gradient-dark text-white py-12 mt-16">
         <div className="container mx-auto px-4 text-center">
           <div className="font-display font-bold text-2xl mb-2">{t("brand.name")}</div>
-          <p className="text-white/50 text-sm">{t("cart.tagline")}</p>
+          <p className="text-white/50 text-sm">{t("products.tagline")}</p>
         </div>
       </footer>
     </div>
