@@ -72,21 +72,13 @@ export default function AuthPage() {
     }
   }, [isAuthenticated, user, isRoleLoading, roleData, refetchRole]);
 
-  // Auto-redirect customers to home page (fallback if handleSubmit redirect didn't work)
+  // Auto-redirect customers to home page immediately (highest priority)
   useEffect(() => {
-    if (
-      isAuthenticated &&
-      user &&
-      !isRoleLoading &&
-      roleData?.role === "customer"
-    ) {
-      // Use a small delay to ensure the redirect happens smoothly
-      const timer = setTimeout(() => {
-        setLocation("/");
-      }, 100);
-      return () => clearTimeout(timer);
+    if (isAuthenticated && user && roleData?.role === "customer") {
+      // Redirect immediately without delay
+      setLocation("/");
     }
-  }, [isAuthenticated, user, isRoleLoading, roleData, setLocation]);
+  }, [isAuthenticated, user, roleData?.role, setLocation]);
 
   // Debug: Log role data and button visibility
   useEffect(() => {
@@ -123,9 +115,12 @@ export default function AuthPage() {
         await login({ email: formData.email, password: formData.password });
         // Invalidate and refetch role after login
         queryClient.invalidateQueries({ queryKey: ["/api/roles"] });
+
+        // Start redirecting immediately - don't wait for role
+        // The useEffect will handle the actual redirect once role is loaded
         const roleResult = await refetchRole();
 
-        // Check if user is a customer and redirect immediately
+        // Check if user is a customer and redirect immediately (no toast)
         if (roleResult.data?.role === "customer") {
           setLocation("/");
           return;
@@ -139,9 +134,11 @@ export default function AuthPage() {
         await signup(formData);
         // Invalidate and refetch role after signup
         queryClient.invalidateQueries({ queryKey: ["/api/roles"] });
+
+        // Start redirecting immediately - don't wait for role
         const roleResult = await refetchRole();
 
-        // Check if user is a customer and redirect immediately
+        // Check if user is a customer and redirect immediately (no toast)
         if (roleResult.data?.role === "customer") {
           setLocation("/");
           return;
@@ -175,15 +172,17 @@ export default function AuthPage() {
     );
   }
 
-  // Show loading page for customers while redirecting (immediate check)
+  // Show loading page for customers while redirecting (immediate check - highest priority)
+  // This prevents the auth page from rendering for customers at all
   if (isAuthenticated && user) {
-    // If role is loading, show loading page
+    // If role is customer, redirect immediately (no auth page content)
+    if (roleData?.role === "customer") {
+      // Redirect is handled by useEffect, but show loading page while it happens
+      return <LoadingPage message="Redirecting to home..." />;
+    }
+    // If role is loading, show loading page (might be customer)
     if (isRoleLoading) {
       return <LoadingPage message="Loading..." />;
-    }
-    // If role is customer, show loading page and redirect will happen
-    if (roleData?.role === "customer") {
-      return <LoadingPage message="Redirecting to home..." />;
     }
   }
 
