@@ -21,8 +21,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { formatKWD } from "@/lib/currency";
 import { useUpload } from "@/hooks/use-upload";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { buildApiUrl } from "@/lib/api-config";
 import type { Order, VendorStory, Vendor } from "@shared/schema";
 
@@ -42,6 +42,7 @@ export default function VendorDashboard() {
   const { data: categories } = useCategories();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: vendorProfile, isLoading: isProfileLoading } = useQuery<Vendor | null>({
     queryKey: ["/api/vendor/profile"],
@@ -73,8 +74,32 @@ export default function VendorDashboard() {
 
   const { data: stories } = useQuery<VendorStory[]>({
     queryKey: ["/api/stories"],
+    queryFn: async () => {
+      const res = await fetch(buildApiUrl("/api/stories"), {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch stories");
+      const data = await res.json();
+      return data;
+    },
   });
-  const myStories = stories?.filter(s => s.vendorId === vendorProfile?.id) || [];
+  
+  // Filter stories by vendorId - ensure both are strings for comparison
+  const myStories = stories?.filter(s => {
+    const storyVendorId = String(s.vendorId || "");
+    const profileVendorId = String(vendorProfile?.id || "");
+    return storyVendorId === profileVendorId;
+  }) || [];
+  
+  // Debug logging
+  useEffect(() => {
+    if (stories && vendorProfile) {
+      console.log("Vendor Dashboard - Stories:", stories);
+      console.log("Vendor Dashboard - Vendor Profile ID:", vendorProfile.id);
+      console.log("Vendor Dashboard - My Stories:", myStories);
+      console.log("Vendor Dashboard - Story vendorIds:", stories.map(s => ({ id: s.id, vendorId: s.vendorId, type: typeof s.vendorId })));
+    }
+  }, [stories, vendorProfile, myStories]);
 
   const [productName, setProductName] = useState("");
   const [productDesc, setProductDesc] = useState("");
@@ -180,8 +205,10 @@ export default function VendorDashboard() {
 
   const addStoryMutation = useMutation({
     mutationFn: async (data: any) => apiRequest("POST", "/api/stories", data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
+    onSuccess: async () => {
+      // Invalidate and refetch stories to ensure the new one appears
+      await queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/stories"] });
       toast({ title: "Spotlight Posted", description: "Your spotlight has been shared with customers." });
       setStoryContent("");
       setStoryImage(null);
