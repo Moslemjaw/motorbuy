@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { formatKWD } from "@/lib/currency";
 import { useUpload } from "@/hooks/use-upload";
@@ -369,28 +369,6 @@ export default function VendorDashboard() {
       vendorId: vendorProfile.id,
       content: storyContent || undefined,
       imageUrl: storyImage || null,
-    });
-  };
-
-  const handleEditStory = (story: any) => {
-    setEditingStory(story);
-    setStoryContent(story.content || "");
-    setStoryImage(story.imageUrl || null);
-    setIsEditStoryDialogOpen(true);
-  };
-
-  const handleUpdateStory = () => {
-    if (!editingStory) return;
-    if (!storyContent && !storyImage) {
-      toast({ title: "Empty Spotlight", description: "Add content or an image.", variant: "destructive" });
-      return;
-    }
-    updateStoryMutation.mutate({
-      id: editingStory.id,
-      data: {
-        content: storyContent || null,
-        imageUrl: storyImage || null,
-      },
     });
   };
 
