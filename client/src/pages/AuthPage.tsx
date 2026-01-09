@@ -209,7 +209,7 @@ export default function AuthPage() {
                           size="lg"
                           data-testid="button-go-dashboard"
                         >
-                          {t("auth.goToDashboard") || "Go to Dashboard"}
+                          Dashboard
                         </Button>
                       </Link>
                     ) : (
@@ -219,7 +219,7 @@ export default function AuthPage() {
                           size="lg"
                           data-testid="button-go-dashboard"
                         >
-                          {t("auth.goToDashboard") || "Go to Dashboard"}
+                          Dashboard
                         </Button>
                       </Link>
                     )

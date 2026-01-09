@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRole, useProducts, useCategories } from "@/hooks/use-motorbuy";
 import { 
   Package, ShoppingCart, Loader2, Plus, Image, Trash2, BookOpen, 
-  Store, TrendingUp, DollarSign, Clock, Wallet, Send
+  Store, TrendingUp, DollarSign, Clock, Wallet, Send, Camera, Save
 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -76,9 +76,14 @@ export default function VendorDashboard() {
 
   const [storeName, setStoreName] = useState("");
   const [storeDescription, setStoreDescription] = useState("");
+  const [storeBio, setStoreBio] = useState("");
+  const [storeLogoUrl, setStoreLogoUrl] = useState<string | null>(null);
+  const [storeCoverImageUrl, setStoreCoverImageUrl] = useState<string | null>(null);
 
   const productImageRef = useRef<HTMLInputElement>(null);
   const storyImageRef = useRef<HTMLInputElement>(null);
+  const storeLogoRef = useRef<HTMLInputElement>(null);
+  const storeCoverRef = useRef<HTMLInputElement>(null);
 
   const { uploadFile: uploadProductImage, isUploading: isUploadingProduct } = useUpload({
     onSuccess: (response) => {
@@ -92,6 +97,22 @@ export default function VendorDashboard() {
     onSuccess: (response) => {
       setStoryImage(response.objectPath);
       toast({ title: "Image Uploaded" });
+    },
+    onError: (error) => toast({ title: "Upload Failed", description: error.message, variant: "destructive" }),
+  });
+
+  const { uploadFile: uploadStoreLogo, isUploading: isUploadingStoreLogo } = useUpload({
+    onSuccess: (response) => {
+      setStoreLogoUrl(response.objectPath);
+      toast({ title: "Logo Uploaded" });
+    },
+    onError: (error) => toast({ title: "Upload Failed", description: error.message, variant: "destructive" }),
+  });
+
+  const { uploadFile: uploadStoreCover, isUploading: isUploadingStoreCover } = useUpload({
+    onSuccess: (response) => {
+      setStoreCoverImageUrl(response.objectPath);
+      toast({ title: "Cover Image Uploaded" });
     },
     onError: (error) => toast({ title: "Upload Failed", description: error.message, variant: "destructive" }),
   });
@@ -137,11 +158,31 @@ export default function VendorDashboard() {
     onError: () => toast({ title: "Error", variant: "destructive" }),
   });
 
+  const updateShopMutation = useMutation({
+    mutationFn: async (data: any) => apiRequest("PATCH", `/api/vendor/profile`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vendor/profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vendors"] });
+      toast({ title: "Shop Updated", description: "Your shop details have been saved." });
+    },
+    onError: () => toast({ title: "Error", description: "Failed to update shop.", variant: "destructive" }),
+  });
+
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated) {
       setLocation("/");
     }
   }, [isAuthLoading, isAuthenticated, setLocation]);
+
+  useEffect(() => {
+    if (vendorProfile) {
+      setStoreName(vendorProfile.storeName || "");
+      setStoreDescription(vendorProfile.description || "");
+      setStoreBio(vendorProfile.bio || "");
+      setStoreLogoUrl(vendorProfile.logoUrl || null);
+      setStoreCoverImageUrl(vendorProfile.coverImageUrl || null);
+    }
+  }, [vendorProfile]);
 
   if (isAuthLoading || isRoleLoading || isProfileLoading) {
     return (
@@ -433,17 +474,144 @@ export default function VendorDashboard() {
           </Card>
         </div>
 
-        <Tabs defaultValue="orders" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6 h-auto">
-            <TabsTrigger value="orders" className="py-3" data-testid="tab-orders">
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Orders
-            </TabsTrigger>
+        <Tabs defaultValue="products" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6 h-auto">
             <TabsTrigger value="products" className="py-3" data-testid="tab-products">
               <Package className="w-4 h-4 mr-2" />
               Products
             </TabsTrigger>
+            <TabsTrigger value="shop" className="py-3" data-testid="tab-shop">
+              <Store className="w-4 h-4 mr-2" />
+              Shop Profile
+            </TabsTrigger>
+            <TabsTrigger value="orders" className="py-3" data-testid="tab-orders">
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              Orders
+            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="shop">
+            <div className="grid lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Store className="w-5 h-5" /> Shop Branding
+                  </CardTitle>
+                  <CardDescription>Update your shop logo and cover image</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="relative h-48 bg-muted rounded-lg overflow-hidden">
+                    {storeCoverImageUrl ? (
+                      <img src={storeCoverImageUrl} alt="Cover" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                        <Image className="w-12 h-12" />
+                      </div>
+                    )}
+                    <input ref={storeCoverRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadStoreCover(f); }} />
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      className="absolute bottom-3 right-3"
+                      onClick={() => storeCoverRef.current?.click()}
+                      disabled={isUploadingStoreCover}
+                    >
+                      {isUploadingStoreCover ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Camera className="w-4 h-4 mr-2" />}
+                      Change Cover
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      {storeLogoUrl ? (
+                        <img src={storeLogoUrl} alt="Logo" className="w-24 h-24 rounded-lg object-cover border" />
+                      ) : (
+                        <div className="w-24 h-24 rounded-lg bg-muted flex items-center justify-center border">
+                          <Store className="w-8 h-8 text-muted-foreground" />
+                        </div>
+                      )}
+                      <input ref={storeLogoRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadStoreLogo(f); }} />
+                      <button 
+                        onClick={() => storeLogoRef.current?.click()}
+                        disabled={isUploadingStoreLogo}
+                        className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center shadow-lg disabled:opacity-50"
+                      >
+                        {isUploadingStoreLogo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <div>
+                      <p className="font-medium">Shop Logo</p>
+                      <p className="text-sm text-muted-foreground">Square image recommended</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Store className="w-5 h-5" /> Shop Details
+                  </CardTitle>
+                  <CardDescription>Update your shop information</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Shop Name *</Label>
+                    <Input 
+                      value={storeName} 
+                      onChange={(e) => setStoreName(e.target.value)} 
+                      placeholder="Your shop name" 
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Short Description</Label>
+                    <Input 
+                      value={storeDescription} 
+                      onChange={(e) => setStoreDescription(e.target.value)} 
+                      placeholder="Brief description of your shop" 
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>About Your Shop</Label>
+                    <Textarea 
+                      value={storeBio} 
+                      onChange={(e) => setStoreBio(e.target.value)} 
+                      placeholder="Tell customers about your shop, what you specialize in..." 
+                      className="min-h-[120px]"
+                    />
+                  </div>
+
+                  <Button 
+                    className="w-full" 
+                    onClick={() => {
+                      const updates: any = {};
+                      if (storeName) updates.storeName = storeName;
+                      if (storeDescription) updates.description = storeDescription;
+                      if (storeBio) updates.bio = storeBio;
+                      if (storeLogoUrl) updates.logoUrl = storeLogoUrl;
+                      if (storeCoverImageUrl) updates.coverImageUrl = storeCoverImageUrl;
+                      updateShopMutation.mutate(updates);
+                    }}
+                    disabled={updateShopMutation.isPending || !storeName.trim()}
+                  >
+                    {updateShopMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Shop Details
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
 
           <TabsContent value="orders">
             <Card>
