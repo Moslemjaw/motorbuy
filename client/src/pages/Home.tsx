@@ -165,22 +165,27 @@ export default function Home() {
         </div>
       </section>
 
-      {featuredStories && featuredStories.length > 0 && (
-        <section className="py-12 md:py-24 gradient-dark text-white overflow-hidden relative">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
-          <div className="container px-4 mx-auto relative z-10">
-            <div className="text-center mb-8 md:mb-14">
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold mb-2 md:mb-3">Community Stories</h2>
-              <p className="text-white/60 text-sm md:text-lg">Updates and announcements from our vendors</p>
+      <section className="py-12 md:py-20">
+        <div className="container px-4 mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 md:gap-4 mb-8 md:mb-12">
+            <div>
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold mb-1 md:mb-2">Vendor Feed</h2>
+              <p className="text-muted-foreground text-sm md:text-lg">Latest updates from our vendors</p>
             </div>
-            <div className="grid md:grid-cols-3 gap-6">
-              {featuredStories.map((story, index) => (
+            <Link href="/stories" className="text-primary font-semibold flex items-center gap-1 group">
+              View All <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+          
+          {stories && stories.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {stories.slice(0, 6).map((story, index) => (
                 <motion.div
                   key={story.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="glass-dark rounded-2xl overflow-hidden group"
+                  transition={{ delay: index * 0.05 }}
+                  className="bg-card rounded-xl border overflow-hidden group hover:shadow-lg transition-shadow"
                 >
                   {story.imageUrl && (
                     <div className="aspect-video overflow-hidden">
@@ -191,31 +196,30 @@ export default function Home() {
                       />
                     </div>
                   )}
-                  <div className="p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center font-bold text-white">
+                  <div className="p-5">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center font-bold text-white text-sm">
                         {story.vendor?.storeName?.[0] || "V"}
                       </div>
-                      <div>
-                        <h4 className="font-semibold">{story.vendor?.storeName}</h4>
-                        <p className="text-xs text-white/50">Verified Vendor</p>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-sm truncate">{story.vendor?.storeName || "Vendor"}</h4>
+                        <p className="text-xs text-muted-foreground">
+                          {story.createdAt ? new Date(story.createdAt).toLocaleDateString() : "Recently"}
+                        </p>
                       </div>
                     </div>
-                    <p className="text-white/80 line-clamp-3">{story.content}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-3">{story.content}</p>
                   </div>
                 </motion.div>
               ))}
             </div>
-            <div className="text-center mt-14">
-              <Link href="/stories">
-                <Button size="lg" className="rounded-full px-10 h-12 shadow-lg shadow-primary/30" data-testid="button-view-all-stories">
-                  View All Stories <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </Link>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              <p>No vendor posts yet. Check back soon!</p>
             </div>
-          </div>
-        </section>
-      )}
+          )}
+        </div>
+      </section>
 
       <section className="py-24 bg-card">
         <div className="container px-4 mx-auto">

@@ -26,13 +26,26 @@ export default function AuthPage() {
     lastName: "",
   });
 
+  const getRedirectPath = async () => {
+    try {
+      const res = await fetch("/api/role", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.role === "vendor") return "/vendor/dashboard";
+        if (data.role === "admin") return "/admin";
+      }
+    } catch {}
+    return "/";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (mode === "login") {
         await login({ email: formData.email, password: formData.password });
         toast({ title: "Welcome back!", description: "You have successfully logged in." });
-        setLocation("/");
+        const redirectPath = await getRedirectPath();
+        setLocation(redirectPath);
       } else {
         await signup(formData);
         toast({ title: "Account created!", description: "Welcome to MotorBuy." });

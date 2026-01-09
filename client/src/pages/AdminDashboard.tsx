@@ -96,17 +96,15 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background font-body pb-20">
+    <div className="min-h-screen bg-muted/30 font-body pb-20">
       <Navbar />
       
-      <div className="bg-primary/10 py-8 md:py-12 mb-6 border-b border-primary/20">
-        <div className="container mx-auto px-4">
-          <h1 className="text-2xl md:text-3xl font-display font-bold mb-2">Admin Control Center</h1>
-          <p className="text-muted-foreground text-sm md:text-base">Manage your marketplace, vendors, users, and analytics.</p>
+      <div className="container mx-auto px-4 py-6">
+        <div className="mb-8">
+          <h1 className="text-2xl md:text-3xl font-display font-bold">Dashboard</h1>
+          <p className="text-muted-foreground text-sm md:text-base">Manage your marketplace</p>
         </div>
-      </div>
 
-      <div className="container mx-auto px-4">
         <TopSummaryCards />
         
         <Tabs defaultValue="analytics" className="space-y-6 mt-6">
@@ -176,48 +174,60 @@ function TopSummaryCards() {
   const totalUsers = analytics?.totalUsers || 0;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-          <CardTitle className="text-sm font-medium">Total Vendors</CardTitle>
-          <Store className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold" data-testid="text-total-vendors">{totalVendors}</div>
-          <p className="text-xs text-muted-foreground">{approvedVendors} approved</p>
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <Card className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900 border-amber-200 dark:border-amber-800">
+        <CardContent className="p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-2 bg-amber-500 rounded-lg">
+              <Store className="w-5 h-5 text-white" />
+            </div>
+          </div>
+          <p className="text-2xl md:text-3xl font-bold text-amber-700 dark:text-amber-300" data-testid="text-total-vendors">
+            {totalVendors}
+          </p>
+          <p className="text-sm text-amber-600 dark:text-amber-400">Vendors ({approvedVendors} approved)</p>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-          <CardTitle className="text-sm font-medium">Payout Requests</CardTitle>
-          <Bell className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold" data-testid="text-payout-requests">{pendingPayouts}</div>
-          <p className="text-xs text-muted-foreground">pending approval</p>
+      <Card className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950 dark:to-red-900 border-red-200 dark:border-red-800">
+        <CardContent className="p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-2 bg-red-500 rounded-lg">
+              <Bell className="w-5 h-5 text-white" />
+            </div>
+          </div>
+          <p className="text-2xl md:text-3xl font-bold text-red-700 dark:text-red-300" data-testid="text-payout-requests">
+            {pendingPayouts}
+          </p>
+          <p className="text-sm text-red-600 dark:text-red-400">Payout Requests</p>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-          <CardTitle className="text-sm font-medium">Total Pending Payouts</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold" data-testid="text-pending-payouts">{totalPendingAmount.toFixed(3)} KWD</div>
-          <p className="text-xs text-muted-foreground">across all vendors</p>
+      <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800">
+        <CardContent className="p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-2 bg-green-500 rounded-lg">
+              <DollarSign className="w-5 h-5 text-white" />
+            </div>
+          </div>
+          <p className="text-2xl md:text-3xl font-bold text-green-700 dark:text-green-300" data-testid="text-pending-payouts">
+            {totalPendingAmount.toFixed(3)}
+          </p>
+          <p className="text-sm text-green-600 dark:text-green-400">Pending (KWD)</p>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-          <CardTitle className="text-sm font-medium">Users</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold" data-testid="text-total-users">{totalUsers}</div>
-          <p className="text-xs text-muted-foreground">registered users</p>
+      <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
+        <CardContent className="p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="p-2 bg-blue-500 rounded-lg">
+              <Users className="w-5 h-5 text-white" />
+            </div>
+          </div>
+          <p className="text-2xl md:text-3xl font-bold text-blue-700 dark:text-blue-300" data-testid="text-total-users">
+            {totalUsers}
+          </p>
+          <p className="text-sm text-blue-600 dark:text-blue-400">Users</p>
         </CardContent>
       </Card>
     </div>

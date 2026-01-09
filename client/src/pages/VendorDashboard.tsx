@@ -7,9 +7,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRole, useProducts, useCategories } from "@/hooks/use-motorbuy";
 import { 
   Package, ShoppingCart, Loader2, Plus, Image, Trash2, BookOpen, 
-  Store, TrendingUp, DollarSign, Clock, LayoutDashboard
+  Store, TrendingUp, DollarSign, Clock, Wallet, Send
 } from "lucide-react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
@@ -56,7 +56,7 @@ export default function VendorDashboard() {
     enabled: !!vendorProfile,
   });
 
-  const { data: stories, isLoading: isStoriesLoading } = useQuery<VendorStory[]>({
+  const { data: stories } = useQuery<VendorStory[]>({
     queryKey: ["/api/stories"],
   });
   const myStories = stories?.filter(s => s.vendorId === vendorProfile?.id) || [];
@@ -101,9 +101,9 @@ export default function VendorDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/vendor/profile"] });
       queryClient.invalidateQueries({ queryKey: ["/api/vendors"] });
-      toast({ title: "Shop Created", description: "Your vendor shop has been set up!" });
+      toast({ title: "Profile Created", description: "Your vendor profile has been set up!" });
     },
-    onError: () => toast({ title: "Error", description: "Failed to create shop.", variant: "destructive" }),
+    onError: () => toast({ title: "Error", description: "Failed to create profile.", variant: "destructive" }),
   });
 
   const addProductMutation = useMutation({
@@ -171,7 +171,7 @@ export default function VendorDashboard() {
 
   const handleCreateProfile = () => {
     if (!storeName.trim()) {
-      toast({ title: "Store Name Required", variant: "destructive" });
+      toast({ title: "Business Name Required", variant: "destructive" });
       return;
     }
     createProfileMutation.mutate({
@@ -213,30 +213,26 @@ export default function VendorDashboard() {
 
   if (!vendorProfile) {
     return (
-      <div className="min-h-screen bg-background font-body pb-20">
+      <div className="min-h-screen bg-muted/30 font-body pb-20">
         <Navbar />
         
-        <div className="bg-primary/10 py-8 md:py-12 border-b border-primary/20">
-          <div className="container mx-auto px-4">
-            <h1 className="text-2xl md:text-3xl font-display font-bold mb-2">Set Up Your Shop</h1>
-            <p className="text-muted-foreground">Create your vendor profile to start selling on MotorBuy.</p>
+        <div className="container mx-auto px-4 py-12 max-w-lg">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Store className="w-8 h-8 text-primary" />
+            </div>
+            <h1 className="text-2xl md:text-3xl font-display font-bold mb-2">Welcome to MotorBuy</h1>
+            <p className="text-muted-foreground">Set up your vendor profile to start selling.</p>
           </div>
-        </div>
 
-        <div className="container mx-auto px-4 py-8 max-w-lg">
-          <Card>
+          <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Store className="w-5 h-5" />
-                Create Your Shop
-              </CardTitle>
-              <CardDescription>
-                Fill in your store details to get started
-              </CardDescription>
+              <CardTitle>Create Your Profile</CardTitle>
+              <CardDescription>Fill in your details to get started</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="storeName">Store Name *</Label>
+                <Label htmlFor="storeName">Business Name *</Label>
                 <Input 
                   id="storeName"
                   value={storeName} 
@@ -246,12 +242,12 @@ export default function VendorDashboard() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="storeDesc">Store Description</Label>
+                <Label htmlFor="storeDesc">Description</Label>
                 <Textarea 
                   id="storeDesc"
                   value={storeDescription} 
                   onChange={(e) => setStoreDescription(e.target.value)} 
-                  placeholder="Tell customers about your shop..."
+                  placeholder="Tell customers about your business..."
                   className="min-h-[100px]"
                   data-testid="input-store-description"
                 />
@@ -268,10 +264,7 @@ export default function VendorDashboard() {
                     Creating...
                   </>
                 ) : (
-                  <>
-                    <Store className="w-4 h-4 mr-2" />
-                    Create My Shop
-                  </>
+                  "Get Started"
                 )}
               </Button>
             </CardContent>
@@ -282,120 +275,218 @@ export default function VendorDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background font-body pb-20">
+    <div className="min-h-screen bg-muted/30 font-body pb-20">
       <Navbar />
       
-      <div className="bg-primary/10 py-6 md:py-12 mb-6 md:mb-8 border-b border-primary/20">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center gap-3 mb-2">
-            <LayoutDashboard className="w-6 h-6 md:w-8 md:h-8" />
-            <h1 className="text-2xl md:text-3xl font-display font-bold">Vendor Dashboard</h1>
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-display font-bold">Dashboard</h1>
+            <p className="text-muted-foreground">{vendorProfile.storeName}</p>
           </div>
-          <p className="text-sm md:text-base text-muted-foreground">{vendorProfile.storeName}</p>
-          {!vendorProfile.isApproved && (
-            <Badge variant="secondary" className="mt-2">Pending Approval</Badge>
-          )}
+          <div className="flex gap-2">
+            {!vendorProfile.isApproved && (
+              <Badge variant="secondary">Pending Approval</Badge>
+            )}
+            <Link href="/vendor/wallet">
+              <Button variant="outline" size="sm" data-testid="button-view-wallet">
+                <Wallet className="w-4 h-4 mr-2" />
+                Wallet
+              </Button>
+            </Link>
+          </div>
         </div>
-      </div>
 
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                  <Package className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Products</p>
-                  <p className="font-bold text-lg" data-testid="text-vendor-products">{analytics?.totalProducts || myProducts.length}</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 bg-blue-500 rounded-lg">
+                  <Package className="w-5 h-5 text-white" />
                 </div>
               </div>
+              <p className="text-2xl md:text-3xl font-bold text-blue-700 dark:text-blue-300" data-testid="text-vendor-products">
+                {analytics?.totalProducts || myProducts.length}
+              </p>
+              <p className="text-sm text-blue-600 dark:text-blue-400">Products</p>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                  <ShoppingCart className="w-5 h-5 text-green-600 dark:text-green-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Orders</p>
-                  <p className="font-bold text-lg" data-testid="text-vendor-orders">{analytics?.totalOrders || 0}</p>
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 bg-green-500 rounded-lg">
+                  <ShoppingCart className="w-5 h-5 text-white" />
                 </div>
               </div>
+              <p className="text-2xl md:text-3xl font-bold text-green-700 dark:text-green-300" data-testid="text-vendor-orders">
+                {analytics?.totalOrders || 0}
+              </p>
+              <p className="text-sm text-green-600 dark:text-green-400">Orders</p>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
-                  <TrendingUp className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Revenue</p>
-                  <p className="font-bold text-lg" data-testid="text-vendor-revenue">{analytics?.grossSalesKwd || "0"} KWD</p>
+          <Card className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900 border-amber-200 dark:border-amber-800">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 bg-amber-500 rounded-lg">
+                  <TrendingUp className="w-5 h-5 text-white" />
                 </div>
               </div>
+              <p className="text-2xl md:text-3xl font-bold text-amber-700 dark:text-amber-300" data-testid="text-vendor-revenue">
+                {analytics?.grossSalesKwd || "0"}
+              </p>
+              <p className="text-sm text-amber-600 dark:text-amber-400">Revenue (KWD)</p>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                  <DollarSign className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Pending Payout</p>
-                  <p className="font-bold text-lg" data-testid="text-vendor-payout">{analytics?.pendingPayoutKwd || "0"} KWD</p>
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200 dark:border-purple-800">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 bg-purple-500 rounded-lg">
+                  <DollarSign className="w-5 h-5 text-white" />
                 </div>
               </div>
+              <p className="text-2xl md:text-3xl font-bold text-purple-700 dark:text-purple-300" data-testid="text-vendor-payout">
+                {analytics?.pendingPayoutKwd || "0"}
+              </p>
+              <p className="text-sm text-purple-600 dark:text-purple-400">Pending (KWD)</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-6 mb-8">
+          <Card className="lg:col-span-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Quick Post</CardTitle>
+              <CardDescription>Share updates with your customers</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <Textarea 
+                    value={storyContent} 
+                    onChange={(e) => setStoryContent(e.target.value)} 
+                    placeholder="Share news, promotions, or new arrivals..."
+                    className="min-h-[80px] resize-none"
+                    data-testid="input-story-content"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <input ref={storyImageRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadStoryImage(f); }} />
+                  <Button variant="outline" size="icon" onClick={() => storyImageRef.current?.click()} disabled={isUploadingStory} data-testid="button-add-story-image">
+                    {isUploadingStory ? <Loader2 className="w-4 h-4 animate-spin" /> : <Image className="w-4 h-4" />}
+                  </Button>
+                  <Button size="icon" onClick={handlePostStory} disabled={addStoryMutation.isPending || (!storyContent && !storyImage)} data-testid="button-post-story">
+                    {addStoryMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  </Button>
+                </div>
+              </div>
+              {storyImage && (
+                <div className="mt-3 relative inline-block">
+                  <img src={storyImage} alt="" className="h-20 rounded-lg object-cover" />
+                  <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6" onClick={() => setStoryImage(null)} data-testid="button-remove-story-image">
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BookOpen className="w-4 h-4" />
+                Recent Posts
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {myStories.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No posts yet</p>
+              ) : (
+                <div className="space-y-3 max-h-[250px] overflow-y-auto">
+                  {myStories.slice(0, 5).map((story) => (
+                    <div key={story.id} className="text-sm p-3 bg-muted/50 rounded-lg" data-testid={`story-row-${story.id}`}>
+                      {story.imageUrl && (
+                        <img src={story.imageUrl} alt="" className="w-full h-20 object-cover rounded mb-2" />
+                      )}
+                      <p className="line-clamp-2">{story.content}</p>
+                      <div className="flex items-center justify-between mt-2">
+                        <p className="text-xs text-muted-foreground">
+                          {story.createdAt ? new Date(story.createdAt).toLocaleDateString() : ""}
+                        </p>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6" 
+                          onClick={() => deleteStoryMutation.mutate(story.id)}
+                          data-testid={`button-delete-story-${story.id}`}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
 
         <Tabs defaultValue="orders" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6 h-auto">
-            <TabsTrigger value="orders" className="py-3 text-xs md:text-sm" data-testid="tab-orders">Orders</TabsTrigger>
-            <TabsTrigger value="products" className="py-3 text-xs md:text-sm" data-testid="tab-products">Products</TabsTrigger>
-            <TabsTrigger value="stories" className="py-3 text-xs md:text-sm" data-testid="tab-stories">Stories</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-6 h-auto">
+            <TabsTrigger value="orders" className="py-3" data-testid="tab-orders">
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              Orders
+            </TabsTrigger>
+            <TabsTrigger value="products" className="py-3" data-testid="tab-products">
+              <Package className="w-4 h-4 mr-2" />
+              Products
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="orders">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5" /> Recent Orders
-                </CardTitle>
+                <CardTitle>Recent Orders</CardTitle>
               </CardHeader>
               <CardContent>
                 {isOrdersLoading ? (
                   <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>
                 ) : !vendorOrders || vendorOrders.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <ShoppingCart className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>No orders yet</p>
+                  <div className="text-center py-12 text-muted-foreground">
+                    <ShoppingCart className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p className="font-medium">No orders yet</p>
                     <p className="text-sm mt-1">Orders will appear here when customers purchase your products.</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {vendorOrders.map((order) => (
-                      <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 md:p-4 border rounded-lg" data-testid={`vendor-order-${order.id}`}>
-                        <div>
-                          <div className="font-medium text-sm md:text-base">Order #{String(order.id).slice(-8)}</div>
-                          <div className="text-xs md:text-sm text-muted-foreground">
-                            {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 md:gap-4">
-                          <span className="font-bold text-sm md:text-base">{formatKWD(order.total)}</span>
-                          <Badge variant={order.status === "delivered" ? "default" : "secondary"}>{order.status}</Badge>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Order ID</th>
+                          <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Date</th>
+                          <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Amount</th>
+                          <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {vendorOrders.map((order) => (
+                          <tr key={order.id} className="border-b last:border-0" data-testid={`vendor-order-${order.id}`}>
+                            <td className="py-3 px-2 text-sm font-mono">#{String(order.id).slice(-8)}</td>
+                            <td className="py-3 px-2 text-sm text-muted-foreground">
+                              {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
+                            </td>
+                            <td className="py-3 px-2 text-sm font-medium">{formatKWD(order.total)}</td>
+                            <td className="py-3 px-2">
+                              <Badge variant={order.status === "delivered" ? "default" : "secondary"} className="capitalize">
+                                {order.status}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </CardContent>
@@ -403,7 +494,7 @@ export default function VendorDashboard() {
           </TabsContent>
 
           <TabsContent value="products">
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -425,17 +516,19 @@ export default function VendorDashboard() {
                       <Input type="number" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} placeholder="0.000" data-testid="input-product-price" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Original Price (KWD)</Label>
+                      <Label>Original Price</Label>
                       <Input type="number" value={productComparePrice} onChange={(e) => setProductComparePrice(e.target.value)} placeholder="For discounts" data-testid="input-compare-price" />
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Stock</Label>
-                    <Input type="number" value={productStock} onChange={(e) => setProductStock(e.target.value)} placeholder="0" data-testid="input-product-stock" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Brand</Label>
-                    <Input value={productBrand} onChange={(e) => setProductBrand(e.target.value)} placeholder="Brand name" data-testid="input-product-brand" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Stock</Label>
+                      <Input type="number" value={productStock} onChange={(e) => setProductStock(e.target.value)} placeholder="0" data-testid="input-product-stock" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Brand</Label>
+                      <Input value={productBrand} onChange={(e) => setProductBrand(e.target.value)} placeholder="Brand name" data-testid="input-product-brand" />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Category *</Label>
@@ -474,103 +567,25 @@ export default function VendorDashboard() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="w-5 h-5" /> Your Products ({myProducts.length})
-                  </CardTitle>
+                  <CardTitle>Your Products ({myProducts.length})</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {myProducts.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                      <p>No products yet</p>
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                      <p className="font-medium">No products yet</p>
                       <p className="text-sm mt-1">Add your first product using the form.</p>
                     </div>
                   ) : (
-                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                    <div className="space-y-3 max-h-[500px] overflow-y-auto">
                       {myProducts.map((product) => (
-                        <div key={product.id} className="flex items-center gap-3 p-3 border rounded-lg" data-testid={`product-row-${product.id}`}>
-                          <img src={product.images?.[0] || "https://placehold.co/50"} alt="" className="w-12 h-12 object-cover rounded" />
+                        <div key={product.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg" data-testid={`product-row-${product.id}`}>
+                          <img src={product.images?.[0] || "https://placehold.co/50"} alt="" className="w-14 h-14 object-cover rounded" />
                           <div className="flex-1 min-w-0">
                             <div className="font-medium truncate">{product.name}</div>
                             <div className="text-sm text-muted-foreground">{formatKWD(product.price)}</div>
                           </div>
                           <Badge variant="outline">{product.stock} in stock</Badge>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="stories">
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BookOpen className="w-5 h-5" /> Post a Story
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Content</Label>
-                    <Textarea value={storyContent} onChange={(e) => setStoryContent(e.target.value)} placeholder="Share updates, new arrivals, promotions..." className="min-h-[100px]" data-testid="input-story-content" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Image</Label>
-                    <input ref={storyImageRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadStoryImage(f); }} />
-                    {storyImage ? (
-                      <div className="relative">
-                        <img src={storyImage} alt="" className="w-full h-40 object-cover rounded-lg" />
-                        <Button variant="destructive" size="icon" className="absolute top-2 right-2" onClick={() => setStoryImage(null)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button variant="outline" className="w-full" onClick={() => storyImageRef.current?.click()} disabled={isUploadingStory} data-testid="button-add-story-image">
-                        {isUploadingStory ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Image className="w-4 h-4 mr-2" />}
-                        Add Image
-                      </Button>
-                    )}
-                  </div>
-                  <Button className="w-full" onClick={handlePostStory} disabled={addStoryMutation.isPending} data-testid="button-post-story">
-                    {addStoryMutation.isPending ? "Posting..." : "Post Story"}
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BookOpen className="w-5 h-5" /> Your Stories ({myStories.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {isStoriesLoading ? (
-                    <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>
-                  ) : myStories.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                      <p>No stories yet</p>
-                      <p className="text-sm mt-1">Share updates with your customers.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3 max-h-96 overflow-y-auto">
-                      {myStories.map((story) => (
-                        <div key={story.id} className="p-3 border rounded-lg" data-testid={`story-row-${story.id}`}>
-                          {story.imageUrl && (
-                            <img src={story.imageUrl} alt="" className="w-full h-32 object-cover rounded-lg mb-2" />
-                          )}
-                          <p className="text-sm">{story.content}</p>
-                          <div className="flex items-center justify-between mt-2">
-                            <span className="text-xs text-muted-foreground">
-                              {story.createdAt ? new Date(story.createdAt).toLocaleDateString() : ""}
-                            </span>
-                            <Button variant="ghost" size="sm" onClick={() => deleteStoryMutation.mutate(story.id)} data-testid={`button-delete-story-${story.id}`}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
                         </div>
                       ))}
                     </div>

@@ -27,7 +27,7 @@ export function Navbar() {
   const navLinks = [
     { href: "/", label: "Home", icon: Home },
     { href: "/products", label: "All Parts", icon: Package },
-    { href: "/vendors", label: "Shops", icon: Users },
+    { href: "/vendors", label: "Vendors", icon: Users },
     { href: "/stories", label: "Stories", icon: BookOpen },
   ];
 
@@ -91,12 +91,6 @@ export function Navbar() {
                         <DropdownMenuItem>
                           <User className="mr-2 h-4 w-4" />
                           <span>My Account</span>
-                        </DropdownMenuItem>
-                      </Link>
-                      <Link href="/vendor/store">
-                        <DropdownMenuItem>
-                          <Store className="mr-2 h-4 w-4" />
-                          <span>My Store</span>
                         </DropdownMenuItem>
                       </Link>
                       <Link href="/vendor/dashboard">
@@ -186,12 +180,6 @@ export function Navbar() {
                                 <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted">
                                   <User className="w-5 h-5" />
                                   <span className="font-medium">My Account</span>
-                                </div>
-                              </Link>
-                              <Link href="/vendor/store" onClick={closeSheet}>
-                                <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted">
-                                  <Store className="w-5 h-5" />
-                                  <span className="font-medium">My Store</span>
                                 </div>
                               </Link>
                               <Link href="/vendor/dashboard" onClick={closeSheet}>
