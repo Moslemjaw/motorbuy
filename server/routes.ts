@@ -10,10 +10,37 @@ import { User, PaymentRequest } from "./mongodb";
 function normalizeId(id: any): string {
   if (!id) return "";
   if (typeof id === "string") return id.trim();
-  if (typeof id === "object" && id.toString)
-    return String(id.toString()).trim();
+  if (typeof id === "object" && id.toString) {
+    const str = String(id.toString()).trim();
+    // Handle MongoDB ObjectId format - extract just the hex string
+    if (str.startsWith("ObjectId(") && str.endsWith(")")) {
+      return str.slice(9, -1).trim();
+    }
+    return str;
+  }
   if (typeof id === "object" && id.id) return String(id.id).trim();
+  if (typeof id === "object" && id._id) return String(id._id).trim();
   return String(id).trim();
+}
+
+// Helper function to compare IDs with multiple fallback strategies
+function compareIds(id1: any, id2: any): boolean {
+  const normalized1 = normalizeId(id1);
+  const normalized2 = normalizeId(id2);
+
+  // Direct string comparison
+  if (normalized1 && normalized2 && normalized1 === normalized2) {
+    return true;
+  }
+
+  // If both are ObjectIds, compare their hex strings
+  if (id1 && id2 && id1.toString && id2.toString) {
+    const str1 = String(id1.toString()).trim();
+    const str2 = String(id2.toString()).trim();
+    if (str1 === str2) return true;
+  }
+
+  return false;
 }
 
 export async function registerRoutes(
@@ -1039,25 +1066,32 @@ export async function registerRoutes(
       }
 
       // Compare vendorIds using normalized comparison
-      const storyVendorId = normalizeId(story.vendorId || story.vendor?.id);
-      const vendorId = normalizeId(vendor.id);
+      // Try multiple sources for story vendorId
+      const storyVendorIdSource =
+        story.vendorId || story.vendor?.id || story.vendor?._id;
+      const vendorIdSource = vendor.id || vendor._id;
+
+      const idsMatch = compareIds(storyVendorIdSource, vendorIdSource);
 
       console.log("Story update - Comparing IDs:", {
-        storyVendorId,
-        vendorId,
+        storyVendorId: normalizeId(storyVendorIdSource),
+        vendorId: normalizeId(vendorIdSource),
         storyId: story.id,
         storyVendorIdRaw: story.vendorId,
+        storyVendorSource: storyVendorIdSource,
         storyVendorRaw: story.vendor,
         vendorIdRaw: vendor.id,
-        match: storyVendorId === vendorId,
+        vendorIdSource: vendorIdSource,
+        match: idsMatch,
       });
 
-      if (!storyVendorId || !vendorId || storyVendorId !== vendorId) {
+      if (!idsMatch) {
         return res.status(403).json({
           message: "You can only update your own stories",
           debug: {
-            storyVendorId,
-            vendorId,
+            storyVendorId: normalizeId(storyVendorIdSource),
+            vendorId: normalizeId(vendorIdSource),
+            error: "VendorId mismatch",
           },
         });
       }
@@ -1102,27 +1136,34 @@ export async function registerRoutes(
       }
 
       // Compare vendorIds using normalized comparison
-      const storyVendorId = normalizeId(
-        storyToDelete.vendorId || storyToDelete.vendor?.id
-      );
-      const vendorId = normalizeId(vendor.id);
+      // Try multiple sources for story vendorId
+      const storyVendorIdSource =
+        storyToDelete.vendorId ||
+        storyToDelete.vendor?.id ||
+        storyToDelete.vendor?._id;
+      const vendorIdSource = vendor.id || vendor._id;
+
+      const idsMatch = compareIds(storyVendorIdSource, vendorIdSource);
 
       console.log("Story delete - Comparing IDs:", {
-        storyVendorId,
-        vendorId,
+        storyVendorId: normalizeId(storyVendorIdSource),
+        vendorId: normalizeId(vendorIdSource),
         storyId: storyToDelete.id,
         storyVendorIdRaw: storyToDelete.vendorId,
+        storyVendorSource: storyVendorIdSource,
         storyVendorRaw: storyToDelete.vendor,
         vendorIdRaw: vendor.id,
-        match: storyVendorId === vendorId,
+        vendorIdSource: vendorIdSource,
+        match: idsMatch,
       });
 
-      if (!storyVendorId || !vendorId || storyVendorId !== vendorId) {
+      if (!idsMatch) {
         return res.status(403).json({
           message: "You can only delete your own stories",
           debug: {
-            storyVendorId,
-            vendorId,
+            storyVendorId: normalizeId(storyVendorIdSource),
+            vendorId: normalizeId(vendorIdSource),
+            error: "VendorId mismatch",
           },
         });
       }

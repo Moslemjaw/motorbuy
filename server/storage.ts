@@ -515,12 +515,21 @@ export class MongoStorage implements IStorage {
       return undefined;
     }
     const obj = toPlainObject(story);
-    if (obj.vendorId && typeof obj.vendorId === 'object') {
-      obj.vendor = toPlainObject(obj.vendorId);
-      obj.vendorId = String(obj.vendor.id || obj.vendorId);
-    } else if (obj.vendorId) {
-      obj.vendorId = String(obj.vendorId);
+    
+    // Handle vendorId normalization - ensure it's always a string
+    if (obj.vendorId) {
+      if (typeof obj.vendorId === 'object') {
+        // If populated, extract the vendor object and get its ID
+        const vendorObj = toPlainObject(obj.vendorId);
+        obj.vendor = vendorObj;
+        // Try multiple ways to get the vendor ID
+        obj.vendorId = String(vendorObj.id || vendorObj._id || obj.vendorId);
+      } else {
+        // If it's already a string or primitive, convert to string
+        obj.vendorId = String(obj.vendorId);
+      }
     }
+    
     return obj;
   }
 
