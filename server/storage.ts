@@ -306,21 +306,26 @@ export class MongoStorage implements IStorage {
       productId: cartData.productId,
     });
     
+    let result;
     if (existingItem) {
       // Update quantity if item already exists
       existingItem.quantity = (existingItem.quantity || 1) + (cartData.quantity || 1);
-      await existingItem.save();
-      const obj = toPlainObject(existingItem);
-      // Populate product for response
-      obj.product = toPlainObject(product);
-      return obj;
+      result = await existingItem.save();
+    } else {
+      // Create new item if it doesn't exist
+      result = await CartItem.create(cartData);
     }
     
-    // Create new item if it doesn't exist
-    const newItem = await CartItem.create(cartData);
-    const obj = toPlainObject(newItem);
-    // Populate product for response
-    obj.product = toPlainObject(product);
+    // Populate product and return
+    const populatedResult = await CartItem.findById(result._id).populate('productId');
+    const obj = toPlainObject(populatedResult);
+    if (obj.productId && typeof obj.productId === 'object') {
+      obj.product = toPlainObject(obj.productId);
+      delete obj.productId;
+    } else {
+      // Fallback: use the product we fetched earlier
+      obj.product = toPlainObject(product);
+    }
     return obj;
   }
 

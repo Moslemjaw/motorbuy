@@ -222,6 +222,8 @@ export function useCart() {
     },
     staleTime: 0, // Always fetch fresh data
     refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
   });
 }
 
@@ -242,10 +244,17 @@ export function useAddToCart() {
       }
       return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
       // Invalidate and refetch cart immediately
-      queryClient.invalidateQueries({ queryKey: [api.cart.get.path] });
-      queryClient.refetchQueries({ queryKey: [api.cart.get.path] });
+      await queryClient.invalidateQueries({ 
+        queryKey: [api.cart.get.path],
+        exact: false // Invalidate all queries that start with this key
+      });
+      // Force a refetch of the cart
+      await queryClient.refetchQueries({ 
+        queryKey: [api.cart.get.path],
+        exact: false
+      });
     },
   });
 }
