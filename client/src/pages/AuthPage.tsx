@@ -26,9 +26,19 @@ export default function AuthPage() {
   // Refetch role when user becomes authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      refetchRole();
+      // Small delay to ensure session is established
+      setTimeout(() => {
+        refetchRole();
+      }, 100);
     }
   }, [isAuthenticated, user, refetchRole]);
+
+  // Debug: Log role data
+  useEffect(() => {
+    if (roleData) {
+      console.log("Role data:", roleData);
+    }
+  }, [roleData]);
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [showPassword, setShowPassword] = useState(false);
@@ -117,13 +127,32 @@ export default function AuthPage() {
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
                       Loading role...
                     </Button>
-                  ) : (roleData?.role === "vendor" || roleData?.role === "admin") ? (
-                    <Link href={roleData.role === "vendor" ? "/vendor/dashboard" : "/admin"}>
+                  ) : roleData?.role === "vendor" ? (
+                    <Link href="/vendor/dashboard">
                       <Button className="w-full" size="lg" data-testid="button-go-dashboard">
                         {t("auth.goToDashboard") || "Go to Dashboard"}
                       </Button>
                     </Link>
-                  ) : null}
+                  ) : roleData?.role === "admin" ? (
+                    <Link href="/admin">
+                      <Button className="w-full" size="lg" data-testid="button-go-dashboard">
+                        {t("auth.goToDashboard") || "Go to Dashboard"}
+                      </Button>
+                    </Link>
+                  ) : roleData ? (
+                    <div className="text-xs text-muted-foreground text-center p-2">
+                      Current role: {roleData.role || "unknown"}
+                    </div>
+                  ) : (
+                    <Button 
+                      className="w-full" 
+                      size="lg" 
+                      variant="outline"
+                      onClick={() => refetchRole()}
+                    >
+                      Refresh Role
+                    </Button>
+                  )}
                   
                   <Link href="/">
                     <Button variant={roleData?.role === "vendor" || roleData?.role === "admin" ? "outline" : "default"} className="w-full" size="lg" data-testid="button-go-home">

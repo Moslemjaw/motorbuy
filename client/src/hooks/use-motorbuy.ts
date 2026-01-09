@@ -10,10 +10,18 @@ export function useRole() {
     queryFn: async () => {
       const res = await fetch(buildApiUrl(api.roles.get.path), { credentials: "include" });
       if (res.status === 401) return null;
-      if (!res.ok) throw new Error("Failed to fetch role");
-      return api.roles.get.responses[200].parse(await res.json());
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Failed to fetch role:", res.status, errorText);
+        throw new Error(`Failed to fetch role: ${res.status}`);
+      }
+      const data = await res.json();
+      console.log("Role API response:", data);
+      return api.roles.get.responses[200].parse(data);
     },
-    retry: false
+    retry: false,
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Always refetch to get latest role
   });
 }
 
