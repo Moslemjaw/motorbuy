@@ -2,7 +2,7 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useProduct, useAddToCart } from "@/hooks/use-motorbuy";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { ShoppingCart, Truck, ShieldCheck, ArrowLeft, Store, Package, Loader2, CheckCircle, Percent } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
@@ -17,22 +17,35 @@ export default function ProductDetail() {
   const { data: product, isLoading } = useProduct(id);
   const addToCartMutation = useAddToCart();
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, isLoading: isAuthLoading } = useAuth();
+  const [, setLocation] = useLocation();
   const isPending = addToCartMutation.isPending;
 
   const handleAddToCart = () => {
     if (!product) return;
     
+    // Quick check - if we know user is not authenticated, redirect to auth page
+    if (!isAuthLoading && !isAuthenticated && !user) {
+      toast({ 
+        title: "Please login", 
+        description: "You need to be logged in to add items to cart", 
+        variant: "destructive" 
+      });
+      setLocation("/auth");
+      return;
+    }
+    
     addToCartMutation.mutate({ productId: product.id, quantity: 1 }, {
       onSuccess: () => toast({ title: "Added to cart", description: `${product.name} added` }),
       onError: (err: Error) => {
-        // Show appropriate error message
-        if (err.message.includes("login") || err.message.includes("authenticated")) {
+        // Show appropriate error message and redirect to auth
+        if (err.message.includes("login") || err.message.includes("authenticated") || err.message.includes("401")) {
           toast({ 
             title: "Please login", 
             description: "You need to be logged in to add items to cart", 
             variant: "destructive" 
           });
+          setLocation("/auth");
         } else {
           toast({ title: "Error", description: err.message, variant: "destructive" });
         }

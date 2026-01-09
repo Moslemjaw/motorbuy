@@ -965,12 +965,10 @@ export async function registerRoutes(
       // Get vendor profile to ensure vendor exists and use correct vendorId
       const vendor = await storage.getVendorByUserId(req.session.userId);
       if (!vendor) {
-        return res
-          .status(404)
-          .json({
-            message:
-              "Vendor profile not found. Please create your vendor profile first.",
-          });
+        return res.status(404).json({
+          message:
+            "Vendor profile not found. Please create your vendor profile first.",
+        });
       }
 
       const input = api.stories.create.input.parse(req.body);

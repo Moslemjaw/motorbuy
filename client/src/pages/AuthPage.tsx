@@ -469,26 +469,7 @@ export default function AuthPage() {
             </CardContent>
           </Card>
 
-          <div className="mt-6 text-center space-y-3">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  {t("auth.or")}
-                </span>
-              </div>
-            </div>
-            <Link href="/products">
-              <Button
-                variant="outline"
-                className="w-full"
-                data-testid="button-guest-continue"
-              >
-                {t("auth.continueAsGuest")}
-              </Button>
-            </Link>
+          <div className="mt-6 text-center">
             <Link href="/">
               <Button
                 variant="ghost"

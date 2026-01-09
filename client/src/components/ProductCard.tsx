@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAddToCart } from "@/hooks/use-motorbuy";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/lib/i18n";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { ShoppingCart, Percent } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { formatKWD } from "@/lib/currency";
@@ -19,17 +19,19 @@ export function ProductCard({ product }: ProductCardProps) {
   const { toast } = useToast();
   const { t, isRTL } = useLanguage();
   const { isAuthenticated, user, isLoading: isAuthLoading } = useAuth();
+  const [, setLocation] = useLocation();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     
-    // Quick check - if we know user is not authenticated, show message immediately
+    // Quick check - if we know user is not authenticated, redirect to auth page
     if (!isAuthLoading && !isAuthenticated && !user) {
       toast({ 
         title: t("product.pleaseLogin") || "Please login", 
         description: t("product.loginRequired") || "You need to be logged in to add items to cart", 
         variant: "destructive" 
       });
+      setLocation("/auth");
       return;
     }
     
@@ -38,13 +40,14 @@ export function ProductCard({ product }: ProductCardProps) {
         toast({ title: t("product.addedToCart"), description: `${product.name} ${t("product.addedToCartDesc")}` });
       },
       onError: (err: Error) => {
-        // Show appropriate error message
+        // Show appropriate error message and redirect to auth
         if (err.message.includes("login") || err.message.includes("authenticated") || err.message.includes("401")) {
           toast({ 
             title: t("product.pleaseLogin") || "Please login", 
             description: t("product.loginRequired") || "You need to be logged in to add items to cart", 
             variant: "destructive" 
           });
+          setLocation("/auth");
         } else {
           toast({ title: t("auth.error"), description: err.message, variant: "destructive" });
         }
