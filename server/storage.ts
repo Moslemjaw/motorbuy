@@ -486,6 +486,22 @@ export class MongoStorage implements IStorage {
     });
   }
 
+  async getStory(id: string): Promise<any | undefined> {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return undefined;
+    }
+    const story = await VendorStory.findById(id).populate('vendorId');
+    if (!story) {
+      return undefined;
+    }
+    const obj = toPlainObject(story);
+    if (obj.vendorId && typeof obj.vendorId === 'object') {
+      obj.vendor = toPlainObject(obj.vendorId);
+      obj.vendorId = obj.vendor.id;
+    }
+    return obj;
+  }
+
   async createStory(story: any): Promise<any> {
     const storyData = { ...story };
     if (storyData.vendorId && typeof storyData.vendorId === 'string') {
@@ -493,6 +509,17 @@ export class MongoStorage implements IStorage {
     }
     const newStory = await VendorStory.create(storyData);
     return toPlainObject(newStory);
+  }
+
+  async updateStory(id: string, updates: any): Promise<any> {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error("Invalid story ID");
+    }
+    const updated = await VendorStory.findByIdAndUpdate(id, updates, { new: true });
+    if (!updated) {
+      throw new Error("Story not found");
+    }
+    return toPlainObject(updated);
   }
 
   async deleteStory(id: string): Promise<void> {

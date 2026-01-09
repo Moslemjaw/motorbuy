@@ -1018,13 +1018,8 @@ export async function registerRoutes(
 
   app.delete("/api/stories/:id", isAuthenticated, async (req: any, res) => {
     const role = await storage.getUserRole(req.session.userId);
-    if (role !== "vendor")
-      return res
-        .status(403)
-        .json({ message: "Only vendors can delete stories" });
 
     try {
-      // Verify the story belongs to the vendor
       const stories = await storage.getStories();
       const storyToDelete = stories.find((s: any) => s.id === req.params.id);
 
@@ -1032,6 +1027,20 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Story not found" });
       }
 
+      // Admins can delete any story, vendors can only delete their own
+      if (role === "admin") {
+        await storage.deleteStory(req.params.id);
+        res.status(204).send();
+        return;
+      }
+
+      if (role !== "vendor") {
+        return res
+          .status(403)
+          .json({ message: "Only vendors and admins can delete stories" });
+      }
+
+      // Verify the story belongs to the vendor
       const vendor = await storage.getVendorByUserId(req.session.userId);
       if (!vendor || storyToDelete.vendorId !== vendor.id) {
         return res
