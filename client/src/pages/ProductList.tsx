@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { ProductCard } from "@/components/ProductCard";
 import { useProducts, useCategories } from "@/hooks/use-motorbuy";
+import { useLanguage } from "@/lib/i18n";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
 export default function ProductList() {
+  const { t, isRTL } = useLanguage();
   const [search, setSearch] = useState("");
   const [categoryId, setCategoryId] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
@@ -48,12 +50,12 @@ export default function ProductList() {
                 <Package className="w-5 h-5 md:w-6 md:h-6" />
               </div>
               <Badge className="bg-white/10 border-white/20 text-white">
-                {products?.length || 0} Products
+                {products?.length || 0} {t("products.count")}
               </Badge>
             </div>
-            <h1 className="text-2xl md:text-4xl lg:text-5xl font-display font-bold mb-2 md:mb-4">Browse Parts</h1>
+            <h1 className="text-2xl md:text-4xl lg:text-5xl font-display font-bold mb-2 md:mb-4">{t("products.title")}</h1>
             <p className="text-white/70 text-sm md:text-lg max-w-xl">
-              Find exactly what you need for your vehicle from trusted vendors.
+              {t("products.subtitle")}
             </p>
           </motion.div>
         </div>
@@ -67,10 +69,10 @@ export default function ProductList() {
           className="flex flex-col md:flex-row gap-4 mb-8 bg-card p-5 rounded-2xl shadow-sm border border-border sticky top-4 z-20"
         >
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            <Search className={`absolute top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 ${isRTL ? 'right-4' : 'left-4'}`} />
             <Input 
-              placeholder="Search parts by name or brand..." 
-              className="pl-12 h-12 rounded-xl bg-background border-border"
+              placeholder={t("products.searchPlaceholder")}
+              className={`h-12 rounded-xl bg-background border-border ${isRTL ? 'pr-12' : 'pl-12'}`}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               data-testid="input-search"
@@ -79,25 +81,30 @@ export default function ProductList() {
           
           <Select value={categoryId} onValueChange={setCategoryId}>
             <SelectTrigger className="w-full md:w-[200px] h-12 rounded-xl" data-testid="select-category">
-              <SelectValue placeholder="Category" />
+              <SelectValue placeholder={t("products.allCategories")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories?.map((cat) => (
-                <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
-              ))}
+              <SelectItem value="all">{t("products.allCategories")}</SelectItem>
+              {categories?.map((cat) => {
+                const translatedName = t(`cat.${cat.slug}`);
+                return (
+                  <SelectItem key={cat.id} value={String(cat.id)}>
+                    {translatedName !== `cat.${cat.slug}` ? translatedName : cat.name}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
           
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-full md:w-[200px] h-12 rounded-xl" data-testid="select-sort">
-              <SlidersHorizontal className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Sort By" />
+              <SlidersHorizontal className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+              <SelectValue placeholder={t("common.sort")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">Newest Arrivals</SelectItem>
-              <SelectItem value="price_asc">Price: Low to High</SelectItem>
-              <SelectItem value="price_desc">Price: High to Low</SelectItem>
+              <SelectItem value="newest">{t("products.newestArrivals")}</SelectItem>
+              <SelectItem value="price_asc">{t("products.priceLowHigh")}</SelectItem>
+              <SelectItem value="price_desc">{t("products.priceHighLow")}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -127,12 +134,12 @@ export default function ProductList() {
             <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
               <Package className="w-10 h-10 text-muted-foreground" />
             </div>
-            <h3 className="text-2xl font-display font-bold mb-3">No products found</h3>
+            <h3 className="text-2xl font-display font-bold mb-3">{t("products.noProducts")}</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Try adjusting your search or filter criteria to find what you're looking for.
+              {t("products.noProductsDesc")}
             </p>
             <Button variant="outline" onClick={clearFilters} className="rounded-full px-6" data-testid="button-clear-all-filters">
-              Clear All Filters
+              {t("products.clearFilters")}
             </Button>
           </motion.div>
         ) : (
@@ -153,8 +160,8 @@ export default function ProductList() {
 
       <footer className="gradient-dark text-white py-12 mt-12">
         <div className="container mx-auto px-4 text-center">
-          <div className="font-display font-bold text-2xl mb-2">MotorBuy</div>
-          <p className="text-white/50 text-sm">Kuwait's premier auto parts marketplace</p>
+          <div className="font-display font-bold text-2xl mb-2">{t("brand.name")}</div>
+          <p className="text-white/50 text-sm">{t("products.tagline")}</p>
         </div>
       </footer>
     </div>

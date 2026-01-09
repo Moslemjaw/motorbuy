@@ -3,11 +3,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useStories } from "@/hooks/use-motorbuy";
+import { useLanguage } from "@/lib/i18n";
 import { Store, Calendar, Loader2, ArrowRight, Newspaper } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 
 export default function Stories() {
+  const { t, language, isRTL } = useLanguage();
   const { data: stories, isLoading } = useStories();
 
   return (
@@ -26,11 +28,11 @@ export default function Stories() {
               <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-white/10 flex items-center justify-center">
                 <Newspaper className="w-5 h-5 md:w-6 md:h-6" />
               </div>
-              <Badge className="bg-white/10 border-white/20 text-white">Community Feed</Badge>
+              <Badge className="bg-white/10 border-white/20 text-white">{t("stories.feedBadge")}</Badge>
             </div>
-            <h1 className="text-2xl md:text-4xl lg:text-5xl font-display font-bold mb-2 md:mb-4">Vendor Stories</h1>
+            <h1 className="text-2xl md:text-4xl lg:text-5xl font-display font-bold mb-2 md:mb-4">{t("stories.title")}</h1>
             <p className="text-white/70 text-sm md:text-lg max-w-xl">
-              Latest updates, promotions, and announcements from our trusted vendors.
+              {t("stories.subtitle")}
             </p>
           </motion.div>
         </div>
@@ -46,13 +48,13 @@ export default function Stories() {
             <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
               <Store className="w-10 h-10 text-muted-foreground" />
             </div>
-            <h2 className="text-2xl font-display font-bold mb-3">No stories yet</h2>
+            <h2 className="text-2xl font-display font-bold mb-3">{t("stories.noStories")}</h2>
             <p className="text-muted-foreground mb-6">
-              Check back soon for updates from our vendors.
+              {t("stories.noStoriesDesc")}
             </p>
             <Link href="/vendors">
               <Button variant="outline" className="rounded-full" data-testid="button-browse-vendors">
-                Browse Vendors <ArrowRight className="ml-2 w-4 h-4" />
+                {t("stories.browseVendors")} <ArrowRight className={`w-4 h-4 ${isRTL ? 'mr-2 rotate-180' : 'ml-2'}`} />
               </Button>
             </Link>
           </div>
@@ -98,13 +100,13 @@ export default function Stories() {
                         </Link>
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                           <Calendar className="w-3 h-3" />
-                          {story.createdAt ? new Date(story.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "Recently"}
+                          {story.createdAt ? new Date(story.createdAt).toLocaleDateString(language === 'ar' ? 'ar-KW' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : t("stories.recently")}
                         </div>
                       </div>
                     </div>
                     
                     <p className="text-muted-foreground leading-relaxed line-clamp-4">
-                      {story.content || "No content"}
+                      {story.content || t("stories.noContent")}
                     </p>
                   </CardContent>
                 </Card>
@@ -116,8 +118,8 @@ export default function Stories() {
 
       <footer className="gradient-dark text-white py-12 mt-12">
         <div className="container mx-auto px-4 text-center">
-          <div className="font-display font-bold text-2xl mb-2">MotorBuy</div>
-          <p className="text-white/50 text-sm">Kuwait's premier auto parts marketplace</p>
+          <div className="font-display font-bold text-2xl mb-2">{t("brand.name")}</div>
+          <p className="text-white/50 text-sm">{t("products.tagline")}</p>
         </div>
       </footer>
     </div>

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAddToCart } from "@/hooks/use-motorbuy";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/lib/i18n";
 import { Link } from "wouter";
 import { ShoppingCart, Percent } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,21 +17,22 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const addToCartMutation = useAddToCart();
   const { toast } = useToast();
+  const { t, isRTL } = useLanguage();
   const { isAuthenticated } = useAuth();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!isAuthenticated) {
-        toast({ title: "Please login", description: "You need to be logged in to add items to cart", variant: "destructive" });
+        toast({ title: t("product.pleaseLogin"), description: t("product.loginRequired"), variant: "destructive" });
         return;
     }
     
     addToCartMutation.mutate({ productId: product.id, quantity: 1 }, {
       onSuccess: () => {
-        toast({ title: "Added to cart", description: `${product.name} added to your cart` });
+        toast({ title: t("product.addedToCart"), description: `${product.name} ${t("product.addedToCartDesc")}` });
       },
       onError: (err: Error) => {
-        toast({ title: "Error", description: err.message, variant: "destructive" });
+        toast({ title: t("auth.error"), description: err.message, variant: "destructive" });
       }
     });
   };
@@ -55,20 +57,20 @@ export function ProductCard({ product }: ProductCardProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           {product.stock <= 0 && (
             <div className="absolute inset-0 bg-black/70 flex items-center justify-center backdrop-blur-sm">
-              <span className="text-white font-bold text-lg px-4 py-2 bg-destructive/80 rounded-full">Out of Stock</span>
+              <span className="text-white font-bold text-lg px-4 py-2 bg-destructive/80 rounded-full">{t("common.outOfStock")}</span>
             </div>
           )}
           
           {hasDiscount && (
-            <div className="absolute top-3 left-3">
+            <div className={`absolute top-3 ${isRTL ? 'right-3' : 'left-3'}`}>
               <Badge className="bg-red-500 text-white font-bold shadow-lg border-0 gap-1">
                 <Percent className="w-3 h-3" />
-                {discountPercent}% OFF
+                {t("product.off").replace("{percent}", String(discountPercent))}
               </Badge>
             </div>
           )}
           
-          <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
+          <div className={`absolute top-3 ${isRTL ? 'left-3' : 'right-3'} flex flex-col items-end gap-1`}>
             <Badge className="bg-white/90 text-foreground font-bold shadow-lg backdrop-blur-sm">
               {formatKWD(product.price)}
             </Badge>
@@ -107,7 +109,7 @@ export function ProductCard({ product }: ProductCardProps) {
             data-testid={`button-add-cart-${product.id}`}
           >
             <ShoppingCart className="w-4 h-4" />
-            {isPending ? "Adding..." : "Add to Cart"}
+            {isPending ? t("product.adding") : t("common.addToCart")}
           </Button>
         </CardFooter>
       </Card>

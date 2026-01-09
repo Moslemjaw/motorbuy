@@ -74,6 +74,14 @@ const en: Translations = {
   "common.noResults": "No results found",
   "common.loading": "Loading...",
   
+  // Product
+  "product.off": "{percent}% OFF",
+  "product.adding": "Adding...",
+  "product.pleaseLogin": "Please login",
+  "product.loginRequired": "You need to be logged in to add items to cart",
+  "product.addedToCart": "Added to cart",
+  "product.addedToCartDesc": "added to your cart",
+  
   // Auth
   "auth.login": "Sign In",
   "auth.signup": "Sign Up",
@@ -149,6 +157,41 @@ const en: Translations = {
   "cat.wheels-tires": "Wheels & Tires",
   "cat.lighting": "Lighting",
   "cat.fluids-chemicals": "Fluids & Chemicals",
+  
+  // Browse Parts Page
+  "products.title": "Browse Parts",
+  "products.subtitle": "Find exactly what you need for your vehicle from trusted vendors.",
+  "products.count": "Products",
+  "products.searchPlaceholder": "Search parts by name or brand...",
+  "products.allCategories": "All Categories",
+  "products.newestArrivals": "Newest Arrivals",
+  "products.priceLowHigh": "Price: Low to High",
+  "products.priceHighLow": "Price: High to Low",
+  "products.noProducts": "No products found",
+  "products.noProductsDesc": "Try adjusting your search or filter criteria to find what you're looking for.",
+  "products.clearFilters": "Clear All Filters",
+  "products.tagline": "Kuwait's premier auto parts marketplace",
+  
+  // Vendors Page
+  "vendors.title": "Our Vendors",
+  "vendors.subtitle": "Trusted shops and expert parts dealers serving automotive enthusiasts across Kuwait.",
+  "vendors.count": "Verified Vendors",
+  "vendors.verified": "Verified Seller",
+  "vendors.visitShop": "Visit Shop",
+  "vendors.noVendors": "No vendors yet",
+  "vendors.noVendorsDesc": "Check back soon as we onboard new automotive parts vendors.",
+  "vendors.defaultDesc": "Quality automotive parts and accessories.",
+  "vendors.location": "Kuwait",
+  
+  // Stories Page
+  "stories.title": "Vendor Stories",
+  "stories.subtitle": "Latest updates, promotions, and announcements from our trusted vendors.",
+  "stories.feedBadge": "Community Feed",
+  "stories.noStories": "No stories yet",
+  "stories.noStoriesDesc": "Check back soon for updates from our vendors.",
+  "stories.browseVendors": "Browse Vendors",
+  "stories.recently": "Recently",
+  "stories.noContent": "No content",
 };
 
 const ar: Translations = {
@@ -218,6 +261,14 @@ const ar: Translations = {
   "common.outOfStock": "غير متوفر",
   "common.noResults": "لا توجد نتائج",
   "common.loading": "جاري التحميل...",
+  
+  // Product
+  "product.off": "خصم {percent}%",
+  "product.adding": "جاري الإضافة...",
+  "product.pleaseLogin": "الرجاء تسجيل الدخول",
+  "product.loginRequired": "يجب تسجيل الدخول لإضافة المنتجات للسلة",
+  "product.addedToCart": "تمت الإضافة للسلة",
+  "product.addedToCartDesc": "تمت إضافته للسلة",
   
   // Auth
   "auth.login": "تسجيل الدخول",
@@ -294,6 +345,41 @@ const ar: Translations = {
   "cat.wheels-tires": "العجلات والإطارات",
   "cat.lighting": "الإضاءة",
   "cat.fluids-chemicals": "السوائل والكيماويات",
+  
+  // Browse Parts Page
+  "products.title": "تصفح القطع",
+  "products.subtitle": "اعثر على ما تحتاجه لسيارتك من موردين موثوقين.",
+  "products.count": "منتج",
+  "products.searchPlaceholder": "ابحث عن قطع بالاسم أو الماركة...",
+  "products.allCategories": "جميع الفئات",
+  "products.newestArrivals": "وصل حديثاً",
+  "products.priceLowHigh": "السعر: من الأقل للأعلى",
+  "products.priceHighLow": "السعر: من الأعلى للأقل",
+  "products.noProducts": "لا توجد منتجات",
+  "products.noProductsDesc": "حاول تعديل البحث أو معايير التصفية للعثور على ما تبحث عنه.",
+  "products.clearFilters": "مسح جميع الفلاتر",
+  "products.tagline": "سوق قطع غيار السيارات الأول في الكويت",
+  
+  // Vendors Page
+  "vendors.title": "موردينا",
+  "vendors.subtitle": "متاجر موثوقة وخبراء قطع غيار يخدمون عشاق السيارات في جميع أنحاء الكويت.",
+  "vendors.count": "مورد موثق",
+  "vendors.verified": "بائع موثق",
+  "vendors.visitShop": "زيارة المتجر",
+  "vendors.noVendors": "لا يوجد موردين حتى الآن",
+  "vendors.noVendorsDesc": "عد قريباً حيث نضيف موردين جدد لقطع غيار السيارات.",
+  "vendors.defaultDesc": "قطع غيار وإكسسوارات سيارات عالية الجودة.",
+  "vendors.location": "الكويت",
+  
+  // Stories Page
+  "stories.title": "قصص الموردين",
+  "stories.subtitle": "آخر التحديثات والعروض الترويجية والإعلانات من موردينا الموثوقين.",
+  "stories.feedBadge": "آخر الأخبار",
+  "stories.noStories": "لا توجد قصص حتى الآن",
+  "stories.noStoriesDesc": "عد قريباً للاطلاع على تحديثات الموردين.",
+  "stories.browseVendors": "تصفح الموردين",
+  "stories.recently": "مؤخراً",
+  "stories.noContent": "لا يوجد محتوى",
 };
 
 const translations: Record<Language, Translations> = { en, ar };

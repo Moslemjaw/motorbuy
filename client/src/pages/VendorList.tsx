@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/Navbar";
 import { useVendors } from "@/hooks/use-motorbuy";
+import { useLanguage } from "@/lib/i18n";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 
 export default function VendorList() {
+  const { t, isRTL } = useLanguage();
   const { data: vendors, isLoading } = useVendors();
 
   return (
@@ -27,12 +29,12 @@ export default function VendorList() {
                 <Users className="w-5 h-5 md:w-6 md:h-6" />
               </div>
               <Badge className="bg-white/10 border-white/20 text-white">
-                {vendors?.length || 0} Verified Vendors
+                {vendors?.length || 0} {t("vendors.count")}
               </Badge>
             </div>
-            <h1 className="text-2xl md:text-4xl lg:text-5xl font-display font-bold mb-2 md:mb-4">Our Vendors</h1>
+            <h1 className="text-2xl md:text-4xl lg:text-5xl font-display font-bold mb-2 md:mb-4">{t("vendors.title")}</h1>
             <p className="text-white/70 text-sm md:text-lg max-w-xl">
-              Trusted shops and expert parts dealers serving automotive enthusiasts across Kuwait.
+              {t("vendors.subtitle")}
             </p>
           </motion.div>
         </div>
@@ -52,9 +54,9 @@ export default function VendorList() {
             <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
               <Store className="w-10 h-10 text-muted-foreground" />
             </div>
-            <h2 className="text-2xl font-display font-bold mb-3">No vendors yet</h2>
+            <h2 className="text-2xl font-display font-bold mb-3">{t("vendors.noVendors")}</h2>
             <p className="text-muted-foreground max-w-md mx-auto">
-              Check back soon as we onboard new automotive parts vendors.
+              {t("vendors.noVendorsDesc")}
             </p>
           </motion.div>
         ) : (
@@ -95,16 +97,16 @@ export default function VendorList() {
                         <h3 className="font-display font-bold text-lg group-hover:text-primary transition-colors mb-1">{vendor.storeName}</h3>
                         <div className="flex items-center gap-1.5 text-sm">
                           <CheckCircle className="w-4 h-4 text-green-500" />
-                          <span className="text-green-600 font-medium">Verified Seller</span>
+                          <span className="text-green-600 font-medium">{t("vendors.verified")}</span>
                         </div>
                       </div>
                       
-                      <p className="text-muted-foreground text-sm mb-4 line-clamp-2 leading-relaxed">{vendor.description || "Quality automotive parts and accessories."}</p>
+                      <p className="text-muted-foreground text-sm mb-4 line-clamp-2 leading-relaxed">{vendor.description || t("vendors.defaultDesc")}</p>
                       
                       <div className="flex items-center justify-between pt-3 border-t border-border">
-                        <span className="text-xs text-muted-foreground">Kuwait</span>
-                        <span className="text-sm text-primary font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
-                          Visit Shop <ArrowRight className="w-4 h-4" />
+                        <span className="text-xs text-muted-foreground">{t("vendors.location")}</span>
+                        <span className={`text-sm text-primary font-medium flex items-center gap-1 group-hover:gap-2 transition-all ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          {t("vendors.visitShop")} <ArrowRight className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
                         </span>
                       </div>
                     </CardContent>
@@ -118,8 +120,8 @@ export default function VendorList() {
 
       <footer className="gradient-dark text-white py-12 mt-8">
         <div className="container mx-auto px-4 text-center">
-          <div className="font-display font-bold text-2xl mb-2">MotorBuy</div>
-          <p className="text-white/50 text-sm">Kuwait's premier auto parts marketplace</p>
+          <div className="font-display font-bold text-2xl mb-2">{t("brand.name")}</div>
+          <p className="text-white/50 text-sm">{t("products.tagline")}</p>
         </div>
       </footer>
     </div>
