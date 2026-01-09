@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useRole } from "@/hooks/use-motorbuy";
+import { useRole, useVendors } from "@/hooks/use-motorbuy";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -1228,9 +1228,7 @@ function SpotlightsSection() {
     },
   });
 
-  const { data: vendors } = useQuery<Vendor[]>({
-    queryKey: ["/api/vendors"],
-  });
+  const { data: vendors } = useVendors();
 
   const deleteStoryMutation = useMutation({
     mutationFn: async (storyId: string) => {
