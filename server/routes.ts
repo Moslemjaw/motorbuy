@@ -13,6 +13,38 @@ export async function registerRoutes(
   registerAuthRoutes(app);
   registerObjectStorageRoutes(app);
 
+  // One-time setup endpoint to assign initial roles (no auth required for setup)
+  app.post("/api/setup/roles", async (req: any, res) => {
+    try {
+      const { email, role } = req.body;
+      
+      if (!email || !role) {
+        return res.status(400).json({ message: "Email and role are required" });
+      }
+      
+      if (!["customer", "vendor", "admin"].includes(role)) {
+        return res.status(400).json({ message: "Invalid role. Must be: customer, vendor, or admin" });
+      }
+
+      const user = await User.findOne({ email: email.toLowerCase() });
+      if (!user) {
+        return res.status(404).json({ message: `User with email ${email} not found` });
+      }
+
+      await storage.setUserRole(user._id.toString(), role);
+      res.json({ 
+        success: true, 
+        message: `Role '${role}' assigned to ${email}`,
+        userId: user._id.toString(),
+        email: user.email,
+        role: role
+      });
+    } catch (e) {
+      console.error("Error setting role:", e);
+      res.status(500).json({ message: "Failed to set role", error: String(e) });
+    }
+  });
+
   app.patch("/api/users/me", isAuthenticated, async (req: any, res) => {
     try {
       const { profileImageUrl, bio, phone, address, city } = req.body;

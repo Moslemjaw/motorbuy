@@ -45,7 +45,7 @@ export default function Home() {
         </div>
         
         <div className="container relative z-10 px-4 mx-auto">
-          <div className="max-w-2xl mx-auto text-center md:text-left">
+          <div className="max-w-2xl mx-auto md:mx-0 text-center md:text-left">
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
