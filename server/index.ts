@@ -9,12 +9,16 @@ import MemoryStore from "memorystore";
 const app = express();
 const httpServer = createServer(app);
 
+// Behind Render/HTTPS we must trust proxy so secure cookies work
+app.set("trust proxy", 1);
+
 // CORS configuration
 app.use((req, res, next) => {
   const origin = req.headers.origin;
+  const allowedOrigin = process.env.FRONTEND_ORIGIN || origin || "";
   // When using credentials, we must specify the origin (can't use *)
-  if (origin) {
-    res.header("Access-Control-Allow-Origin", origin);
+  if (allowedOrigin) {
+    res.header("Access-Control-Allow-Origin", allowedOrigin);
   }
   res.header("Access-Control-Allow-Credentials", "true");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");

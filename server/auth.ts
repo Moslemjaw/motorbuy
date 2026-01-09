@@ -139,6 +139,7 @@ export function registerAuthRoutes(app: Express) {
 
       req.session.userId = user.id;
       console.log("Login - Setting session userId:", user.id);
+      console.log("Login - Session ID before save:", req.sessionID);
 
       // Save session and wait for it to complete before responding
       return new Promise<void>((resolve, reject) => {
@@ -151,7 +152,11 @@ export function registerAuthRoutes(app: Express) {
             "Login - Session saved successfully, userId:",
             req.session.userId
           );
-          console.log("Login - Session ID:", req.sessionID);
+          console.log("Login - Session ID after save:", req.sessionID);
+          console.log(
+            "Login - Set-Cookie header (if any):",
+            res.getHeader("Set-Cookie")
+          );
           res.json(user);
           resolve();
         });
