@@ -87,7 +87,7 @@ export default function VendorDashboard() {
   });
   
   // Filter stories by vendorId - handle both ObjectId and string formats
-  const myStories = React.useMemo(() => {
+  const myStories = useMemo(() => {
     if (!stories || !vendorProfile) return [];
     
     const profileVendorId = String(vendorProfile.id || "").trim();
