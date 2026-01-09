@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { registerAuthRoutes, isAuthenticated } from "./auth";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { api } from "@shared/routes";
-import { User, PaymentRequest } from "./mongodb";
+import { User, PaymentRequest, Role } from "./mongodb";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -41,6 +41,34 @@ export async function registerRoutes(
   app.get(api.roles.get.path, isAuthenticated, async (req: any, res) => {
     const role = await storage.getUserRole(req.session.userId);
     res.json({ role });
+  });
+
+  // Get all roles (admin only)
+  app.get("/api/admin/roles", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
+
+      const roles = await Role.find({});
+      const rolesWithUsers = await Promise.all(roles.map(async (roleDoc: any) => {
+        const user = await User.findById(roleDoc.userId);
+        return {
+          id: roleDoc._id.toString(),
+          userId: roleDoc.userId,
+          role: roleDoc.role,
+          user: user ? {
+            id: user._id.toString(),
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+          } : null,
+        };
+      }));
+      res.json(rolesWithUsers);
+    } catch (e) {
+      console.error("Error fetching roles:", e);
+      res.status(500).json({ message: "Failed to fetch roles" });
+    }
   });
 
   app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
@@ -81,6 +109,33 @@ export async function registerRoutes(
       res.json({ success: true, message: `Role updated to ${newRole}` });
     } catch (e) {
       console.error("Error updating user role:", e);
+      res.status(500).json({ message: "Failed to update role" });
+    }
+  });
+
+  // Set role by email (for initial setup - admin only)
+  app.post("/api/admin/users/role-by-email", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== 'admin') return res.status(403).json({ message: "Forbidden" });
+
+      const { email, role: newRole } = req.body;
+      if (!email || !newRole) {
+        return res.status(400).json({ message: "Email and role are required" });
+      }
+      if (!["customer", "vendor", "admin"].includes(newRole)) {
+        return res.status(400).json({ message: "Invalid role" });
+      }
+
+      const user = await User.findOne({ email: email.toLowerCase() });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      await storage.setUserRole(user._id.toString(), newRole);
+      res.json({ success: true, message: `Role updated to ${newRole} for ${email}` });
+    } catch (e) {
+      console.error("Error updating user role by email:", e);
       res.status(500).json({ message: "Failed to update role" });
     }
   });
