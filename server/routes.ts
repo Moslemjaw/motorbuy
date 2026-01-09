@@ -786,6 +786,39 @@ export async function registerRoutes(
     }
   });
 
+  app.delete("/api/products/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "vendor")
+        return res
+          .status(403)
+          .json({ message: "Only vendors can delete products" });
+
+      const productId = req.params.id;
+      const existingProduct = await storage.getProduct(productId);
+      if (!existingProduct) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      // Verify the product belongs to the vendor
+      const vendors = await storage.getVendors();
+      const vendor = vendors.find((v) => v.userId === req.session.userId);
+      if (!vendor || existingProduct.vendorId !== vendor.id) {
+        return res
+          .status(403)
+          .json({ message: "You can only delete your own products" });
+      }
+
+      await storage.deleteProduct(productId);
+      res.status(204).send();
+    } catch (e: any) {
+      console.error("Error deleting product:", e);
+      res
+        .status(500)
+        .json({ message: e.message || "Failed to delete product" });
+    }
+  });
+
   app.get(api.categories.list.path, async (req, res) => {
     const categories = await storage.getCategories();
     res.json(categories);
@@ -929,11 +962,27 @@ export async function registerRoutes(
       return res.status(403).json({ message: "Only vendors can post stories" });
 
     try {
+      // Get vendor profile to ensure vendor exists and use correct vendorId
+      const vendor = await storage.getVendorByUserId(req.session.userId);
+      if (!vendor) {
+        return res
+          .status(404)
+          .json({
+            message:
+              "Vendor profile not found. Please create your vendor profile first.",
+          });
+      }
+
       const input = api.stories.create.input.parse(req.body);
-      const story = await storage.createStory(input);
+      // Ensure the vendorId matches the authenticated vendor
+      const story = await storage.createStory({
+        ...input,
+        vendorId: vendor.id,
+      });
       res.status(201).json(story);
-    } catch (e) {
-      res.status(400).json({ message: "Validation error" });
+    } catch (e: any) {
+      console.error("Error creating story:", e);
+      res.status(400).json({ message: e.message || "Validation error" });
     }
   });
 
@@ -944,8 +993,28 @@ export async function registerRoutes(
         .status(403)
         .json({ message: "Only vendors can delete stories" });
 
-    await storage.deleteStory(req.params.id);
-    res.status(204).send();
+    try {
+      // Verify the story belongs to the vendor
+      const stories = await storage.getStories();
+      const storyToDelete = stories.find((s: any) => s.id === req.params.id);
+
+      if (!storyToDelete) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+
+      const vendor = await storage.getVendorByUserId(req.session.userId);
+      if (!vendor || storyToDelete.vendorId !== vendor.id) {
+        return res
+          .status(403)
+          .json({ message: "You can only delete your own stories" });
+      }
+
+      await storage.deleteStory(req.params.id);
+      res.status(204).send();
+    } catch (e: any) {
+      console.error("Error deleting story:", e);
+      res.status(500).json({ message: e.message || "Failed to delete story" });
+    }
   });
 
   // Seed initial categories (update existing or create new)

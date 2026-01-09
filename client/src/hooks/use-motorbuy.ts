@@ -241,6 +241,26 @@ export function useAddToCart() {
   });
 }
 
+export function useDeleteProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(buildApiUrl(`/api/products/${id}`), {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.message || "Failed to delete product");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vendor/analytics"] });
+    },
+  });
+}
+
 export function useUpdateCartQuantity() {
   const queryClient = useQueryClient();
   return useMutation({

@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
-import { useRole, useProducts, useCategories } from "@/hooks/use-motorbuy";
+import { useRole, useProducts, useCategories, useDeleteProduct } from "@/hooks/use-motorbuy";
 import { 
   Package, ShoppingCart, Loader2, Plus, Image, Trash2, BookOpen, 
-  Store, TrendingUp, DollarSign, Clock, Wallet, Send, Camera, Save, Edit
+  Store, TrendingUp, DollarSign, Clock, Wallet, Send, Camera, Save, Edit, AlertTriangle
 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { formatKWD } from "@/lib/currency";
 import { useUpload } from "@/hooks/use-upload";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -86,6 +87,8 @@ export default function VendorDashboard() {
   const [productWarranty, setProductWarranty] = useState("");
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [deletingProduct, setDeletingProduct] = useState<any | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const [storyContent, setStoryContent] = useState("");
   const [storyImage, setStoryImage] = useState<string | null>(null);
@@ -111,7 +114,11 @@ export default function VendorDashboard() {
 
   const { uploadFile: uploadStoryImage, isUploading: isUploadingStory } = useUpload({
     onSuccess: (response) => {
-      setStoryImage(response.objectPath);
+      // Convert objectPath to full URL if needed
+      const imageUrl = response.objectPath.startsWith('http') 
+        ? response.objectPath 
+        : buildApiUrl(response.objectPath);
+      setStoryImage(imageUrl);
       toast({ title: "Image Uploaded" });
     },
     onError: (error) => toast({ title: "Upload Failed", description: error.message, variant: "destructive" }),
@@ -155,6 +162,8 @@ export default function VendorDashboard() {
     onError: () => toast({ title: "Error", description: "Failed to add product.", variant: "destructive" }),
   });
 
+  const deleteProductMutation = useDeleteProduct();
+
   const updateProductMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => apiRequest("PATCH", `/api/products/${id}`, data),
     onSuccess: () => {
@@ -173,10 +182,18 @@ export default function VendorDashboard() {
     mutationFn: async (data: any) => apiRequest("POST", "/api/stories", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
-      toast({ title: "Spotlight Posted" });
-      setStoryContent(""); setStoryImage(null);
+      toast({ title: "Spotlight Posted", description: "Your spotlight has been shared with customers." });
+      setStoryContent("");
+      setStoryImage(null);
+      // Clear the file input
+      if (storyImageRef.current) {
+        storyImageRef.current.value = "";
+      }
     },
-    onError: () => toast({ title: "Error", description: "Failed to post spotlight.", variant: "destructive" }),
+    onError: (error: any) => {
+      const message = error?.message || "Failed to post spotlight.";
+      toast({ title: "Error", description: message, variant: "destructive" });
+    },
   });
 
   const deleteStoryMutation = useMutation({
@@ -301,15 +318,38 @@ export default function VendorDashboard() {
     });
   };
 
+  const handleDeleteProduct = (product: any) => {
+    setDeletingProduct(product);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteProduct = () => {
+    if (!deletingProduct) return;
+    deleteProductMutation.mutate(deletingProduct.id, {
+      onSuccess: () => {
+        toast({ title: "Product Deleted", description: `${deletingProduct.name} has been deleted.` });
+        setIsDeleteDialogOpen(false);
+        setDeletingProduct(null);
+      },
+      onError: () => {
+        toast({ title: "Error", description: "Failed to delete product.", variant: "destructive" });
+      },
+    });
+  };
+
   const handlePostStory = () => {
     if (!storyContent && !storyImage) {
       toast({ title: "Empty Spotlight", description: "Add content or an image.", variant: "destructive" });
       return;
     }
+    if (!vendorProfile?.id) {
+      toast({ title: "Error", description: "Vendor profile not found.", variant: "destructive" });
+      return;
+    }
     addStoryMutation.mutate({
-      vendorId: vendorProfile?.id,
-      content: storyContent,
-      imageUrl: storyImage,
+      vendorId: vendorProfile.id,
+      content: storyContent || undefined,
+      imageUrl: storyImage || null,
     });
   };
 
@@ -816,15 +856,26 @@ export default function VendorDashboard() {
                             <div className="text-sm text-muted-foreground">{formatKWD(product.price)}</div>
                           </div>
                           <Badge variant="outline">{product.stock} in stock</Badge>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleEditProduct(product)}
-                            data-testid={`button-edit-product-${product.id}`}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleEditProduct(product)}
+                              data-testid={`button-edit-product-${product.id}`}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                              onClick={() => handleDeleteProduct(product)}
+                              data-testid={`button-delete-product-${product.id}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -973,6 +1024,43 @@ export default function VendorDashboard() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Product Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-destructive" />
+              Delete Product
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deletingProduct?.name}"? This action cannot be undone and will also remove this product from all customer carts.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setIsDeleteDialogOpen(false);
+              setDeletingProduct(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteProduct}
+              disabled={deleteProductMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteProductMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Product"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

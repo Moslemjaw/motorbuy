@@ -22,6 +22,7 @@ export interface IStorage {
   getProduct(id: string): Promise<any | undefined>;
   createProduct(product: any): Promise<any>;
   updateProduct(id: string, updates: any): Promise<any>;
+  deleteProduct(id: string): Promise<void>;
   getCartItems(userId: string): Promise<any[]>;
   addToCart(item: any): Promise<any>;
   updateCartItemQuantity(id: string, quantity: number): Promise<any>;
@@ -245,6 +246,18 @@ export class MongoStorage implements IStorage {
       throw new Error("Product not found");
     }
     return toPlainObject(updated);
+  }
+
+  async deleteProduct(id: string): Promise<void> {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error("Invalid product ID");
+    }
+    const deleted = await Product.findByIdAndDelete(id);
+    if (!deleted) {
+      throw new Error("Product not found");
+    }
+    // Also remove from any carts that contain this product
+    await CartItem.deleteMany({ productId: new mongoose.Types.ObjectId(id) });
   }
 
   async getCartItems(userId: string): Promise<any[]> {
