@@ -30,7 +30,6 @@ function Router() {
       <Route path="/vendors" component={VendorList} />
       <Route path="/cart" component={Cart} />
       <Route path="/stories" component={Stories} />
-      <Route path="/vendor/:id" component={VendorProfile} />
       
       {/* Auth routes */}
       <Route path="/login" component={AuthPage} />
@@ -41,11 +40,12 @@ function Router() {
       <Route path="/account" component={CustomerAccount} />
       <Route path="/orders" component={OrderHistory} />
       
-      {/* Vendor routes */}
+      {/* Vendor routes - specific routes must come before /vendor/:id */}
       <Route path="/vendor/account" component={VendorAccount} />
       <Route path="/vendor/store" component={VendorStore} />
       <Route path="/vendor/dashboard" component={VendorDashboard} />
       <Route path="/vendor/wallet" component={VendorWallet} />
+      <Route path="/vendor/:id" component={VendorProfile} />
       
       {/* Legacy route redirects */}
       <Route path="/vendor-dashboard" component={VendorDashboard} />
