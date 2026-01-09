@@ -73,7 +73,7 @@ export default function VendorDashboard() {
   });
 
   // Fetch stories filtered by vendorId directly from backend
-  const { data: myStories, isLoading: isStoriesLoading } = useQuery<VendorStory[]>({
+  const { data: myStories = [], isLoading: isStoriesLoading } = useQuery<VendorStory[]>({
     queryKey: ["/api/stories", vendorProfile?.id],
     queryFn: async () => {
       if (!vendorProfile?.id) return [];
