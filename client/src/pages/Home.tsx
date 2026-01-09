@@ -45,12 +45,12 @@ export default function Home() {
         </div>
         
         <div className="container relative z-10 px-4 mx-auto">
-          <div className="max-w-2xl mx-auto md:mx-0 text-center md:text-left">
+          <div className={`max-w-2xl mx-auto md:mx-0 text-center ${isRTL ? 'md:text-right' : 'md:text-left'}`}>
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-bold tracking-tight ${isRTL ? 'leading-[1.8] mb-6 md:mb-8' : 'leading-tight mb-4 md:mb-6'}`}
+              className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-bold tracking-tight ${isRTL ? 'leading-[1.8] mb-4 md:mb-6' : 'leading-tight mb-4 md:mb-6'}`}
             >
               {t("hero.title")} <span className="text-primary">{t("hero.title.highlight")}</span>
             </motion.h1>
@@ -59,7 +59,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className={`text-base md:text-lg text-white/70 mb-8 max-w-lg mx-auto md:mx-0 ${isRTL ? 'leading-loose' : 'leading-relaxed'}`}
+              className={`text-base md:text-lg text-white/70 mb-8 max-w-lg mx-auto md:mx-0 mt-4 md:mt-6 ${isRTL ? 'leading-loose' : 'leading-relaxed'}`}
             >
               {t("hero.subtitle")}
             </motion.p>
