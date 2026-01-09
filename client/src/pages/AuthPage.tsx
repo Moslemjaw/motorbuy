@@ -17,7 +17,7 @@ export default function AuthPage() {
   const { data: roleData, isLoading: isRoleLoading } = useRole();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [showPassword, setShowPassword] = useState(false);
@@ -45,23 +45,23 @@ export default function AuthPage() {
     try {
       if (mode === "login") {
         await login({ email: formData.email, password: formData.password });
-        toast({ title: "Welcome back!", description: "You have successfully logged in." });
+        toast({ title: t("auth.loginSuccess"), description: t("auth.loginSuccessDesc") });
         const redirectPath = await getRedirectPath();
         setLocation(redirectPath);
       } else {
         await signup(formData);
-        toast({ title: "Account created!", description: "Welcome to MotorBuy." });
+        toast({ title: t("auth.signupSuccess"), description: t("auth.signupSuccessDesc") });
         setLocation("/");
       }
     } catch (error: any) {
-      const message = error?.message || "An error occurred";
-      toast({ title: "Error", description: message, variant: "destructive" });
+      const message = error?.message || t("auth.genericError");
+      toast({ title: t("auth.error"), description: message, variant: "destructive" });
     }
   };
 
   const handleLogout = () => {
     logout();
-    toast({ title: "Logged out", description: "You have been logged out." });
+    toast({ title: t("auth.loggedOut"), description: t("auth.loggedOutDesc") });
   };
 
   if (isLoading) {
@@ -86,22 +86,22 @@ export default function AuthPage() {
                 <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <CheckCircle className="w-10 h-10 text-primary" />
                 </div>
-                <CardTitle className="text-2xl">Welcome back!</CardTitle>
+                <CardTitle className="text-2xl">{t("auth.welcome")}</CardTitle>
                 <CardDescription>
-                  You are signed in as {user.firstName || user.email || "User"}
+                  {t("auth.signedInAs")} {user.firstName || user.email || t("auth.defaultUser")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center justify-center gap-3 flex-wrap">
                   <Badge variant="outline" className="text-sm py-1 px-3">
-                    <User className="w-4 h-4 mr-1" />
+                    <User className={`w-4 h-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />
                     {user.email}
                   </Badge>
                   {!isRoleLoading && roleData && (
                     <Badge className="text-sm py-1 px-3 capitalize">
-                      {roleData.role === "admin" && <Shield className="w-4 h-4 mr-1" />}
-                      {roleData.role === "vendor" && <Store className="w-4 h-4 mr-1" />}
-                      {roleData.role === "customer" && <Car className="w-4 h-4 mr-1" />}
+                      {roleData.role === "admin" && <Shield className={`w-4 h-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />}
+                      {roleData.role === "vendor" && <Store className={`w-4 h-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />}
+                      {roleData.role === "customer" && <Car className={`w-4 h-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />}
                       {roleData.role}
                     </Badge>
                   )}
@@ -110,14 +110,14 @@ export default function AuthPage() {
                 <div className="grid gap-3">
                   <Link href="/">
                     <Button className="w-full" size="lg" data-testid="button-go-home">
-                      Go to Home
+                      {t("auth.goHome")}
                     </Button>
                   </Link>
                   
                   {roleData?.role === "customer" && (
                     <Link href="/account">
                       <Button variant="outline" className="w-full" size="lg" data-testid="button-customer-dashboard">
-                        Customer Dashboard
+                        {t("auth.customerDashboard")}
                       </Button>
                     </Link>
                   )}
@@ -125,7 +125,7 @@ export default function AuthPage() {
                   {roleData?.role === "vendor" && (
                     <Link href="/vendor/dashboard">
                       <Button variant="outline" className="w-full" size="lg" data-testid="button-vendor-dashboard">
-                        Vendor Dashboard
+                        {t("auth.vendorDashboard")}
                       </Button>
                     </Link>
                   )}
@@ -133,7 +133,7 @@ export default function AuthPage() {
                   {roleData?.role === "admin" && (
                     <Link href="/admin">
                       <Button variant="outline" className="w-full" size="lg" data-testid="button-admin-dashboard">
-                        Admin Dashboard
+                        {t("auth.adminDashboard")}
                       </Button>
                     </Link>
                   )}
@@ -144,7 +144,7 @@ export default function AuthPage() {
                     onClick={handleLogout}
                     data-testid="button-logout"
                   >
-                    Sign Out
+                    {t("auth.signOut")}
                   </Button>
                 </div>
               </CardContent>
@@ -164,24 +164,26 @@ export default function AuthPage() {
           className="max-w-md mx-auto"
         >
           <div className="text-center mb-8">
-            <Link href="/" className="inline-flex items-center gap-2 text-primary font-display font-bold text-2xl mb-4">
-              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-base">
-                M
-              </div>
-              MotorBuy
+            <Link href="/">
+              <span className="inline-flex items-center gap-2 text-primary font-display font-bold text-2xl mb-4 cursor-pointer">
+                <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-base">
+                  M
+                </span>
+                MotorBuy
+              </span>
             </Link>
-            <p className="text-muted-foreground">
-              {mode === "login" ? "Sign in to your account" : "Create a new account"}
+            <p className="text-muted-foreground mt-2">
+              {mode === "login" ? t("auth.welcomeSubtitle") : t("auth.createSubtitle")}
             </p>
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle>{mode === "login" ? "Sign In" : "Create Account"}</CardTitle>
+              <CardTitle>{mode === "login" ? t("auth.login") : t("auth.createAccount")}</CardTitle>
               <CardDescription>
                 {mode === "login" 
-                  ? "Enter your email and password to sign in" 
-                  : "Fill in your details to create an account"}
+                  ? t("auth.enterEmail") 
+                  : t("auth.createSubtitle")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -189,10 +191,10 @@ export default function AuthPage() {
                 {mode === "signup" && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
+                      <Label htmlFor="firstName">{t("auth.firstName")}</Label>
                       <Input
                         id="firstName"
-                        placeholder="John"
+                        placeholder={isRTL ? "محمد" : "John"}
                         value={formData.firstName}
                         onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                         required
@@ -200,10 +202,10 @@ export default function AuthPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
+                      <Label htmlFor="lastName">{t("auth.lastName")}</Label>
                       <Input
                         id="lastName"
-                        placeholder="Doe"
+                        placeholder={isRTL ? "العلي" : "Doe"}
                         value={formData.lastName}
                         onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                         required
@@ -214,7 +216,7 @@ export default function AuthPage() {
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t("auth.email")}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -227,12 +229,12 @@ export default function AuthPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{t("auth.password")}</Label>
                   <div className="relative">
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
-                      placeholder={mode === "signup" ? "At least 6 characters" : "Your password"}
+                      placeholder={mode === "signup" ? t("auth.passwordHint") : ""}
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       required
@@ -243,7 +245,7 @@ export default function AuthPage() {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="absolute right-0 top-0 h-full px-3"
+                      className={`absolute top-0 h-full px-3 ${isRTL ? 'left-0' : 'right-0'}`}
                       onClick={() => setShowPassword(!showPassword)}
                       data-testid="button-toggle-password"
                     >
@@ -259,32 +261,32 @@ export default function AuthPage() {
                   disabled={isLoggingIn || isSigningUp}
                   data-testid="button-submit"
                 >
-                  {(isLoggingIn || isSigningUp) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  {mode === "login" ? "Sign In" : "Create Account"}
+                  {(isLoggingIn || isSigningUp) && <Loader2 className={`w-4 h-4 animate-spin ${isRTL ? 'ml-2' : 'mr-2'}`} />}
+                  {mode === "login" ? t("auth.login") : t("auth.createAccount")}
                 </Button>
               </form>
 
               <div className="mt-6 text-center text-sm">
                 {mode === "login" ? (
                   <p>
-                    Don't have an account?{" "}
+                    {t("auth.noAccount")}{" "}
                     <button 
                       onClick={() => setMode("signup")} 
                       className="text-primary font-medium hover:underline"
                       data-testid="button-switch-to-signup"
                     >
-                      Create one
+                      {t("auth.createOne")}
                     </button>
                   </p>
                 ) : (
                   <p>
-                    Already have an account?{" "}
+                    {t("auth.haveAccount")}{" "}
                     <button 
                       onClick={() => setMode("login")} 
                       className="text-primary font-medium hover:underline"
                       data-testid="button-switch-to-login"
                     >
-                      Sign in
+                      {t("auth.signIn")}
                     </button>
                   </p>
                 )}
@@ -295,7 +297,7 @@ export default function AuthPage() {
           <div className="mt-8 text-center">
             <Link href="/">
               <Button variant="ghost" data-testid="button-back-home">
-                Back to Home
+                {t("auth.backHome")}
               </Button>
             </Link>
           </div>
