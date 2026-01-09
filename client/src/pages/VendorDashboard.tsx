@@ -72,50 +72,18 @@ export default function VendorDashboard() {
     enabled: !!vendorProfile,
   });
 
-  // Fetch stories filtered by vendorId directly from backend
+  // Fetch stories for this vendor from backend
   const { data: myStories = [], isLoading: isStoriesLoading } = useQuery<VendorStory[]>({
-    queryKey: ["/api/stories", vendorProfile?.id],
+    queryKey: ["/api/vendor/stories"],
     queryFn: async () => {
-      if (!vendorProfile?.id) return [];
-      
-      const res = await fetch(buildApiUrl("/api/stories"), {
+      const res = await fetch(buildApiUrl("/api/vendor/stories"), {
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to fetch stories");
-      const allStories = await res.json();
-      
-      // Filter stories by vendorId - handle both ObjectId and string formats
-      const profileVendorId = String(vendorProfile.id || "").trim();
-      console.log("Vendor Dashboard - Filtering stories. Profile ID:", profileVendorId);
-      
-      const filtered = allStories.filter((s: VendorStory) => {
-        // Handle vendorId in different formats
-        let storyVendorId = "";
-        if (s.vendorId) {
-          if (typeof s.vendorId === 'object' && (s.vendorId as any).id) {
-            storyVendorId = String((s.vendorId as any).id).trim();
-          } else if (typeof s.vendorId === 'object' && (s.vendorId as any).toString) {
-            storyVendorId = String((s.vendorId as any).toString()).trim();
-          } else {
-            storyVendorId = String(s.vendorId).trim();
-          }
-        }
-        
-        const matches = storyVendorId === profileVendorId;
-        if (!matches && storyVendorId) {
-          console.log("Vendor Dashboard - Story mismatch:", {
-            storyId: s.id,
-            storyVendorId,
-            profileVendorId,
-          });
-        }
-        return matches;
-      });
-      
-      console.log("Vendor Dashboard - Filtered stories count:", filtered.length, "out of", allStories.length);
-      return filtered;
+      if (res.status === 403) return []; // not a vendor
+      if (!res.ok) throw new Error("Failed to fetch spotlights");
+      return res.json();
     },
-    enabled: !!vendorProfile?.id, // Only fetch when vendor profile is loaded
+    enabled: !!user && roleData?.role === "vendor",
   });
 
   const [productName, setProductName] = useState("");

@@ -958,6 +958,29 @@ export async function registerRoutes(
     res.json(stories);
   });
 
+  // Vendor-only stories list
+  app.get("/api/vendor/stories", isAuthenticated, async (req: any, res) => {
+    const role = await storage.getUserRole(req.session.userId);
+    if (role !== "vendor") {
+      return res
+        .status(403)
+        .json({ message: "Only vendors can view their spotlights" });
+    }
+    try {
+      const vendor = await storage.getVendorByUserId(req.session.userId);
+      if (!vendor) {
+        return res.status(404).json({ message: "Vendor profile not found" });
+      }
+      const stories = await storage.getStoriesByVendor(vendor.id);
+      res.json(stories);
+    } catch (e: any) {
+      console.error("Error fetching vendor stories:", e);
+      res
+        .status(500)
+        .json({ message: e.message || "Failed to fetch vendor stories" });
+    }
+  });
+
   app.post(api.stories.create.path, isAuthenticated, async (req: any, res) => {
     const role = await storage.getUserRole(req.session.userId);
     if (role !== "vendor")

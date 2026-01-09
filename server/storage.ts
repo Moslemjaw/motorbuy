@@ -33,6 +33,7 @@ export interface IStorage {
   getOrders(userId: string): Promise<any[]>;
   getStories(): Promise<any[]>;
   getStory(id: string): Promise<any | undefined>;
+  getStoriesByVendor(vendorId: string): Promise<any[]>;
   createStory(story: any): Promise<any>;
   updateStory(id: string, updates: any): Promise<any>;
   deleteStory(id: string): Promise<void>;
@@ -483,6 +484,23 @@ export class MongoStorage implements IStorage {
         obj.vendorId = obj.vendor.id;
       }
       return obj;
+    });
+  }
+
+  async getStoriesByVendor(vendorId: string): Promise<any[]> {
+    if (!mongoose.Types.ObjectId.isValid(vendorId)) return [];
+    const stories = await VendorStory.find({ vendorId: new mongoose.Types.ObjectId(vendorId) })
+      .populate('vendorId')
+      .sort({ createdAt: -1 });
+    return stories.map(story => {
+      const obj = toPlainObject(story);
+      if (obj.vendorId && typeof obj.vendorId === 'object') {
+        obj.vendor = toPlainObject(obj.vendorId);
+        obj.vendorId = obj.vendor.id;
+      } else if (obj.vendorId) {
+        obj.vendorId = String(obj.vendorId);
+      }
+    return obj;
     });
   }
 
