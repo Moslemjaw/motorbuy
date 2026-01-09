@@ -862,8 +862,19 @@ export async function registerRoutes(
   });
 
   app.get(api.cart.get.path, isAuthenticated, async (req: any, res) => {
-    const items = await storage.getCartItems(req.session.userId);
-    res.json(items);
+    try {
+      const items = await storage.getCartItems(req.session.userId);
+      console.log(
+        "Cart GET - userId:",
+        req.session.userId,
+        "items count:",
+        items.length
+      );
+      res.json(items);
+    } catch (e: any) {
+      console.error("Error fetching cart:", e);
+      res.status(500).json({ message: "Failed to fetch cart" });
+    }
   });
 
   app.post(api.cart.add.path, isAuthenticated, async (req: any, res) => {

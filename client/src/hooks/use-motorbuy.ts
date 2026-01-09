@@ -209,15 +209,24 @@ export function useCategories() {
 
 // === CART ===
 export function useCart() {
+  const queryKey = [api.cart.get.path];
   return useQuery({
-    queryKey: [api.cart.get.path],
+    queryKey,
     queryFn: async () => {
+      console.log("Fetching cart from:", buildApiUrl(api.cart.get.path));
       const res = await fetch(buildApiUrl(api.cart.get.path), {
         credentials: "include",
       });
-      if (res.status === 401) return [];
-      if (!res.ok) throw new Error("Failed to fetch cart");
+      if (res.status === 401) {
+        console.log("Cart fetch: Not authenticated");
+        return [];
+      }
+      if (!res.ok) {
+        console.error("Cart fetch failed:", res.status, res.statusText);
+        throw new Error("Failed to fetch cart");
+      }
       const data = await res.json();
+      console.log("Cart data received:", data);
       return Array.isArray(data) ? data : [];
     },
     staleTime: 0, // Always fetch fresh data
@@ -229,8 +238,11 @@ export function useCart() {
 
 export function useAddToCart() {
   const queryClient = useQueryClient();
+  const cartQueryKey = [api.cart.get.path];
+  
   return useMutation({
     mutationFn: async (data: z.infer<typeof api.cart.add.input>) => {
+      console.log("Adding to cart:", data);
       const res = await fetch(buildApiUrl(api.cart.add.path), {
         method: api.cart.add.method,
         headers: { "Content-Type": "application/json" },
@@ -242,19 +254,26 @@ export function useAddToCart() {
         const error = await res.json().catch(() => ({}));
         throw new Error(error.message || "Failed to add to cart");
       }
-      return await res.json();
+      const result = await res.json();
+      console.log("Add to cart response:", result);
+      return result;
     },
     onSuccess: async (data) => {
-      // Invalidate and refetch cart immediately
+      console.log("Add to cart success, invalidating and refetching cart...", data);
+      // Invalidate the cart query
       await queryClient.invalidateQueries({ 
-        queryKey: [api.cart.get.path],
-        exact: false // Invalidate all queries that start with this key
+        queryKey: cartQueryKey,
+        exact: true
       });
-      // Force a refetch of the cart
+      // Immediately refetch the cart
       await queryClient.refetchQueries({ 
-        queryKey: [api.cart.get.path],
-        exact: false
+        queryKey: cartQueryKey,
+        exact: true
       });
+      console.log("Cart refetch completed");
+    },
+    onError: (error) => {
+      console.error("Add to cart error:", error);
     },
   });
 }
