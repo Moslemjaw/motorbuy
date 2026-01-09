@@ -247,7 +247,7 @@ export default function AuthPage() {
                           size="lg"
                           data-testid="button-go-dashboard"
                         >
-                          Go To Dashboard
+                          Go To Vendor Dashboard
                         </Button>
                       </Link>
                     ) : (
@@ -257,7 +257,7 @@ export default function AuthPage() {
                           size="lg"
                           data-testid="button-go-dashboard"
                         >
-                          Dashboard
+                          Go To Admin Dashboard
                         </Button>
                       </Link>
                     )
