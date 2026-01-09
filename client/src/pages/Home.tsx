@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useCategories, useStories, useProducts, useVendors } from "@/hooks/use-motorbuy";
 import { useLanguage } from "@/lib/i18n";
 import { ProductCard } from "@/components/ProductCard";
-import { ArrowRight, Shield, ChevronRight, Users, Package, TrendingUp, Cog, Settings, CircleStop, Gauge, Zap, Thermometer, Fuel, Wind, Car, Armchair, Circle, Lightbulb, Droplets, Wrench, Truck, Headphones, CreditCard, type LucideIcon } from "lucide-react";
+import { ArrowRight, Shield, ChevronRight, Users, Package, TrendingUp, Cog, Settings, CircleStop, Gauge, Zap, Thermometer, Fuel, Wind, Car, Armchair, Circle, Lightbulb, Droplets, Wrench, Truck, Headphones, CreditCard, Megaphone, type LucideIcon } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 
@@ -13,7 +13,7 @@ const iconMap: Record<string, LucideIcon> = {
 };
 
 export default function Home() {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const { data: categories } = useCategories();
   const { data: products } = useProducts({ sortBy: 'newest' });
   const { data: stories } = useStories();
@@ -195,19 +195,19 @@ export default function Home() {
         </div>
       </section>
 
-      {stories && stories.length > 0 && (
-        <section className="py-12 md:py-20">
-          <div className="container px-4 mx-auto">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-              <div>
-                <h2 className="text-2xl md:text-3xl font-display font-bold mb-1">{t("section.spotlight")}</h2>
-                <p className="text-muted-foreground text-sm md:text-base">{t("section.spotlight.subtitle")}</p>
-              </div>
-              <Link href="/stories" className="text-primary text-sm font-medium flex items-center gap-1 group">
-                {t("common.viewAll")} <ChevronRight className={`w-4 h-4 transition-transform ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
-              </Link>
+      <section className="py-12 md:py-20">
+        <div className="container px-4 mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-display font-bold mb-1">{t("section.featuredAds")}</h2>
+              <p className="text-muted-foreground text-sm md:text-base">{t("section.featuredAds.subtitle")}</p>
             </div>
-            
+            <Link href="/stories" className="text-primary text-sm font-medium flex items-center gap-1 group">
+              {t("common.viewAll")} <ChevronRight className={`w-4 h-4 transition-transform ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
+            </Link>
+          </div>
+          
+          {stories && stories.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
               {stories.slice(0, 6).map((story, index) => (
                 <motion.div
@@ -234,7 +234,7 @@ export default function Home() {
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm truncate">{story.vendor?.storeName || "Vendor"}</h4>
                         <p className="text-xs text-muted-foreground">
-                          {story.createdAt ? new Date(story.createdAt).toLocaleDateString() : ""}
+                          {story.createdAt ? new Date(story.createdAt).toLocaleDateString(language === "ar" ? "ar-KW" : "en-US") : ""}
                         </p>
                       </div>
                     </div>
@@ -243,9 +243,16 @@ export default function Home() {
                 </motion.div>
               ))}
             </div>
-          </div>
-        </section>
-      )}
+          ) : (
+            <div className="text-center py-12 bg-card rounded-xl border">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <Megaphone className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground">{t("section.noAds")}</p>
+            </div>
+          )}
+        </div>
+      </section>
 
       <section className="py-16 md:py-24 bg-muted/50">
         <div className="container px-4 mx-auto">
