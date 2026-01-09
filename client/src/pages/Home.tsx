@@ -45,7 +45,7 @@ export default function Home() {
         </div>
         
         <div className="container relative z-10 px-4 mx-auto">
-          <div className="max-w-2xl">
+          <div className="max-w-2xl mx-auto text-center md:text-left">
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -59,7 +59,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className={`text-base md:text-lg text-white/70 mb-8 max-w-lg ${isRTL ? 'leading-loose' : 'leading-relaxed'}`}
+              className={`text-base md:text-lg text-white/70 mb-8 max-w-lg mx-auto md:mx-0 ${isRTL ? 'leading-loose' : 'leading-relaxed'}`}
             >
               {t("hero.subtitle")}
             </motion.p>
@@ -68,7 +68,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="flex flex-wrap gap-3"
+              className="flex flex-wrap gap-3 justify-center md:justify-start"
             >
               <Link href="/products">
                 <Button size="lg" className="rounded-full px-6 md:px-8 shadow-lg" data-testid="button-shop-parts">
@@ -86,7 +86,7 @@ export default function Home() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex flex-wrap gap-6 md:gap-10 mt-10 pt-8 border-t border-white/10"
+              className="flex flex-wrap gap-6 md:gap-10 mt-10 pt-8 border-t border-white/10 justify-center md:justify-start"
             >
               {stats.map((stat, i) => (
                 <div key={i} className="flex items-center gap-3">
@@ -106,14 +106,14 @@ export default function Home() {
 
       <section className="py-12 md:py-16 border-b">
         <div className="container px-4 mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
             {features.map((feature, i) => (
-              <div key={i} className="text-center">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                  <feature.icon className="w-6 h-6 text-primary" />
+              <div key={i} className="text-center px-2">
+                <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 transition-transform hover:scale-110">
+                  <feature.icon className="w-6 h-6 md:w-7 md:h-7 text-primary" />
                 </div>
-                <h3 className="font-semibold text-sm mb-1">{feature.title}</h3>
-                <p className="text-xs text-muted-foreground">{feature.desc}</p>
+                <h3 className="font-semibold text-sm md:text-base mb-2 md:mb-1">{feature.title}</h3>
+                <p className="text-xs md:text-sm text-muted-foreground leading-relaxed px-1">{feature.desc}</p>
               </div>
             ))}
           </div>
@@ -122,12 +122,12 @@ export default function Home() {
 
       <section className="py-12 md:py-20">
         <div className="container px-4 mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-display font-bold mb-1">{t("section.categories")}</h2>
+          <div className="flex flex-col items-center md:flex-row md:justify-between md:items-center gap-4 mb-8 text-center md:text-left">
+            <div className="max-w-2xl md:max-w-none">
+              <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">{t("section.categories")}</h2>
               <p className="text-muted-foreground text-sm md:text-base">{t("section.categories.subtitle")}</p>
             </div>
-            <Link href="/products" className="text-primary text-sm font-medium flex items-center gap-1 group">
+            <Link href="/products" className="text-primary text-sm font-medium flex items-center gap-1 group justify-center md:justify-start">
               {t("common.viewAll")} <ChevronRight className={`w-4 h-4 transition-transform ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
             </Link>
           </div>
@@ -165,12 +165,12 @@ export default function Home() {
 
       <section className="py-12 md:py-20 bg-muted/30">
         <div className="container px-4 mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-display font-bold mb-1">{t("section.newArrivals")}</h2>
+          <div className="flex flex-col items-center md:flex-row md:justify-between md:items-center gap-4 mb-8 text-center md:text-left">
+            <div className="max-w-2xl md:max-w-none">
+              <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">{t("section.newArrivals")}</h2>
               <p className="text-muted-foreground text-sm md:text-base">{t("section.newArrivals.subtitle")}</p>
             </div>
-            <Link href="/products" className="text-primary text-sm font-medium flex items-center gap-1 group">
+            <Link href="/products" className="text-primary text-sm font-medium flex items-center gap-1 group justify-center md:justify-start">
               {t("common.viewAll")} <ChevronRight className={`w-4 h-4 transition-transform ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
             </Link>
           </div>
@@ -197,12 +197,12 @@ export default function Home() {
 
       <section className="py-12 md:py-20">
         <div className="container px-4 mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-display font-bold mb-1">{t("section.featuredAds")}</h2>
+          <div className="flex flex-col items-center md:flex-row md:justify-between md:items-center gap-4 mb-8 text-center md:text-left">
+            <div className="max-w-2xl md:max-w-none">
+              <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">{t("section.featuredAds")}</h2>
               <p className="text-muted-foreground text-sm md:text-base">{t("section.featuredAds.subtitle")}</p>
             </div>
-            <Link href="/stories" className="text-primary text-sm font-medium flex items-center gap-1 group">
+            <Link href="/stories" className="text-primary text-sm font-medium flex items-center gap-1 group justify-center md:justify-start">
               {t("common.viewAll")} <ChevronRight className={`w-4 h-4 transition-transform ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
             </Link>
           </div>
