@@ -26,6 +26,7 @@ export interface IStorage {
   removeFromCart(id: string): Promise<void>;
   clearCart(userId: string): Promise<void>;
   createOrder(userId: string, total: string, items: { productId: string; quantity: number; price: string }[]): Promise<any>;
+  createGuestOrder(guestEmail: string, guestName: string, guestPhone: string, total: string, items: { productId: string; quantity: number; price: string }[]): Promise<any>;
   getOrders(userId: string): Promise<any[]>;
   getStories(): Promise<any[]>;
   createStory(story: any): Promise<any>;
@@ -258,6 +259,65 @@ export class MongoStorage implements IStorage {
   async createOrder(userId: string, total: string, items: { productId: string; quantity: number; price: string }[]): Promise<any> {
     const order = await Order.create({
       userId,
+      total,
+      status: "paid"
+    });
+
+    const vendorEarnings: Record<string, number> = {};
+
+    for (const item of items) {
+      await OrderItem.create({
+        orderId: order._id,
+        productId: new mongoose.Types.ObjectId(item.productId),
+        quantity: item.quantity,
+        price: item.price
+      });
+
+      const product = await Product.findById(item.productId);
+      if (product) {
+        const vendorIdStr = product.vendorId.toString();
+        const lineTotal = parseFloat(item.price) * item.quantity;
+        
+        if (!vendorEarnings[vendorIdStr]) {
+          vendorEarnings[vendorIdStr] = 0;
+        }
+        vendorEarnings[vendorIdStr] += lineTotal;
+      }
+    }
+
+    for (const [vendorId, grossAmount] of Object.entries(vendorEarnings)) {
+      const vendor = await Vendor.findById(vendorId);
+      if (vendor) {
+        const commissionType = vendor.commissionType || "percentage";
+        const commissionValue = parseFloat(vendor.commissionValue || "5");
+        
+        let commission = 0;
+        if (commissionType === "percentage") {
+          commission = grossAmount * (commissionValue / 100);
+        } else {
+          commission = commissionValue;
+        }
+        
+        const netEarning = Math.max(0, grossAmount - commission);
+        const newGross = parseFloat(vendor.grossSalesKwd || "0") + grossAmount;
+        const newPending = parseFloat(vendor.pendingPayoutKwd || "0") + netEarning;
+
+        await Vendor.findByIdAndUpdate(vendorId, {
+          grossSalesKwd: newGross.toFixed(3),
+          pendingPayoutKwd: newPending.toFixed(3),
+        });
+      }
+    }
+
+    return toPlainObject(order);
+  }
+
+  async createGuestOrder(guestEmail: string, guestName: string, guestPhone: string, total: string, items: { productId: string; quantity: number; price: string }[]): Promise<any> {
+    const order = await Order.create({
+      userId: `guest:${guestEmail}`,
+      guestEmail,
+      guestName,
+      guestPhone,
       total,
       status: "paid"
     });

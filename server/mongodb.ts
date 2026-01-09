@@ -73,6 +73,9 @@ const productSchema = new mongoose.Schema({
 
 const orderSchema = new mongoose.Schema({
   userId: { type: String, required: true },
+  guestEmail: { type: String },
+  guestName: { type: String },
+  guestPhone: { type: String },
   total: { type: String, required: true },
   status: { type: String, enum: ["pending", "paid", "shipped", "delivered", "cancelled"], default: "pending" },
   createdAt: { type: Date, default: Date.now },

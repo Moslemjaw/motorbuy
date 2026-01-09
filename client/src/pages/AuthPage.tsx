@@ -11,13 +11,15 @@ import { Link, useLocation } from "wouter";
 import { Car, Store, Shield, User, Loader2, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { buildApiUrl } from "@/lib/api-config";
+import carLogo from "@assets/image_2026-01-09_142631252-removebg-preview_1767958016384.png";
 
 export default function AuthPage() {
   const { user, isLoading, isAuthenticated, login, signup, logout, isLoggingIn, isSigningUp } = useAuth();
   const { data: roleData, isLoading: isRoleLoading } = useRole();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [showPassword, setShowPassword] = useState(false);
@@ -30,7 +32,7 @@ export default function AuthPage() {
 
   const getRedirectPath = async () => {
     try {
-      const res = await fetch("/api/role", { credentials: "include" });
+      const res = await fetch(buildApiUrl("/api/role"), { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         if (data.role === "vendor") return "/vendor/dashboard";
@@ -165,11 +167,19 @@ export default function AuthPage() {
         >
           <div className="text-center mb-8">
             <Link href="/">
-              <span className="inline-flex items-center gap-2 text-primary font-display font-bold text-2xl mb-4 cursor-pointer">
-                <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-base">
-                  {t("brand.letter")}
-                </span>
-                {t("brand.name")}
+              <span className="inline-flex items-center gap-2 font-display font-bold text-2xl mb-4 cursor-pointer">
+                <img src={carLogo} alt="MotorBuy" className="w-12 h-12 object-contain" />
+                {language === "ar" ? (
+                  <span>
+                    <span className="text-[hsl(var(--logo-accent))]">موتور</span>
+                    <span className="text-primary">باي</span>
+                  </span>
+                ) : (
+                  <span>
+                    <span className="text-primary">motor</span>
+                    <span className="text-[hsl(var(--logo-accent))]">buy</span>
+                  </span>
+                )}
               </span>
             </Link>
             <p className="text-muted-foreground mt-2">
@@ -294,9 +304,24 @@ export default function AuthPage() {
             </CardContent>
           </Card>
 
-          <div className="mt-8 text-center">
+          <div className="mt-6 text-center space-y-3">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  {t("auth.or")}
+                </span>
+              </div>
+            </div>
+            <Link href="/products">
+              <Button variant="outline" className="w-full" data-testid="button-guest-continue">
+                {t("auth.continueAsGuest")}
+              </Button>
+            </Link>
             <Link href="/">
-              <Button variant="ghost" data-testid="button-back-home">
+              <Button variant="ghost" className="w-full" data-testid="button-back-home">
                 {t("auth.backHome")}
               </Button>
             </Link>

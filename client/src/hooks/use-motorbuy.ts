@@ -1,13 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl, errorSchemas } from "@shared/routes";
 import { z } from "zod";
+import { buildApiUrl } from "@/lib/api-config";
 
 // === ROLES ===
 export function useRole() {
   return useQuery({
     queryKey: [api.roles.get.path],
     queryFn: async () => {
-      const res = await fetch(api.roles.get.path, { credentials: "include" });
+      const res = await fetch(buildApiUrl(api.roles.get.path), { credentials: "include" });
       if (res.status === 401) return null;
       if (!res.ok) throw new Error("Failed to fetch role");
       return api.roles.get.responses[200].parse(await res.json());
@@ -21,7 +22,7 @@ export function useVendors() {
   return useQuery({
     queryKey: [api.vendors.list.path],
     queryFn: async () => {
-      const res = await fetch(api.vendors.list.path, { credentials: "include" });
+      const res = await fetch(buildApiUrl(api.vendors.list.path), { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch vendors");
       return api.vendors.list.responses[200].parse(await res.json());
     },
@@ -33,7 +34,7 @@ export function useVendor(id: string) {
     queryKey: [api.vendors.get.path, id],
     queryFn: async () => {
       const url = buildUrl(api.vendors.get.path, { id });
-      const res = await fetch(url, { credentials: "include" });
+      const res = await fetch(buildApiUrl(url), { credentials: "include" });
       if (res.status === 404) return null;
       if (!res.ok) throw new Error("Failed to fetch vendor");
       return api.vendors.get.responses[200].parse(await res.json());
@@ -46,7 +47,7 @@ export function useCreateVendor() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: z.infer<typeof api.vendors.create.input>) => {
-      const res = await fetch(api.vendors.create.path, {
+      const res = await fetch(buildApiUrl(api.vendors.create.path), {
         method: api.vendors.create.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -73,7 +74,7 @@ export function useApproveVendor() {
   return useMutation({
     mutationFn: async ({ id, isApproved }: { id: string, isApproved: boolean }) => {
       const url = buildUrl(api.vendors.approve.path, { id });
-      const res = await fetch(url, {
+      const res = await fetch(buildApiUrl(url), {
         method: api.vendors.approve.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isApproved }),
@@ -99,7 +100,7 @@ export function useProducts(filters?: z.infer<typeof api.products.list.input>) {
       if (filters?.sortBy) params.append("sortBy", filters.sortBy);
 
       const url = `${api.products.list.path}?${params.toString()}`;
-      const res = await fetch(url, { credentials: "include" });
+      const res = await fetch(buildApiUrl(url), { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch products");
       return api.products.list.responses[200].parse(await res.json());
     },
@@ -111,7 +112,7 @@ export function useProduct(id: string) {
     queryKey: [api.products.get.path, id],
     queryFn: async () => {
       const url = buildUrl(api.products.get.path, { id });
-      const res = await fetch(url, { credentials: "include" });
+      const res = await fetch(buildApiUrl(url), { credentials: "include" });
       if (res.status === 404) return null;
       if (!res.ok) throw new Error("Failed to fetch product");
       return api.products.get.responses[200].parse(await res.json());
@@ -130,7 +131,7 @@ export function useCreateProduct() {
         stock: Number(data.stock),
       };
       
-      const res = await fetch(api.products.create.path, {
+      const res = await fetch(buildApiUrl(api.products.create.path), {
         method: api.products.create.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -148,7 +149,7 @@ export function useCategories() {
   return useQuery({
     queryKey: [api.categories.list.path],
     queryFn: async () => {
-      const res = await fetch(api.categories.list.path, { credentials: "include" });
+      const res = await fetch(buildApiUrl(api.categories.list.path), { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch categories");
       return api.categories.list.responses[200].parse(await res.json());
     },
@@ -160,7 +161,7 @@ export function useCart() {
   return useQuery({
     queryKey: [api.cart.get.path],
     queryFn: async () => {
-      const res = await fetch(api.cart.get.path, { credentials: "include" });
+      const res = await fetch(buildApiUrl(api.cart.get.path), { credentials: "include" });
       if (res.status === 401) return null;
       if (!res.ok) throw new Error("Failed to fetch cart");
       return api.cart.get.responses[200].parse(await res.json());
@@ -172,7 +173,7 @@ export function useAddToCart() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: z.infer<typeof api.cart.add.input>) => {
-      const res = await fetch(api.cart.add.path, {
+      const res = await fetch(buildApiUrl(api.cart.add.path), {
         method: api.cart.add.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -191,7 +192,7 @@ export function useRemoveFromCart() {
   return useMutation({
     mutationFn: async (id: string) => {
       const url = buildUrl(api.cart.remove.path, { id });
-      const res = await fetch(url, { method: api.cart.remove.method, credentials: "include" });
+      const res = await fetch(buildApiUrl(url), { method: api.cart.remove.method, credentials: "include" });
       if (!res.ok) throw new Error("Failed to remove item");
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.cart.get.path] }),
@@ -203,7 +204,7 @@ export function useOrders() {
   return useQuery({
     queryKey: [api.orders.list.path],
     queryFn: async () => {
-      const res = await fetch(api.orders.list.path, { credentials: "include" });
+      const res = await fetch(buildApiUrl(api.orders.list.path), { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch orders");
       return api.orders.list.responses[200].parse(await res.json());
     },
@@ -214,7 +215,7 @@ export function useCreateOrder() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch(api.orders.create.path, {
+      const res = await fetch(buildApiUrl(api.orders.create.path), {
         method: api.orders.create.method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -234,7 +235,7 @@ export function useStories() {
   return useQuery({
     queryKey: [api.stories.list.path],
     queryFn: async () => {
-      const res = await fetch(api.stories.list.path, { credentials: "include" });
+      const res = await fetch(buildApiUrl(api.stories.list.path), { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch stories");
       return api.stories.list.responses[200].parse(await res.json());
     },
@@ -245,7 +246,7 @@ export function useCreateStory() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: z.infer<typeof api.stories.create.input>) => {
-      const res = await fetch(api.stories.create.path, {
+      const res = await fetch(buildApiUrl(api.stories.create.path), {
         method: api.stories.create.method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

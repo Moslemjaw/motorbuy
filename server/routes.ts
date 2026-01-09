@@ -537,6 +537,44 @@ export async function registerRoutes(
     res.status(201).json(order);
   });
 
+  // Guest checkout - allows purchase without authentication
+  app.post("/api/orders/guest", async (req: any, res) => {
+    try {
+      const { items, guestEmail, guestName, guestPhone } = req.body;
+      
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ message: "Cart is empty" });
+      }
+      
+      if (!guestEmail) {
+        return res.status(400).json({ message: "Email is required for guest checkout" });
+      }
+
+      // Validate items and get prices from database (never trust client prices)
+      let total = 0;
+      const orderItems = [];
+      for (const item of items) {
+        const product = await storage.getProduct(item.productId);
+        if (!product) {
+          return res.status(400).json({ message: `Product ${item.productId} not found` });
+        }
+        const price = parseFloat(product.price);
+        total += price * item.quantity;
+        orderItems.push({
+          productId: item.productId,
+          quantity: item.quantity,
+          price: product.price // Use database price, not client-provided price
+        });
+      }
+
+      const order = await storage.createGuestOrder(guestEmail, guestName || "Guest", guestPhone || "", total.toString(), orderItems);
+      res.status(201).json(order);
+    } catch (e) {
+      console.error("Guest checkout error:", e);
+      res.status(500).json({ message: "Failed to process guest order" });
+    }
+  });
+
   app.get(api.orders.list.path, isAuthenticated, async (req: any, res) => {
     const orders = await storage.getOrders(req.session.userId);
     res.json(orders);
