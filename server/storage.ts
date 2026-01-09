@@ -508,7 +508,17 @@ export class MongoStorage implements IStorage {
       storyData.vendorId = new mongoose.Types.ObjectId(storyData.vendorId);
     }
     const newStory = await VendorStory.create(storyData);
-    return toPlainObject(newStory);
+    // Populate vendorId to ensure consistent format
+    const populatedStory = await VendorStory.findById(newStory._id).populate('vendorId');
+    const obj = toPlainObject(populatedStory);
+    // Convert vendorId to string format (consistent with getStories)
+    if (obj.vendorId && typeof obj.vendorId === 'object') {
+      obj.vendor = toPlainObject(obj.vendorId);
+      obj.vendorId = obj.vendor.id;
+    } else if (obj.vendorId) {
+      obj.vendorId = String(obj.vendorId);
+    }
+    return obj;
   }
 
   async updateStory(id: string, updates: any): Promise<any> {

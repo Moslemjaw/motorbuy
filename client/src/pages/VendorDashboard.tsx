@@ -86,29 +86,49 @@ export default function VendorDashboard() {
     enabled: !!vendorProfile, // Only fetch when vendor profile is loaded
   });
   
-  // Filter stories by vendorId - ensure both are strings for comparison
+  // Filter stories by vendorId - handle both ObjectId and string formats
   const myStories = React.useMemo(() => {
     if (!stories || !vendorProfile) return [];
     
-    const profileVendorId = String(vendorProfile.id || "");
+    const profileVendorId = String(vendorProfile.id || "").trim();
     console.log("Vendor Dashboard - Filtering stories. Profile ID:", profileVendorId, "Type:", typeof vendorProfile.id);
     
     const filtered = stories.filter(s => {
-      const storyVendorId = String(s.vendorId || "");
+      // Handle vendorId in different formats
+      let storyVendorId = "";
+      if (s.vendorId) {
+        if (typeof s.vendorId === 'object' && s.vendorId.id) {
+          storyVendorId = String(s.vendorId.id).trim();
+        } else if (typeof s.vendorId === 'object' && s.vendorId.toString) {
+          storyVendorId = String(s.vendorId.toString()).trim();
+        } else {
+          storyVendorId = String(s.vendorId).trim();
+        }
+      }
+      
       const matches = storyVendorId === profileVendorId;
-      if (!matches) {
+      if (!matches && storyVendorId) {
         console.log("Vendor Dashboard - Story mismatch:", {
           storyId: s.id,
           storyVendorId,
           storyVendorIdType: typeof s.vendorId,
           profileVendorId,
-          matches
+          matches,
+          rawVendorId: s.vendorId
         });
       }
       return matches;
     });
     
     console.log("Vendor Dashboard - Filtered stories count:", filtered.length, "out of", stories.length);
+    if (filtered.length === 0 && stories.length > 0) {
+      console.log("Vendor Dashboard - All story vendorIds:", stories.map(s => ({
+        id: s.id,
+        vendorId: s.vendorId,
+        vendorIdType: typeof s.vendorId,
+        vendorIdString: String(s.vendorId || "")
+      })));
+    }
     return filtered;
   }, [stories, vendorProfile]);
 
@@ -619,42 +639,65 @@ export default function VendorDashboard() {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
                 <BookOpen className="w-4 h-4" />
-                Your Spotlights
+                Your Spotlights {myStories.length > 0 && `(${myStories.length})`}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {myStories.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">No spotlights yet</p>
+              {isStoriesLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : myStories.length === 0 ? (
+                <div className="text-center py-8">
+                  <BookOpen className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
+                  <p className="text-sm text-muted-foreground mb-1">No spotlights yet</p>
+                  <p className="text-xs text-muted-foreground">Create your first spotlight above</p>
+                </div>
               ) : (
-                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                <div className="space-y-3 max-h-[500px] overflow-y-auto">
                   {myStories.map((story) => (
-                    <div key={story.id} className="text-sm p-3 bg-muted/50 rounded-lg hover:bg-muted/70 transition-colors" data-testid={`story-row-${story.id}`}>
+                    <div key={story.id} className="text-sm p-4 bg-muted/50 rounded-lg hover:bg-muted/70 transition-colors border border-border/50" data-testid={`story-row-${story.id}`}>
                       {story.imageUrl && (
-                        <img src={story.imageUrl} alt="" className="w-full h-24 object-cover rounded mb-2" />
+                        <div className="mb-3 rounded-lg overflow-hidden">
+                          <img src={story.imageUrl} alt="" className="w-full h-32 object-cover" />
+                        </div>
                       )}
-                      <p className="line-clamp-2 mb-2">{story.content || "No content"}</p>
-                      <div className="flex items-center justify-between mt-2">
+                      {story.content && (
+                        <p className="line-clamp-3 mb-3 text-foreground">{story.content}</p>
+                      )}
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/30">
                         <p className="text-xs text-muted-foreground">
-                          {story.createdAt ? new Date(story.createdAt).toLocaleDateString() : ""}
+                          {story.createdAt ? new Date(story.createdAt).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric' 
+                          }) : "Recently"}
                         </p>
                         <div className="flex gap-1">
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-7 w-7" 
+                            className="h-8 w-8" 
                             onClick={() => handleEditStory(story)}
                             data-testid={`button-edit-story-${story.id}`}
+                            title="Edit spotlight"
                           >
-                            <Edit className="w-3 h-3" />
+                            <Edit className="w-4 h-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-7 w-7 text-destructive hover:bg-destructive/10" 
+                            className="h-8 w-8 text-destructive hover:bg-destructive/10" 
                             onClick={() => deleteStoryMutation.mutate(story.id)}
+                            disabled={deleteStoryMutation.isPending}
                             data-testid={`button-delete-story-${story.id}`}
+                            title="Delete spotlight"
                           >
-                            <Trash2 className="w-3 h-3" />
+                            {deleteStoryMutation.isPending ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
                           </Button>
                         </div>
                       </div>
