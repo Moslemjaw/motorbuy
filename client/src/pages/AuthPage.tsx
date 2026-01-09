@@ -62,6 +62,16 @@ export default function AuthPage() {
     }
   }, [isAuthenticated, user, refetchRole]);
 
+  // Auto-retry fetching role if authenticated but role data is not available
+  useEffect(() => {
+    if (isAuthenticated && user && !isRoleLoading && !roleData) {
+      const timer = setTimeout(() => {
+        refetchRole();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, user, isRoleLoading, roleData, refetchRole]);
+
   // Auto-redirect customers to home page
   useEffect(() => {
     if (
@@ -156,6 +166,21 @@ export default function AuthPage() {
     (isRoleLoading || roleData?.role === "customer")
   ) {
     return <LoadingPage message="Redirecting to home..." />;
+  }
+
+  // Show loading page if authenticated but role data is not available (retry button would appear)
+  // Auto-retry fetching role in the background
+  useEffect(() => {
+    if (isAuthenticated && user && !isRoleLoading && !roleData) {
+      const timer = setTimeout(() => {
+        refetchRole();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, user, isRoleLoading, roleData, refetchRole]);
+
+  if (isAuthenticated && user && !isRoleLoading && !roleData) {
+    return <LoadingPage message="Loading your role..." />;
   }
 
   if (isAuthenticated && user) {
