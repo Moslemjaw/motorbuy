@@ -72,7 +72,7 @@ export default function VendorDashboard() {
     enabled: !!vendorProfile,
   });
 
-  const { data: stories } = useQuery<VendorStory[]>({
+  const { data: stories, isLoading: isStoriesLoading } = useQuery<VendorStory[]>({
     queryKey: ["/api/stories"],
     queryFn: async () => {
       const res = await fetch(buildApiUrl("/api/stories"), {
@@ -80,26 +80,37 @@ export default function VendorDashboard() {
       });
       if (!res.ok) throw new Error("Failed to fetch stories");
       const data = await res.json();
+      console.log("Vendor Dashboard - Fetched all stories:", data);
       return data;
     },
+    enabled: !!vendorProfile, // Only fetch when vendor profile is loaded
   });
   
   // Filter stories by vendorId - ensure both are strings for comparison
-  const myStories = stories?.filter(s => {
-    const storyVendorId = String(s.vendorId || "");
-    const profileVendorId = String(vendorProfile?.id || "");
-    return storyVendorId === profileVendorId;
-  }) || [];
-  
-  // Debug logging
-  useEffect(() => {
-    if (stories && vendorProfile) {
-      console.log("Vendor Dashboard - Stories:", stories);
-      console.log("Vendor Dashboard - Vendor Profile ID:", vendorProfile.id);
-      console.log("Vendor Dashboard - My Stories:", myStories);
-      console.log("Vendor Dashboard - Story vendorIds:", stories.map(s => ({ id: s.id, vendorId: s.vendorId, type: typeof s.vendorId })));
-    }
-  }, [stories, vendorProfile, myStories]);
+  const myStories = React.useMemo(() => {
+    if (!stories || !vendorProfile) return [];
+    
+    const profileVendorId = String(vendorProfile.id || "");
+    console.log("Vendor Dashboard - Filtering stories. Profile ID:", profileVendorId, "Type:", typeof vendorProfile.id);
+    
+    const filtered = stories.filter(s => {
+      const storyVendorId = String(s.vendorId || "");
+      const matches = storyVendorId === profileVendorId;
+      if (!matches) {
+        console.log("Vendor Dashboard - Story mismatch:", {
+          storyId: s.id,
+          storyVendorId,
+          storyVendorIdType: typeof s.vendorId,
+          profileVendorId,
+          matches
+        });
+      }
+      return matches;
+    });
+    
+    console.log("Vendor Dashboard - Filtered stories count:", filtered.length, "out of", stories.length);
+    return filtered;
+  }, [stories, vendorProfile]);
 
   const [productName, setProductName] = useState("");
   const [productDesc, setProductDesc] = useState("");
