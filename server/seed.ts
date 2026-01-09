@@ -58,8 +58,28 @@ export async function seedDatabase() {
   console.log("Starting database seeding...");
 
   // Create test users with passwords
-  const testPassword = "test123"; // Default password for test users
+  const testPassword = "test123"; // Default password for all test users
   const passwordHash = await bcrypt.hash(testPassword, 12);
+
+  // Create or update customer@test.com
+  let customerUser = await User.findOne({ email: "customer@test.com" });
+  if (!customerUser) {
+    customerUser = await User.create({
+      email: "customer@test.com",
+      passwordHash,
+      firstName: "Customer",
+      lastName: "Test",
+      role: "customer",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    console.log("✅ Created customer@test.com user with customer role");
+  } else {
+    customerUser.passwordHash = passwordHash;
+    customerUser.role = "customer";
+    await customerUser.save();
+    console.log("✅ Updated customer@test.com user with customer role");
+  }
 
   // Create or update vendor@test.com
   let vendorUser = await User.findOne({ email: "vendor@test.com" });

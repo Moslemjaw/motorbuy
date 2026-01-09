@@ -50,11 +50,9 @@ export async function registerRoutes(
       }
 
       if (!["customer", "vendor", "admin"].includes(role)) {
-        return res
-          .status(400)
-          .json({
-            message: "Invalid role. Must be: customer, vendor, or admin",
-          });
+        return res.status(400).json({
+          message: "Invalid role. Must be: customer, vendor, or admin",
+        });
       }
 
       const user = await User.findOne({ email: email.toLowerCase() });
@@ -942,6 +940,11 @@ export async function registerRoutes(
       res.json({
         message: "Database seeded successfully with demo data and test users",
         testUsers: {
+          customer: {
+            email: "customer@test.com",
+            password: "test123",
+            role: "customer",
+          },
           vendor: {
             email: "vendor@test.com",
             password: "test123",

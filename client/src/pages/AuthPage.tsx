@@ -33,6 +33,13 @@ export default function AuthPage() {
     }
   }, [isAuthenticated, user, refetchRole]);
 
+  // Auto-redirect customers to home page
+  useEffect(() => {
+    if (isAuthenticated && user && !isRoleLoading && roleData?.role === "customer") {
+      setLocation("/");
+    }
+  }, [isAuthenticated, user, isRoleLoading, roleData, setLocation]);
+
   // Debug: Log role data
   useEffect(() => {
     if (roleData) {
@@ -146,14 +153,6 @@ export default function AuthPage() {
                       {t("auth.goHome")}
                     </Button>
                   </Link>
-                  
-                  {roleData?.role === "customer" && (
-                    <Link href="/account">
-                      <Button variant="outline" className="w-full" size="lg" data-testid="button-customer-dashboard">
-                        {t("auth.customerDashboard")}
-                      </Button>
-                    </Link>
-                  )}
                   
                   <Button 
                     variant="ghost" 
