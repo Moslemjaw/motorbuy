@@ -97,8 +97,16 @@ export default function AuthPage() {
                 </div>
 
                 <div className="grid gap-3">
+                  {(roleData?.role === "vendor" || roleData?.role === "admin") && (
+                    <Link href={roleData.role === "vendor" ? "/vendor/dashboard" : "/admin"}>
+                      <Button className="w-full" size="lg" data-testid="button-go-dashboard">
+                        {t("auth.goToDashboard") || "Go to Dashboard"}
+                      </Button>
+                    </Link>
+                  )}
+                  
                   <Link href="/">
-                    <Button className="w-full" size="lg" data-testid="button-go-home">
+                    <Button variant={roleData?.role === "vendor" || roleData?.role === "admin" ? "outline" : "default"} className="w-full" size="lg" data-testid="button-go-home">
                       {t("auth.goHome")}
                     </Button>
                   </Link>
@@ -107,22 +115,6 @@ export default function AuthPage() {
                     <Link href="/account">
                       <Button variant="outline" className="w-full" size="lg" data-testid="button-customer-dashboard">
                         {t("auth.customerDashboard")}
-                      </Button>
-                    </Link>
-                  )}
-                  
-                  {roleData?.role === "vendor" && (
-                    <Link href="/vendor/dashboard">
-                      <Button variant="outline" className="w-full" size="lg" data-testid="button-vendor-dashboard">
-                        {t("auth.vendorDashboard")}
-                      </Button>
-                    </Link>
-                  )}
-                  
-                  {roleData?.role === "admin" && (
-                    <Link href="/admin">
-                      <Button variant="outline" className="w-full" size="lg" data-testid="button-admin-dashboard">
-                        {t("auth.adminDashboard")}
                       </Button>
                     </Link>
                   )}
