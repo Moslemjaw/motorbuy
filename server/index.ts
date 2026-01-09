@@ -9,16 +9,34 @@ import MemoryStore from "memorystore";
 const app = express();
 const httpServer = createServer(app);
 
+// CORS configuration
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  // When using credentials, we must specify the origin (can't use *)
+  if (origin) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 const MemoryStoreSession = MemoryStore(session);
 
 app.use(
   session({
     secret: process.env.SESSION_SECRET!,
-    resave: false,
-    saveUninitialized: false,
+    resave: true, // Changed to true to ensure session is saved
+    saveUninitialized: true, // Changed to true to save session even if not modified
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production", // true in production (HTTPS required)
       httpOnly: true,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // "none" for cross-origin in production
       maxAge: 24 * 60 * 60 * 1000 * 7, // 7 days
     },
     store: new MemoryStoreSession({

@@ -27,7 +27,19 @@ export function useRole() {
         }
         const data = await res.json();
         console.log("Role API raw response:", data);
-        const parsed = api.roles.get.responses[200].parse(data);
+        
+        // Handle case where role might be missing or invalid
+        if (!data || typeof data !== 'object') {
+          console.error("Invalid role response format:", data);
+          return { role: "customer" };
+        }
+        
+        // Ensure role is one of the valid values
+        const validRole = ["customer", "vendor", "admin"].includes(data.role) 
+          ? data.role 
+          : "customer";
+        
+        const parsed = { role: validRole };
         console.log("Role API parsed response:", parsed);
         return parsed;
       } catch (error) {

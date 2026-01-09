@@ -101,8 +101,19 @@ export async function registerRoutes(
   });
 
   app.get(api.roles.get.path, isAuthenticated, async (req: any, res) => {
-    const role = await storage.getUserRole(req.session.userId);
-    res.json({ role });
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      const role = await storage.getUserRole(req.session.userId);
+      console.log("Role endpoint - userId:", req.session.userId, "role:", role);
+      res.json({ role: role || "customer" });
+    } catch (error) {
+      console.error("Error fetching role:", error);
+      res
+        .status(500)
+        .json({ message: "Failed to fetch role", error: String(error) });
+    }
   });
 
   // Get all users with roles (admin only)

@@ -200,10 +200,9 @@ export default function AuthPage() {
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
                       Loading...
                     </Button>
-                  ) : roleData &&
-                    (roleData.role === "vendor" ||
-                      roleData.role === "admin") ? (
-                    roleData.role === "vendor" ? (
+                  ) : (roleData?.role === "vendor" || roleData?.role === "admin" || (user as any)?.role === "vendor" || (user as any)?.role === "admin") ? (
+                    // Use roleData if available, otherwise fallback to user.role
+                    (roleData?.role || (user as any)?.role) === "vendor" ? (
                       <Link href="/vendor/dashboard">
                         <Button
                           className="w-full"

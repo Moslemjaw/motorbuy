@@ -71,6 +71,7 @@ export async function getUserById(id: string) {
     phone: user.phone,
     address: user.address,
     city: user.city,
+    role: user.role || "customer", // Include role in user object
   };
 }
 
@@ -137,6 +138,13 @@ export function registerAuthRoutes(app: Express) {
       }
 
       req.session.userId = user.id;
+      // Save session explicitly
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+        }
+      });
+      console.log("Login - Session userId set:", req.session.userId);
       res.json(user);
     } catch (error) {
       console.error("Login error:", error);
