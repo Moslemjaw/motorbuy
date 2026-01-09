@@ -24,6 +24,7 @@ export interface IStorage {
   updateProduct(id: string, updates: any): Promise<any>;
   getCartItems(userId: string): Promise<any[]>;
   addToCart(item: any): Promise<any>;
+  updateCartItemQuantity(id: string, quantity: number): Promise<any>;
   removeFromCart(id: string): Promise<void>;
   clearCart(userId: string): Promise<void>;
   createOrder(userId: string, total: string, items: { productId: string; quantity: number; price: string }[]): Promise<any>;
@@ -263,8 +264,41 @@ export class MongoStorage implements IStorage {
     if (cartData.productId && typeof cartData.productId === 'string') {
       cartData.productId = new mongoose.Types.ObjectId(cartData.productId);
     }
+    
+    // Check if item already exists in cart
+    const existingItem = await CartItem.findOne({
+      userId: cartData.userId,
+      productId: cartData.productId,
+    });
+    
+    if (existingItem) {
+      // Update quantity if item already exists
+      existingItem.quantity = (existingItem.quantity || 1) + (cartData.quantity || 1);
+      await existingItem.save();
+      return toPlainObject(existingItem);
+    }
+    
+    // Create new item if it doesn't exist
     const newItem = await CartItem.create(cartData);
     return toPlainObject(newItem);
+  }
+
+  async updateCartItemQuantity(id: string, quantity: number): Promise<any> {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error("Invalid cart item ID");
+    }
+    if (quantity <= 0) {
+      throw new Error("Quantity must be greater than 0");
+    }
+    const updated = await CartItem.findByIdAndUpdate(
+      id,
+      { quantity },
+      { new: true }
+    );
+    if (!updated) {
+      throw new Error("Cart item not found");
+    }
+    return toPlainObject(updated);
   }
 
   async removeFromCart(id: string): Promise<void> {

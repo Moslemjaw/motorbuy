@@ -1,9 +1,10 @@
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useCart, useRemoveFromCart, useCreateOrder } from "@/hooks/use-motorbuy";
+import { Input } from "@/components/ui/input";
+import { useCart, useRemoveFromCart, useCreateOrder, useUpdateCartQuantity } from "@/hooks/use-motorbuy";
 import { useLanguage } from "@/lib/i18n";
-import { Trash2, ShoppingBag, ArrowRight, ArrowLeft, Loader2, ShieldCheck, Truck, CreditCard } from "lucide-react";
+import { Trash2, ShoppingBag, ArrowRight, ArrowLeft, Loader2, ShieldCheck, Truck, CreditCard, Plus, Minus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { formatKWD } from "@/lib/currency";
@@ -12,6 +13,7 @@ import { motion } from "framer-motion";
 export default function Cart() {
   const { data: cartItems, isLoading } = useCart();
   const { mutate: removeItem } = useRemoveFromCart();
+  const { mutate: updateQuantity, isPending: isUpdating } = useUpdateCartQuantity();
   const { mutate: createOrder, isPending: isOrdering } = useCreateOrder();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -97,13 +99,53 @@ export default function Cart() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-display font-bold text-sm md:text-lg truncate">{item.product.name}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="secondary" className="text-xs">{t("cart.qty")}: {item.quantity}</Badge>
+                    <div className="flex items-center gap-3 mt-2">
+                      <div className="flex items-center gap-1 border rounded-lg">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            if (item.quantity > 1) {
+                              updateQuantity({ id: item.id, quantity: item.quantity - 1 });
+                            }
+                          }}
+                          disabled={isUpdating || item.quantity <= 1}
+                          data-testid={`button-decrease-${item.id}`}
+                        >
+                          <Minus className="w-4 h-4" />
+                        </Button>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(e) => {
+                            const qty = parseInt(e.target.value) || 1;
+                            if (qty > 0) {
+                              updateQuantity({ id: item.id, quantity: qty });
+                            }
+                          }}
+                          className="w-16 h-8 text-center border-0 focus-visible:ring-0"
+                          disabled={isUpdating}
+                          data-testid={`input-quantity-${item.id}`}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => updateQuantity({ id: item.id, quantity: item.quantity + 1 })}
+                          disabled={isUpdating}
+                          data-testid={`button-increase-${item.id}`}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="font-bold text-base md:hidden mt-1">{formatKWD(Number(item.product.price) * item.quantity)}</div>
+                    <div className="font-bold text-base md:hidden mt-2">{formatKWD(Number(item.product.price) * item.quantity)}</div>
                   </div>
-                  <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                    <div className="font-bold text-xl mb-2 hidden md:block">{formatKWD(Number(item.product.price) * item.quantity)}</div>
+                  <div className="text-right shrink-0 flex flex-col items-end gap-2">
+                    <div className="font-bold text-xl hidden md:block">{formatKWD(Number(item.product.price) * item.quantity)}</div>
+                    <div className="text-sm text-muted-foreground hidden md:block">{formatKWD(item.product.price)} each</div>
                     <Button 
                       variant="ghost" 
                       size="icon"

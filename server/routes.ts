@@ -809,6 +809,25 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/cart/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const { quantity } = req.body;
+      if (!quantity || quantity <= 0) {
+        return res.status(400).json({ message: "Invalid quantity" });
+      }
+      const updated = await storage.updateCartItemQuantity(
+        req.params.id,
+        quantity
+      );
+      res.json(updated);
+    } catch (e: any) {
+      console.error("Error updating cart item:", e);
+      res
+        .status(400)
+        .json({ message: e.message || "Failed to update cart item" });
+    }
+  });
+
   app.delete(api.cart.remove.path, isAuthenticated, async (req: any, res) => {
     await storage.removeFromCart(req.params.id);
     res.status(204).send();

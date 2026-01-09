@@ -28,6 +28,7 @@ import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { buildApiUrl } from "@/lib/api-config";
 import { useQueryClient } from "@tanstack/react-query";
+import { LoadingPage } from "@/components/LoadingPage";
 import carLogo from "@assets/image_2026-01-09_142631252-removebg-preview_1767958016384.png";
 
 export default function AuthPage() {
@@ -146,6 +147,15 @@ export default function AuthPage() {
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
       </div>
     );
+  }
+
+  // Show loading page for customers while redirecting
+  if (
+    isAuthenticated &&
+    user &&
+    (isRoleLoading || roleData?.role === "customer")
+  ) {
+    return <LoadingPage message="Redirecting to home..." />;
   }
 
   if (isAuthenticated && user) {

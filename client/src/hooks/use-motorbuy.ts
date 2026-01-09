@@ -241,6 +241,24 @@ export function useAddToCart() {
   });
 }
 
+export function useUpdateCartQuantity() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, quantity }: { id: string; quantity: number }) => {
+      const res = await fetch(buildApiUrl(`/api/cart/${id}`), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quantity }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to update quantity");
+      return res.json();
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [api.cart.get.path] }),
+  });
+}
+
 export function useRemoveFromCart() {
   const queryClient = useQueryClient();
   return useMutation({
