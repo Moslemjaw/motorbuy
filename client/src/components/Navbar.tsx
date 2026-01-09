@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRole, useCart } from "@/hooks/use-motorbuy";
 import { useLanguage } from "@/lib/i18n";
 import { ShoppingCart, Menu, User, Store, ShieldCheck, LogOut, Home, Package, Users, BookOpen, Globe } from "lucide-react";
+import carLogo from "@assets/image_2026-01-09_142631252-removebg-preview_1767958016384.png";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -43,11 +44,19 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 h-14 md:h-16 flex items-center justify-between gap-2">
         <div className="flex items-center gap-4 md:gap-8">
-          <Link href="/" className="font-display font-bold text-lg md:text-xl text-primary flex items-center gap-2">
-            <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
-              {t("brand.letter")}
-            </div>
-            <span>{t("brand.name")}</span>
+          <Link href="/" className="font-display font-bold text-lg md:text-xl flex items-center gap-2">
+            <img src={carLogo} alt="MotorBuy" className="w-8 h-8 md:w-9 md:h-9 object-contain" />
+            {language === "ar" ? (
+              <span>
+                <span className="text-[hsl(var(--logo-accent))]">موتور</span>
+                <span className="text-primary">باي</span>
+              </span>
+            ) : (
+              <span>
+                <span className="text-primary">motor</span>
+                <span className="text-[hsl(var(--logo-accent))]">buy</span>
+              </span>
+            )}
           </Link>
           
           <div className="hidden md:flex gap-6">

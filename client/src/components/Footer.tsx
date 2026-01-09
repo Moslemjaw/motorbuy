@@ -1,9 +1,10 @@
 import { Link } from "wouter";
 import { useLanguage } from "@/lib/i18n";
 import { SiFacebook, SiInstagram, SiX, SiYoutube } from "react-icons/si";
+import carLogo from "@assets/image_2026-01-09_142631252-removebg-preview_1767958016384.png";
 
 export function Footer() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   
   return (
     <footer className="bg-card border-t">
@@ -11,11 +12,19 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
           <div className="col-span-2 md:col-span-1">
             <Link href="/">
-              <span className="font-display font-bold text-xl text-primary flex items-center gap-2 mb-4 cursor-pointer">
-                <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
-                  {t("brand.letter")}
-                </span>
-                <span>{t("brand.name")}</span>
+              <span className="font-display font-bold text-xl flex items-center gap-2 mb-4 cursor-pointer">
+                <img src={carLogo} alt="MotorBuy" className="w-9 h-9 object-contain" />
+                {language === "ar" ? (
+                  <span>
+                    <span className="text-[hsl(var(--logo-accent))]">موتور</span>
+                    <span className="text-primary">باي</span>
+                  </span>
+                ) : (
+                  <span>
+                    <span className="text-primary">motor</span>
+                    <span className="text-[hsl(var(--logo-accent))]">buy</span>
+                  </span>
+                )}
               </span>
             </Link>
             <p className="text-sm text-muted-foreground mb-6 max-w-xs">
