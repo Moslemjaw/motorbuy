@@ -1024,7 +1024,20 @@ export async function registerRoutes(
       }
 
       const vendor = await storage.getVendorByUserId(req.session.userId);
-      if (!vendor || story.vendorId !== vendor.id) {
+      if (!vendor) {
+        return res.status(404).json({ message: "Vendor profile not found" });
+      }
+
+      // Compare vendorIds as strings to handle ObjectId vs string formats
+      const storyVendorId = String(story.vendorId || "").trim();
+      const vendorId = String(vendor.id || "").trim();
+
+      if (storyVendorId !== vendorId) {
+        console.log("Story update - vendorId mismatch:", {
+          storyVendorId,
+          vendorId,
+          storyId: story.id,
+        });
         return res
           .status(403)
           .json({ message: "You can only update your own stories" });
@@ -1065,7 +1078,20 @@ export async function registerRoutes(
 
       // Verify the story belongs to the vendor
       const vendor = await storage.getVendorByUserId(req.session.userId);
-      if (!vendor || storyToDelete.vendorId !== vendor.id) {
+      if (!vendor) {
+        return res.status(404).json({ message: "Vendor profile not found" });
+      }
+
+      // Compare vendorIds as strings to handle ObjectId vs string formats
+      const storyVendorId = String(storyToDelete.vendorId || "").trim();
+      const vendorId = String(vendor.id || "").trim();
+
+      if (storyVendorId !== vendorId) {
+        console.log("Story delete - vendorId mismatch:", {
+          storyVendorId,
+          vendorId,
+          storyId: storyToDelete.id,
+        });
         return res
           .status(403)
           .json({ message: "You can only delete your own stories" });
