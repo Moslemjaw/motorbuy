@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useOrders } from "@/hooks/use-motorbuy";
 import { useLanguage } from "@/lib/i18n";
-import { Package, ShoppingBag, Loader2, ArrowLeft, ArrowRight } from "lucide-react";
+import { Package, ShoppingBag, ArrowLeft, ArrowRight } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { formatKWD } from "@/lib/currency";
 import { useEffect } from "react";
@@ -65,9 +65,7 @@ export default function OrderHistory() {
           </CardHeader>
           <CardContent>
             {isOrdersLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="animate-spin" />
-              </div>
+              <LoadingPage message="Loading orders..." fullScreen={false} />
             ) : !orders || orders.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <ShoppingBag className="w-16 h-16 mx-auto mb-4 opacity-50" />

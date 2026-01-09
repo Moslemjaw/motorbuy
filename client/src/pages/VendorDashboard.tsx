@@ -1,4 +1,5 @@
 import { Navbar } from "@/components/Navbar";
+import { LoadingPage } from "@/components/LoadingPage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -196,13 +197,9 @@ export default function VendorDashboard() {
     }
   }, [vendorProfile]);
 
-  if (isAuthLoading || isRoleLoading || isProfileLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="animate-spin w-8 h-8" />
-      </div>
-    );
-  }
+        if (isAuthLoading || isRoleLoading || isProfileLoading) {
+          return <LoadingPage message="Loading dashboard..." />;
+        }
 
   if (!isAuthenticated || !user) {
     return null;

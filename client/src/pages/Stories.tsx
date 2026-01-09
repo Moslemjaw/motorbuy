@@ -1,10 +1,11 @@
 import { Navbar } from "@/components/Navbar";
+import { LoadingPage } from "@/components/LoadingPage";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useStories } from "@/hooks/use-motorbuy";
 import { useLanguage } from "@/lib/i18n";
-import { Store, Calendar, Loader2, ArrowRight, Newspaper } from "lucide-react";
+import { Store, Calendar, ArrowRight, Newspaper } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 
@@ -40,9 +41,7 @@ export default function Stories() {
 
       <div className="container mx-auto px-4 py-12">
         {isLoading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="animate-spin w-10 h-10 text-primary" />
-          </div>
+          <LoadingPage message="Loading stories..." fullScreen={false} />
         ) : !stories || stories.length === 0 ? (
           <div className="text-center py-24">
             <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">

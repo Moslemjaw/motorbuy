@@ -1,4 +1,5 @@
 import { Navbar } from "@/components/Navbar";
+import { LoadingPage } from "@/components/LoadingPage";
 import { ProductCard } from "@/components/ProductCard";
 import { useProducts, useCategories } from "@/hooks/use-motorbuy";
 import { useLanguage } from "@/lib/i18n";
@@ -6,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
-import { Search, Loader2, Package, SlidersHorizontal, X } from "lucide-react";
+import { Search, Package, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
@@ -122,9 +123,7 @@ export default function ProductList() {
         </motion.div>
 
         {isLoading ? (
-          <div className="flex justify-center py-24">
-            <Loader2 className="w-12 h-12 animate-spin text-primary" />
-          </div>
+          <LoadingPage message="Loading products..." fullScreen={false} />
         ) : products?.length === 0 ? (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}

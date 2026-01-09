@@ -86,20 +86,37 @@ export function useUpload(options: UseUploadOptions = {}) {
   );
 
   /**
-   * Upload a file directly to the presigned URL.
+   * Upload a file directly to the presigned URL or direct upload endpoint.
    */
   const uploadToPresignedUrl = useCallback(
-    async (file: File, uploadURL: string): Promise<void> => {
-      const response = await fetch(uploadURL, {
-        method: "PUT",
-        body: file,
-        headers: {
-          "Content-Type": file.type || "application/octet-stream",
-        },
-      });
+    async (file: File, uploadURL: string, method?: string): Promise<void> => {
+      if (method === "POST") {
+        // Direct upload using FormData
+        const formData = new FormData();
+        formData.append("file", file);
+        
+        const response = await fetch(buildApiUrl(uploadURL), {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to upload file to storage");
+        if (!response.ok) {
+          throw new Error("Failed to upload file to server");
+        }
+      } else {
+        // Presigned URL upload (PUT)
+        const response = await fetch(uploadURL, {
+          method: "PUT",
+          body: file,
+          headers: {
+            "Content-Type": file.type || "application/octet-stream",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to upload file to storage");
+        }
       }
     },
     []
@@ -122,9 +139,30 @@ export function useUpload(options: UseUploadOptions = {}) {
         setProgress(10);
         const uploadResponse = await requestUploadUrl(file);
 
-        // Step 2: Upload file directly to presigned URL
+        // Step 2: Upload file directly to presigned URL or direct upload endpoint
         setProgress(30);
-        await uploadToPresignedUrl(file, uploadResponse.uploadURL);
+        if (uploadResponse.method === "POST") {
+          // Direct upload - upload file and get the actual objectPath from response
+          const formData = new FormData();
+          formData.append("file", file);
+          
+          const uploadRes = await fetch(buildApiUrl(uploadResponse.uploadURL), {
+            method: "POST",
+            body: formData,
+            credentials: "include",
+          });
+
+          if (!uploadRes.ok) {
+            throw new Error("Failed to upload file to server");
+          }
+
+          const uploadResult = await uploadRes.json();
+          // Update the response with the actual objectPath from server
+          uploadResponse.objectPath = uploadResult.objectPath || uploadResult.url;
+        } else {
+          // Presigned URL upload (PUT)
+          await uploadToPresignedUrl(file, uploadResponse.uploadURL);
+        }
 
         setProgress(100);
         options.onSuccess?.(uploadResponse);

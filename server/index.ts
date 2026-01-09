@@ -69,6 +69,8 @@ app.use(express.urlencoded({ extended: false }));
 
 import path from "path";
 app.use("/attached_assets", express.static(path.join(process.cwd(), "attached_assets")));
+// Serve uploaded files
+app.use("/uploads", express.static(path.join(process.cwd(), "server", "public", "uploads")));
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {

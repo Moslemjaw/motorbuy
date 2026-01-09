@@ -1,4 +1,5 @@
 import { Navbar } from "@/components/Navbar";
+import { LoadingPage } from "@/components/LoadingPage";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useVendor, useProducts, useStories } from "@/hooks/use-motorbuy";
@@ -24,11 +25,7 @@ export default function VendorProfile() {
   const vendorStories = allStories?.filter(s => s.vendorId === vendorId) || [];
 
   if (isVendorLoading || isProductsLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="animate-spin w-8 h-8" />
-      </div>
-    );
+    return <LoadingPage message="Loading vendor profile..." />;
   }
 
   if (!vendor) {

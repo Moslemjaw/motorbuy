@@ -4,7 +4,7 @@ import { useLanguage } from "@/lib/i18n";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Store, Loader2, Users, ArrowRight, CheckCircle } from "lucide-react";
+import { Store, Users, ArrowRight, CheckCircle } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 
@@ -42,9 +42,7 @@ export default function VendorList() {
 
       <div className="container mx-auto px-4 py-12">
         {isLoading ? (
-          <div className="flex justify-center py-24">
-            <Loader2 className="w-12 h-12 animate-spin text-primary" />
-          </div>
+          <LoadingPage message="Loading vendors..." fullScreen={false} />
         ) : !vendors || vendors.length === 0 ? (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
