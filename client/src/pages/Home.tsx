@@ -1,92 +1,101 @@
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useCategories, useStories, useProducts, useVendors } from "@/hooks/use-motorbuy";
+import { useLanguage } from "@/lib/i18n";
 import { ProductCard } from "@/components/ProductCard";
-import { ArrowRight, Star, Settings, Wrench, Shield, ChevronRight, Users, Package, TrendingUp, Cog, CircleStop, Gauge, Zap, Thermometer, Fuel, Wind, Car, Armchair, Circle, Lightbulb, Droplets, type LucideIcon } from "lucide-react";
+import { ArrowRight, Shield, ChevronRight, Users, Package, TrendingUp, Cog, Settings, CircleStop, Gauge, Zap, Thermometer, Fuel, Wind, Car, Armchair, Circle, Lightbulb, Droplets, Wrench, Truck, Headphones, CreditCard, type LucideIcon } from "lucide-react";
+import { Link } from "wouter";
+import { motion } from "framer-motion";
 
 const iconMap: Record<string, LucideIcon> = {
   Cog, Settings, CircleStop, Gauge, Zap, Thermometer, Fuel, Wind, Car, Armchair, Circle, Lightbulb, Droplets, Wrench
 };
-import { Link } from "wouter";
-import { motion } from "framer-motion";
 
 export default function Home() {
+  const { t, isRTL } = useLanguage();
   const { data: categories } = useCategories();
   const { data: products } = useProducts({ sortBy: 'newest' });
   const { data: stories } = useStories();
   const { data: vendors } = useVendors();
 
   const featuredProducts = products?.slice(0, 4);
-  const featuredStories = stories?.slice(0, 3);
 
   const stats = [
-    { icon: Package, label: "Products", value: products?.length || 0 },
-    { icon: Users, label: "Vendors", value: vendors?.length || 0 },
-    { icon: TrendingUp, label: "Categories", value: categories?.length || 0 },
+    { icon: Package, label: t("stats.products"), value: products?.length || 0 },
+    { icon: Users, label: t("stats.vendors"), value: vendors?.length || 0 },
+    { icon: TrendingUp, label: t("stats.categories"), value: categories?.length || 0 },
+  ];
+
+  const features = [
+    { icon: Shield, title: t("feature.quality"), desc: t("feature.quality.desc") },
+    { icon: Truck, title: t("feature.delivery"), desc: t("feature.delivery.desc") },
+    { icon: Headphones, title: t("feature.support"), desc: t("feature.support.desc") },
+    { icon: CreditCard, title: t("feature.secure"), desc: t("feature.secure.desc") },
   ];
 
   return (
     <div className="min-h-screen bg-background font-body">
       <Navbar />
 
-      <section className="relative overflow-hidden gradient-dark text-white py-10 md:py-16 lg:py-24">
+      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white py-12 md:py-20 lg:py-28">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-0 right-0 w-2/3 h-full bg-gradient-to-l from-primary/20 to-transparent -skew-x-12 translate-x-1/4" />
-          <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-gradient-to-tr from-accent/10 to-transparent rounded-full blur-3xl" />
+          <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/10 to-transparent" />
+          <div className="absolute bottom-0 left-0 w-1/3 h-1/2 bg-gradient-to-tr from-primary/5 to-transparent rounded-full blur-3xl" />
         </div>
         
         <div className="container relative z-10 px-4 mx-auto">
-          <div className="max-w-3xl">
+          <div className="max-w-2xl">
             <motion.h1 
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-display font-bold mb-4 md:mb-6 tracking-tight leading-[1.1] text-shadow-lg"
+              transition={{ duration: 0.5 }}
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-4 md:mb-6 tracking-tight leading-tight"
             >
-              Find the Perfect Parts for Your <span className="text-primary">Ride</span>
+              {t("hero.title")} <span className="text-primary">{t("hero.title.highlight")}</span>
             </motion.h1>
             
             <motion.p 
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-base md:text-xl text-white/70 mb-6 md:mb-10 max-w-xl leading-relaxed"
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-base md:text-lg text-white/70 mb-8 max-w-lg leading-relaxed"
             >
-              Connect with trusted vendors, discover quality parts, and build your dream machine. All in one marketplace.
+              {t("hero.subtitle")}
             </motion.p>
             
             <motion.div 
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="flex flex-wrap gap-3 md:gap-4"
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="flex flex-wrap gap-3"
             >
               <Link href="/products">
-                <Button size="default" className="text-sm md:text-lg px-4 md:px-8 h-10 md:h-14 rounded-full shadow-lg shadow-primary/30" data-testid="button-shop-parts">
-                  Shop Parts <ArrowRight className="ml-2 w-4 h-4 md:w-5 md:h-5" />
+                <Button size="lg" className="rounded-full px-6 md:px-8 shadow-lg" data-testid="button-shop-parts">
+                  {t("hero.shopParts")} <ArrowRight className={`w-4 h-4 ${isRTL ? 'mr-2 rotate-180' : 'ml-2'}`} />
                 </Button>
               </Link>
               <Link href="/vendors">
-                <Button size="default" variant="outline" className="text-sm md:text-lg px-4 md:px-8 h-10 md:h-14 rounded-full border-white/30 text-white bg-white/5 backdrop-blur-sm" data-testid="button-browse-vendors">
-                  Browse Vendors
+                <Button size="lg" variant="outline" className="rounded-full px-6 md:px-8 border-white/20 text-white bg-white/5 hover:bg-white/10" data-testid="button-browse-vendors">
+                  {t("hero.browseVendors")}
                 </Button>
               </Link>
             </motion.div>
 
             <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex flex-wrap gap-4 md:gap-8 mt-8 md:mt-14 pt-6 md:pt-8 border-t border-white/10"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="flex flex-wrap gap-6 md:gap-10 mt-10 pt-8 border-t border-white/10"
             >
               {stats.map((stat, i) => (
-                <div key={i} className="flex items-center gap-2 md:gap-3">
-                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/10 flex items-center justify-center">
-                    <stat.icon className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+                <div key={i} className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                    <stat.icon className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <div className="text-lg md:text-2xl font-bold">{stat.value}+</div>
-                    <div className="text-xs md:text-sm text-white/60">{stat.label}</div>
+                    <div className="text-xl md:text-2xl font-bold">{stat.value}+</div>
+                    <div className="text-xs text-white/60">{stat.label}</div>
                   </div>
                 </div>
               ))}
@@ -95,187 +104,179 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-12 md:py-20">
+      <section className="py-12 md:py-16 border-b">
         <div className="container px-4 mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 md:gap-4 mb-8 md:mb-12">
-            <div>
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold mb-1 md:mb-2">Shop by Category</h2>
-              <p className="text-muted-foreground text-sm md:text-lg">Find exactly what your vehicle needs</p>
-            </div>
-            <Link href="/products" className="text-primary font-semibold flex items-center gap-1 group">
-              View All Categories <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
-            {categories?.map((cat, index) => (
-              <motion.div
-                key={cat.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Link href={`/products?categoryId=${cat.id}`}>
-                  <div className="group cursor-pointer bg-card rounded-xl md:rounded-2xl p-4 md:p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-border hover:border-primary/30 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-20 md:w-32 h-20 md:h-32 bg-gradient-to-bl from-primary/10 to-transparent rounded-bl-full" />
-                    <div className="w-10 h-10 md:w-16 md:h-16 bg-gradient-to-br from-primary to-primary/80 rounded-xl md:rounded-2xl flex items-center justify-center mb-3 md:mb-6 text-white group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-primary/20">
-                      {(() => {
-                        const IconComponent = cat.icon ? iconMap[cat.icon] : Wrench;
-                        return IconComponent ? <IconComponent className="w-5 h-5 md:w-8 md:h-8" /> : <Wrench className="w-5 h-5 md:w-8 md:h-8" />;
-                      })()}
-                    </div>
-                    <h3 className="font-display font-bold text-sm md:text-xl mb-1 md:mb-2 group-hover:text-primary transition-colors">{cat.name}</h3>
-                    <p className="text-muted-foreground text-xs md:text-sm hidden md:block">Browse {cat.name.toLowerCase()} parts</p>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-            {(!categories || categories.length === 0) && (
-              <div className="col-span-full text-center py-16 text-muted-foreground">
-                No categories available yet
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            {features.map((feature, i) => (
+              <div key={i} className="text-center">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                  <feature.icon className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="font-semibold text-sm mb-1">{feature.title}</h3>
+                <p className="text-xs text-muted-foreground">{feature.desc}</p>
               </div>
-            )}
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="py-12 md:py-20 bg-muted/50">
+      <section className="py-12 md:py-20">
         <div className="container px-4 mx-auto">
-          <div className="text-center mb-8 md:mb-14">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold mb-2 md:mb-3">New Arrivals</h2>
-            <p className="text-muted-foreground text-sm md:text-lg">Fresh stock from our top vendors</p>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-display font-bold mb-1">{t("section.categories")}</h2>
+              <p className="text-muted-foreground text-sm md:text-base">{t("section.categories.subtitle")}</p>
+            </div>
+            <Link href="/products" className="text-primary text-sm font-medium flex items-center gap-1 group">
+              {t("common.viewAll")} <ChevronRight className={`w-4 h-4 transition-transform ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
+            </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+            {categories?.slice(0, 10).map((cat, index) => {
+              const IconComponent = cat.icon ? iconMap[cat.icon] : Wrench;
+              return (
+                <motion.div
+                  key={cat.id}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.03 }}
+                >
+                  <Link href={`/products?categoryId=${cat.id}`}>
+                    <div className="group cursor-pointer bg-card rounded-xl p-4 md:p-5 border hover:border-primary/30 hover:shadow-md transition-all text-center">
+                      <div className="w-12 h-12 md:w-14 md:h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-3 mx-auto group-hover:bg-primary/20 transition-colors">
+                        {IconComponent && <IconComponent className="w-6 h-6 md:w-7 md:h-7 text-primary" />}
+                      </div>
+                      <h3 className="font-medium text-xs md:text-sm group-hover:text-primary transition-colors line-clamp-2">{cat.name}</h3>
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+          {(!categories || categories.length === 0) && (
+            <div className="text-center py-12 text-muted-foreground">
+              {t("common.noResults")}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="py-12 md:py-20 bg-muted/30">
+        <div className="container px-4 mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-display font-bold mb-1">{t("section.newArrivals")}</h2>
+              <p className="text-muted-foreground text-sm md:text-base">{t("section.newArrivals.subtitle")}</p>
+            </div>
+            <Link href="/products" className="text-primary text-sm font-medium flex items-center gap-1 group">
+              {t("common.viewAll")} <ChevronRight className={`w-4 h-4 transition-transform ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
+            </Link>
+          </div>
+          
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
             {featuredProducts?.map((product, index) => (
               <motion.div
                 key={product.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: index * 0.05 }}
               >
                 <ProductCard product={product} />
               </motion.div>
             ))}
           </div>
           {(!featuredProducts || featuredProducts.length === 0) && (
-            <div className="text-center py-16 text-muted-foreground">
-              No products available yet
+            <div className="text-center py-12 text-muted-foreground">
+              {t("common.noResults")}
             </div>
           )}
-          <div className="text-center mt-8 md:mt-14">
-            <Link href="/products">
-              <Button size="default" variant="outline" className="rounded-full px-6 md:px-10 h-10 md:h-12" data-testid="button-view-all-products">
-                View All Products <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
-            </Link>
-          </div>
         </div>
       </section>
 
-      <section className="py-12 md:py-20">
-        <div className="container px-4 mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 md:gap-4 mb-8 md:mb-12">
-            <div>
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold mb-1 md:mb-2">Vendor Spotlight</h2>
-              <p className="text-muted-foreground text-sm md:text-lg">Featured promotions and updates from our vendors</p>
+      {stories && stories.length > 0 && (
+        <section className="py-12 md:py-20">
+          <div className="container px-4 mx-auto">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-display font-bold mb-1">{t("section.spotlight")}</h2>
+                <p className="text-muted-foreground text-sm md:text-base">{t("section.spotlight.subtitle")}</p>
+              </div>
+              <Link href="/stories" className="text-primary text-sm font-medium flex items-center gap-1 group">
+                {t("common.viewAll")} <ChevronRight className={`w-4 h-4 transition-transform ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
+              </Link>
             </div>
-            <Link href="/stories" className="text-primary font-semibold flex items-center gap-1 group">
-              View All <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-          
-          {stories && stories.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
               {stories.slice(0, 6).map((story, index) => (
                 <motion.div
                   key={story.id}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="bg-card rounded-xl border overflow-hidden group hover:shadow-lg transition-shadow"
+                  transition={{ delay: index * 0.03 }}
+                  className="bg-card rounded-xl border overflow-hidden group hover:shadow-md transition-shadow"
                 >
                   {story.imageUrl && (
-                    <div className="aspect-video overflow-hidden">
+                    <div className="aspect-video overflow-hidden bg-muted">
                       <img 
                         src={story.imageUrl} 
-                        alt="Story" 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        alt="" 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     </div>
                   )}
-                  <div className="p-5">
+                  <div className="p-4">
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center font-bold text-white text-sm">
+                      <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center font-semibold text-primary text-sm">
                         {story.vendor?.storeName?.[0] || "V"}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-sm truncate">{story.vendor?.storeName || "Vendor"}</h4>
+                        <h4 className="font-medium text-sm truncate">{story.vendor?.storeName || "Vendor"}</h4>
                         <p className="text-xs text-muted-foreground">
-                          {story.createdAt ? new Date(story.createdAt).toLocaleDateString() : "Recently"}
+                          {story.createdAt ? new Date(story.createdAt).toLocaleDateString() : ""}
                         </p>
                       </div>
                     </div>
-                    <p className="text-sm text-muted-foreground line-clamp-3">{story.content}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{story.content}</p>
                   </div>
                 </motion.div>
               ))}
             </div>
-          ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <p>No vendor posts yet. Check back soon!</p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section className="py-24 bg-card">
-        <div className="container px-4 mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-display font-bold mb-3">Why Choose MotorBuy?</h2>
-            <p className="text-muted-foreground text-lg">The trusted marketplace for automotive enthusiasts</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+        </section>
+      )}
+
+      <section className="py-16 md:py-24 bg-muted/50">
+        <div className="container px-4 mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-display font-bold mb-2">{t("section.whyUs")}</h2>
+            <p className="text-muted-foreground">{t("section.whyUs.subtitle")}</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {[
-              { icon: Shield, title: "Verified Vendors", desc: "Every shop is vetted for quality and reliability before joining our platform." },
-              { icon: Settings, title: "Exact Fitment", desc: "Detailed specifications ensure you always get the part that fits perfectly." },
-              { icon: Star, title: "Community Rated", desc: "Real reviews from fellow enthusiasts help you make informed decisions." }
+              { icon: Shield, title: t("feature.quality"), desc: t("feature.quality.desc") },
+              { icon: Truck, title: t("feature.delivery"), desc: t("feature.delivery.desc") },
+              { icon: Headphones, title: t("feature.support"), desc: t("feature.support.desc") },
             ].map((item, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className="text-center p-8"
+                className="text-center"
               >
-                <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary/80 rounded-3xl flex items-center justify-center text-white mb-6 mx-auto shadow-xl shadow-primary/20">
-                  <item.icon className="w-10 h-10" />
+                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <item.icon className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="font-display font-bold text-xl mb-3">{item.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{item.desc}</p>
+                <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
+                <p className="text-sm text-muted-foreground">{item.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      <footer className="gradient-dark text-white py-16">
-        <div className="container px-4 mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-            <div>
-              <div className="font-display font-bold text-3xl mb-2">MotorBuy</div>
-              <p className="text-white/60">Kuwait's premier auto parts marketplace</p>
-            </div>
-            <div className="flex gap-6">
-              <Link href="/products" className="text-white/70 hover:text-white transition-colors">Products</Link>
-              <Link href="/vendors" className="text-white/70 hover:text-white transition-colors">Vendors</Link>
-              <Link href="/stories" className="text-white/70 hover:text-white transition-colors">Stories</Link>
-            </div>
-          </div>
-          <div className="border-t border-white/10 mt-10 pt-8 text-center text-white/50 text-sm">
-            © 2025 MotorBuy Marketplace. All rights reserved.
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -3,18 +3,20 @@ import { useLanguage } from "@/lib/i18n";
 import { SiFacebook, SiInstagram, SiX, SiYoutube } from "react-icons/si";
 
 export function Footer() {
-  const { t, isRTL } = useLanguage();
+  const { t } = useLanguage();
   
   return (
     <footer className="bg-card border-t">
       <div className="container mx-auto px-4 py-12 md:py-16">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="font-display font-bold text-xl text-primary flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
-                M
-              </div>
-              <span>MotorBuy</span>
+            <Link href="/">
+              <span className="font-display font-bold text-xl text-primary flex items-center gap-2 mb-4 cursor-pointer">
+                <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+                  M
+                </span>
+                <span>MotorBuy</span>
+              </span>
             </Link>
             <p className="text-sm text-muted-foreground mb-6 max-w-xs">
               {t("footer.aboutText")}
@@ -39,18 +41,24 @@ export function Footer() {
             <h4 className="font-semibold text-sm mb-4">{t("footer.services")}</h4>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link href="/products" className="text-muted-foreground hover:text-primary transition-colors">
-                  {t("nav.products")}
+                <Link href="/products">
+                  <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                    {t("nav.products")}
+                  </span>
                 </Link>
               </li>
               <li>
-                <Link href="/vendors" className="text-muted-foreground hover:text-primary transition-colors">
-                  {t("nav.vendors")}
+                <Link href="/vendors">
+                  <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                    {t("nav.vendors")}
+                  </span>
                 </Link>
               </li>
               <li>
-                <Link href="/stories" className="text-muted-foreground hover:text-primary transition-colors">
-                  {t("section.spotlight")}
+                <Link href="/stories">
+                  <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                    {t("section.spotlight")}
+                  </span>
                 </Link>
               </li>
             </ul>

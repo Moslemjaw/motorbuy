@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-motorbuy";
+import { useLanguage } from "@/lib/i18n";
 import { Link, useLocation } from "wouter";
-import { LogIn, UserPlus, Car, Store, Shield, User, Loader2, CheckCircle, Eye, EyeOff } from "lucide-react";
+import { Car, Store, Shield, User, Loader2, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,6 +17,7 @@ export default function AuthPage() {
   const { data: roleData, isLoading: isRoleLoading } = useRole();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [showPassword, setShowPassword] = useState(false);
