@@ -73,8 +73,10 @@ export default function VendorDashboard() {
   });
 
   // Fetch stories for this vendor from backend
+  const STORIES_QUERY_KEY = ["/api/vendor/stories"];
+
   const { data: myStories = [], isLoading: isStoriesLoading } = useQuery<VendorStory[]>({
-    queryKey: ["/api/vendor/stories"],
+    queryKey: STORIES_QUERY_KEY,
     queryFn: async () => {
       const res = await fetch(buildApiUrl("/api/vendor/stories"), {
         credentials: "include",
@@ -214,7 +216,7 @@ export default function VendorDashboard() {
   const updateStoryMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => apiRequest("PATCH", `/api/stories/${id}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
+      queryClient.invalidateQueries({ queryKey: STORIES_QUERY_KEY });
       toast({ title: "Spotlight Updated", description: "Your spotlight has been updated." });
       setIsEditStoryDialogOpen(false);
       setEditingStory(null);
@@ -230,7 +232,8 @@ export default function VendorDashboard() {
   const deleteStoryMutation = useMutation({
     mutationFn: async (id: string) => apiRequest("DELETE", `/api/stories/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
+      queryClient.invalidateQueries({ queryKey: STORIES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: STORIES_QUERY_KEY });
       toast({ title: "Spotlight Deleted", description: "Your spotlight has been removed." });
     },
     onError: () => toast({ title: "Error", description: "Failed to delete spotlight.", variant: "destructive" }),
