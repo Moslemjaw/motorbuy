@@ -20,6 +20,7 @@ import { formatKWD } from "@/lib/currency";
 import { useUpload } from "@/hooks/use-upload";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { buildApiUrl } from "@/lib/api-config";
 import type { Order, VendorStory, Vendor } from "@shared/schema";
 
 interface VendorAnalytics {
@@ -41,7 +42,18 @@ export default function VendorDashboard() {
 
   const { data: vendorProfile, isLoading: isProfileLoading } = useQuery<Vendor | null>({
     queryKey: ["/api/vendor/profile"],
+    queryFn: async () => {
+      const res = await fetch(buildApiUrl("/api/vendor/profile"), { credentials: "include" });
+      if (res.status === 401) return null;
+      if (!res.ok) {
+        if (res.status === 404) return null;
+        throw new Error(`Failed to fetch vendor profile: ${res.status}`);
+      }
+      const data = await res.json();
+      return data || null;
+    },
     enabled: !!user && roleData?.role === "vendor",
+    retry: false,
   });
 
   const { data: analytics } = useQuery<VendorAnalytics>({
@@ -252,7 +264,8 @@ export default function VendorDashboard() {
     });
   };
 
-  if (!vendorProfile) {
+  // Show profile creation form if vendor profile doesn't exist
+  if (!vendorProfile && !isProfileLoading) {
     return (
       <div className="min-h-screen bg-muted/30 font-body pb-20">
         <Navbar />
