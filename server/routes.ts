@@ -1029,15 +1029,20 @@ export async function registerRoutes(
       }
 
       // Compare vendorIds as strings to handle ObjectId vs string formats
+      // Normalize both IDs by converting to string and removing any whitespace
       const storyVendorId = String(story.vendorId || "").trim();
       const vendorId = String(vendor.id || "").trim();
 
-      if (storyVendorId !== vendorId) {
-        console.log("Story update - vendorId mismatch:", {
-          storyVendorId,
-          vendorId,
-          storyId: story.id,
-        });
+      console.log("Story update - Comparing IDs:", {
+        storyVendorId,
+        vendorId,
+        storyId: story.id,
+        storyVendorIdType: typeof story.vendorId,
+        vendorIdType: typeof vendor.id,
+        match: storyVendorId === vendorId,
+      });
+
+      if (!storyVendorId || !vendorId || storyVendorId !== vendorId) {
         return res
           .status(403)
           .json({ message: "You can only update your own stories" });
@@ -1056,8 +1061,8 @@ export async function registerRoutes(
     const role = await storage.getUserRole(req.session.userId);
 
     try {
-      const stories = await storage.getStories();
-      const storyToDelete = stories.find((s: any) => s.id === req.params.id);
+      // Use getStory for consistency and better performance
+      const storyToDelete = await storage.getStory(req.params.id);
 
       if (!storyToDelete) {
         return res.status(404).json({ message: "Story not found" });
@@ -1083,15 +1088,20 @@ export async function registerRoutes(
       }
 
       // Compare vendorIds as strings to handle ObjectId vs string formats
+      // Normalize both IDs by converting to string and removing any whitespace
       const storyVendorId = String(storyToDelete.vendorId || "").trim();
       const vendorId = String(vendor.id || "").trim();
 
-      if (storyVendorId !== vendorId) {
-        console.log("Story delete - vendorId mismatch:", {
-          storyVendorId,
-          vendorId,
-          storyId: storyToDelete.id,
-        });
+      console.log("Story delete - Comparing IDs:", {
+        storyVendorId,
+        vendorId,
+        storyId: storyToDelete.id,
+        storyVendorIdType: typeof storyToDelete.vendorId,
+        vendorIdType: typeof vendor.id,
+        match: storyVendorId === vendorId,
+      });
+
+      if (!storyVendorId || !vendorId || storyVendorId !== vendorId) {
         return res
           .status(403)
           .json({ message: "You can only delete your own stories" });

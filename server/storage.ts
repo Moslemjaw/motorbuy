@@ -481,7 +481,9 @@ export class MongoStorage implements IStorage {
       const obj = toPlainObject(story);
       if (obj.vendorId && typeof obj.vendorId === 'object') {
         obj.vendor = toPlainObject(obj.vendorId);
-        obj.vendorId = obj.vendor.id;
+        obj.vendorId = String(obj.vendor.id || obj.vendorId);
+      } else if (obj.vendorId) {
+        obj.vendorId = String(obj.vendorId);
       }
       return obj;
     });
@@ -515,7 +517,9 @@ export class MongoStorage implements IStorage {
     const obj = toPlainObject(story);
     if (obj.vendorId && typeof obj.vendorId === 'object') {
       obj.vendor = toPlainObject(obj.vendorId);
-      obj.vendorId = obj.vendor.id;
+      obj.vendorId = String(obj.vendor.id || obj.vendorId);
+    } else if (obj.vendorId) {
+      obj.vendorId = String(obj.vendorId);
     }
     return obj;
   }
