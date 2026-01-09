@@ -752,6 +752,40 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/products/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "vendor")
+        return res
+          .status(403)
+          .json({ message: "Only vendors can update products" });
+
+      const productId = req.params.id;
+      const existingProduct = await storage.getProduct(productId);
+      if (!existingProduct) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      // Verify the product belongs to the vendor
+      const vendors = await storage.getVendors();
+      const vendor = vendors.find((v) => v.userId === req.session.userId);
+      if (!vendor || existingProduct.vendorId !== vendor.id) {
+        return res
+          .status(403)
+          .json({ message: "You can only edit your own products" });
+      }
+
+      const updates = req.body;
+      const updatedProduct = await storage.updateProduct(productId, updates);
+      res.json(updatedProduct);
+    } catch (e: any) {
+      console.error("Error updating product:", e);
+      res
+        .status(500)
+        .json({ message: e.message || "Failed to update product" });
+    }
+  });
+
   app.get(api.categories.list.path, async (req, res) => {
     const categories = await storage.getCategories();
     res.json(categories);

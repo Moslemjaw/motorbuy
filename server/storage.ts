@@ -21,6 +21,7 @@ export interface IStorage {
   getProducts(filters?: { categoryId?: string; vendorId?: string; search?: string; sortBy?: string }): Promise<any[]>;
   getProduct(id: string): Promise<any | undefined>;
   createProduct(product: any): Promise<any>;
+  updateProduct(id: string, updates: any): Promise<any>;
   getCartItems(userId: string): Promise<any[]>;
   addToCart(item: any): Promise<any>;
   removeFromCart(id: string): Promise<void>;
@@ -225,6 +226,24 @@ export class MongoStorage implements IStorage {
     }
     const newProduct = await Product.create(productData);
     return toPlainObject(newProduct);
+  }
+
+  async updateProduct(id: string, updates: any): Promise<any> {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error("Invalid product ID");
+    }
+    const updateData = { ...updates };
+    if (updateData.vendorId && typeof updateData.vendorId === 'string') {
+      updateData.vendorId = new mongoose.Types.ObjectId(updateData.vendorId);
+    }
+    if (updateData.categoryId && typeof updateData.categoryId === 'string') {
+      updateData.categoryId = new mongoose.Types.ObjectId(updateData.categoryId);
+    }
+    const updated = await Product.findByIdAndUpdate(id, updateData, { new: true });
+    if (!updated) {
+      throw new Error("Product not found");
+    }
+    return toPlainObject(updated);
   }
 
   async getCartItems(userId: string): Promise<any[]> {

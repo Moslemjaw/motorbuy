@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRole, useProducts, useCategories } from "@/hooks/use-motorbuy";
 import { 
   Package, ShoppingCart, Loader2, Plus, Image, Trash2, BookOpen, 
-  Store, TrendingUp, DollarSign, Clock, Wallet, Send, Camera, Save
+  Store, TrendingUp, DollarSign, Clock, Wallet, Send, Camera, Save, Edit
 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { formatKWD } from "@/lib/currency";
 import { useUpload } from "@/hooks/use-upload";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -83,6 +84,8 @@ export default function VendorDashboard() {
   const [productCategory, setProductCategory] = useState("");
   const [productImages, setProductImages] = useState<string[]>([]);
   const [productWarranty, setProductWarranty] = useState("");
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const [storyContent, setStoryContent] = useState("");
   const [storyImage, setStoryImage] = useState<string | null>(null);
@@ -150,6 +153,20 @@ export default function VendorDashboard() {
       setProductStock(""); setProductBrand(""); setProductCategory(""); setProductImages([]); setProductWarranty("");
     },
     onError: () => toast({ title: "Error", description: "Failed to add product.", variant: "destructive" }),
+  });
+
+  const updateProductMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => apiRequest("PATCH", `/api/products/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vendor/analytics"] });
+      toast({ title: "Product Updated" });
+      setIsEditDialogOpen(false);
+      setEditingProduct(null);
+      setProductName(""); setProductDesc(""); setProductPrice(""); setProductComparePrice("");
+      setProductStock(""); setProductBrand(""); setProductCategory(""); setProductImages([]); setProductWarranty("");
+    },
+    onError: () => toast({ title: "Error", description: "Failed to update product.", variant: "destructive" }),
   });
 
   const addStoryMutation = useMutation({
@@ -246,6 +263,41 @@ export default function VendorDashboard() {
       brand: productBrand,
       images: productImages.length > 0 ? productImages : ["https://placehold.co/400x300?text=Product"],
       warrantyInfo: productWarranty || null,
+    });
+  };
+
+  const handleEditProduct = (product: any) => {
+    setEditingProduct(product);
+    setProductName(product.name || "");
+    setProductDesc(product.description || "");
+    setProductPrice(product.price || "");
+    setProductComparePrice(product.compareAtPrice || "");
+    setProductStock(product.stock?.toString() || "");
+    setProductBrand(product.brand || "");
+    setProductCategory(product.categoryId || "");
+    setProductImages(product.images || []);
+    setProductWarranty(product.warrantyInfo || "");
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateProduct = () => {
+    if (!productName || !productDesc || !productPrice || !productCategory || !editingProduct) {
+      toast({ title: "Missing Fields", description: "Please fill all required fields.", variant: "destructive" });
+      return;
+    }
+    updateProductMutation.mutate({
+      id: editingProduct.id,
+      data: {
+        categoryId: productCategory,
+        name: productName,
+        description: productDesc,
+        price: productPrice,
+        compareAtPrice: productComparePrice || null,
+        stock: parseInt(productStock) || 0,
+        brand: productBrand,
+        images: productImages.length > 0 ? productImages : ["https://placehold.co/400x300?text=Product"],
+        warrantyInfo: productWarranty || null,
+      },
     });
   };
 
@@ -764,6 +816,15 @@ export default function VendorDashboard() {
                             <div className="text-sm text-muted-foreground">{formatKWD(product.price)}</div>
                           </div>
                           <Badge variant="outline">{product.stock} in stock</Badge>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleEditProduct(product)}
+                            data-testid={`button-edit-product-${product.id}`}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
                         </div>
                       ))}
                     </div>
@@ -774,6 +835,144 @@ export default function VendorDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Edit Product Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Product</DialogTitle>
+            <DialogDescription>Update your product information</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Product Name *</Label>
+              <Input
+                value={productName}
+                onChange={(e) => setProductName(e.target.value)}
+                placeholder="Product name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Description *</Label>
+              <Textarea
+                value={productDesc}
+                onChange={(e) => setProductDesc(e.target.value)}
+                placeholder="Product description"
+                className="min-h-[100px]"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Price (KWD) *</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={productPrice}
+                  onChange={(e) => setProductPrice(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Compare at Price (KWD)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={productComparePrice}
+                  onChange={(e) => setProductComparePrice(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Stock *</Label>
+                <Input
+                  type="number"
+                  value={productStock}
+                  onChange={(e) => setProductStock(e.target.value)}
+                  placeholder="0"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Brand *</Label>
+                <Input
+                  value={productBrand}
+                  onChange={(e) => setProductBrand(e.target.value)}
+                  placeholder="Brand name"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Category *</Label>
+              <Select value={productCategory} onValueChange={setProductCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories?.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Warranty Information</Label>
+              <Input
+                value={productWarranty}
+                onChange={(e) => setProductWarranty(e.target.value)}
+                placeholder="e.g., 1 year warranty"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Product Images</Label>
+              <div className="flex gap-2 flex-wrap">
+                {productImages.map((img, idx) => (
+                  <div key={idx} className="relative">
+                    <img src={img} alt="" className="w-20 h-20 object-cover rounded" />
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-6 w-6"
+                      onClick={() => setProductImages(productImages.filter((_, i) => i !== idx))}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <input ref={productImageRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadProductImage(f); }} />
+              <Button variant="outline" onClick={() => productImageRef.current?.click()} disabled={isUploadingProduct}>
+                {isUploadingProduct ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+                Add Image
+              </Button>
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleUpdateProduct} disabled={updateProductMutation.isPending}>
+                {updateProductMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    Updating...
+                  </>
+                ) : (
+                  "Update Product"
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
