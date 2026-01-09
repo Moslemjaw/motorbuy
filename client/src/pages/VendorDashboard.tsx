@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -72,65 +72,51 @@ export default function VendorDashboard() {
     enabled: !!vendorProfile,
   });
 
-  const { data: stories, isLoading: isStoriesLoading } = useQuery<VendorStory[]>({
-    queryKey: ["/api/stories"],
+  // Fetch stories filtered by vendorId directly from backend
+  const { data: myStories, isLoading: isStoriesLoading } = useQuery<VendorStory[]>({
+    queryKey: ["/api/stories", vendorProfile?.id],
     queryFn: async () => {
+      if (!vendorProfile?.id) return [];
+      
       const res = await fetch(buildApiUrl("/api/stories"), {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to fetch stories");
-      const data = await res.json();
-      console.log("Vendor Dashboard - Fetched all stories:", data);
-      return data;
-    },
-    enabled: !!vendorProfile, // Only fetch when vendor profile is loaded
-  });
-  
-  // Filter stories by vendorId - handle both ObjectId and string formats
-  const myStories = useMemo(() => {
-    if (!stories || !vendorProfile) return [];
-    
-    const profileVendorId = String(vendorProfile.id || "").trim();
-    console.log("Vendor Dashboard - Filtering stories. Profile ID:", profileVendorId, "Type:", typeof vendorProfile.id);
-    
-    const filtered = stories.filter(s => {
-      // Handle vendorId in different formats
-      let storyVendorId = "";
-      if (s.vendorId) {
-        if (typeof s.vendorId === 'object' && s.vendorId.id) {
-          storyVendorId = String(s.vendorId.id).trim();
-        } else if (typeof s.vendorId === 'object' && s.vendorId.toString) {
-          storyVendorId = String(s.vendorId.toString()).trim();
-        } else {
-          storyVendorId = String(s.vendorId).trim();
-        }
-      }
+      const allStories = await res.json();
       
-      const matches = storyVendorId === profileVendorId;
-      if (!matches && storyVendorId) {
-        console.log("Vendor Dashboard - Story mismatch:", {
-          storyId: s.id,
-          storyVendorId,
-          storyVendorIdType: typeof s.vendorId,
-          profileVendorId,
-          matches,
-          rawVendorId: s.vendorId
-        });
-      }
-      return matches;
-    });
-    
-    console.log("Vendor Dashboard - Filtered stories count:", filtered.length, "out of", stories.length);
-    if (filtered.length === 0 && stories.length > 0) {
-      console.log("Vendor Dashboard - All story vendorIds:", stories.map(s => ({
-        id: s.id,
-        vendorId: s.vendorId,
-        vendorIdType: typeof s.vendorId,
-        vendorIdString: String(s.vendorId || "")
-      })));
-    }
-    return filtered;
-  }, [stories, vendorProfile]);
+      // Filter stories by vendorId - handle both ObjectId and string formats
+      const profileVendorId = String(vendorProfile.id || "").trim();
+      console.log("Vendor Dashboard - Filtering stories. Profile ID:", profileVendorId);
+      
+      const filtered = allStories.filter((s: VendorStory) => {
+        // Handle vendorId in different formats
+        let storyVendorId = "";
+        if (s.vendorId) {
+          if (typeof s.vendorId === 'object' && (s.vendorId as any).id) {
+            storyVendorId = String((s.vendorId as any).id).trim();
+          } else if (typeof s.vendorId === 'object' && (s.vendorId as any).toString) {
+            storyVendorId = String((s.vendorId as any).toString()).trim();
+          } else {
+            storyVendorId = String(s.vendorId).trim();
+          }
+        }
+        
+        const matches = storyVendorId === profileVendorId;
+        if (!matches && storyVendorId) {
+          console.log("Vendor Dashboard - Story mismatch:", {
+            storyId: s.id,
+            storyVendorId,
+            profileVendorId,
+          });
+        }
+        return matches;
+      });
+      
+      console.log("Vendor Dashboard - Filtered stories count:", filtered.length, "out of", allStories.length);
+      return filtered;
+    },
+    enabled: !!vendorProfile?.id, // Only fetch when vendor profile is loaded
+  });
 
   const [productName, setProductName] = useState("");
   const [productDesc, setProductDesc] = useState("");
