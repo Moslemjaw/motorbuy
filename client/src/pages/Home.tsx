@@ -169,8 +169,8 @@ export default function Home() {
         <div className="container px-4 mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-3 md:gap-4 mb-8 md:mb-12">
             <div>
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold mb-1 md:mb-2">Vendor Feed</h2>
-              <p className="text-muted-foreground text-sm md:text-lg">Latest updates from our vendors</p>
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold mb-1 md:mb-2">Vendor Spotlight</h2>
+              <p className="text-muted-foreground text-sm md:text-lg">Featured promotions and updates from our vendors</p>
             </div>
             <Link href="/stories" className="text-primary font-semibold flex items-center gap-1 group">
               View All <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

@@ -122,17 +122,17 @@ export default function VendorDashboard() {
     mutationFn: async (data: any) => apiRequest("POST", "/api/stories", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
-      toast({ title: "Story Posted" });
+      toast({ title: "Spotlight Posted" });
       setStoryContent(""); setStoryImage(null);
     },
-    onError: () => toast({ title: "Error", description: "Failed to post story.", variant: "destructive" }),
+    onError: () => toast({ title: "Error", description: "Failed to post spotlight.", variant: "destructive" }),
   });
 
   const deleteStoryMutation = useMutation({
     mutationFn: async (id: string) => apiRequest("DELETE", `/api/stories/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
-      toast({ title: "Story Deleted" });
+      toast({ title: "Spotlight Deleted" });
     },
     onError: () => toast({ title: "Error", variant: "destructive" }),
   });
@@ -201,7 +201,7 @@ export default function VendorDashboard() {
 
   const handlePostStory = () => {
     if (!storyContent && !storyImage) {
-      toast({ title: "Empty Story", description: "Add content or an image.", variant: "destructive" });
+      toast({ title: "Empty Spotlight", description: "Add content or an image.", variant: "destructive" });
       return;
     }
     addStoryMutation.mutate({
@@ -358,7 +358,7 @@ export default function VendorDashboard() {
         <div className="grid lg:grid-cols-3 gap-6 mb-8">
           <Card className="lg:col-span-2">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Quick Post</CardTitle>
+              <CardTitle className="text-lg">Create Spotlight</CardTitle>
               <CardDescription>Share updates with your customers</CardDescription>
             </CardHeader>
             <CardContent>
@@ -397,12 +397,12 @@ export default function VendorDashboard() {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
                 <BookOpen className="w-4 h-4" />
-                Recent Posts
+                Your Spotlights
               </CardTitle>
             </CardHeader>
             <CardContent>
               {myStories.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">No posts yet</p>
+                <p className="text-sm text-muted-foreground text-center py-4">No spotlights yet</p>
               ) : (
                 <div className="space-y-3 max-h-[250px] overflow-y-auto">
                   {myStories.slice(0, 5).map((story) => (
