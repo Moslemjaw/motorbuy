@@ -54,6 +54,7 @@ const categorySchema = new mongoose.Schema({
   name: { type: String, required: true },
   slug: { type: String, required: true, unique: true },
   imageUrl: String,
+  icon: String,
 });
 
 const productSchema = new mongoose.Schema({

@@ -568,12 +568,31 @@ export async function registerRoutes(
     res.status(204).send();
   });
 
-  // Seed initial categories
+  // Seed initial categories (update existing or create new)
+  const defaultCategories = [
+    { name: "Engine Parts", slug: "engine-parts", icon: "Cog" },
+    { name: "Transmission System", slug: "transmission", icon: "Settings" },
+    { name: "Braking System", slug: "brakes", icon: "CircleStop" },
+    { name: "Suspension & Steering", slug: "suspension-steering", icon: "Gauge" },
+    { name: "Electrical System", slug: "electrical", icon: "Zap" },
+    { name: "Cooling System", slug: "cooling", icon: "Thermometer" },
+    { name: "Fuel System", slug: "fuel-system", icon: "Fuel" },
+    { name: "Exhaust System", slug: "exhaust", icon: "Wind" },
+    { name: "Body & Structure", slug: "body-structure", icon: "Car" },
+    { name: "Interior Parts", slug: "interior", icon: "Armchair" },
+    { name: "Wheels & Tires", slug: "wheels-tires", icon: "Circle" },
+    { name: "Lighting", slug: "lighting", icon: "Lightbulb" },
+    { name: "Fluids & Chemicals", slug: "fluids-chemicals", icon: "Droplets" },
+  ];
   const categories = await storage.getCategories();
-  if (categories.length === 0) {
-    await storage.createCategory({ name: "Engine Parts", slug: "engine-parts", imageUrl: "https://placehold.co/100x100?text=Engine" });
-    await storage.createCategory({ name: "Brakes", slug: "brakes", imageUrl: "https://placehold.co/100x100?text=Brakes" });
-    await storage.createCategory({ name: "Suspension", slug: "suspension", imageUrl: "https://placehold.co/100x100?text=Suspension" });
+  if (categories.length < defaultCategories.length) {
+    // Clear old categories and seed new ones
+    for (const cat of categories) {
+      await storage.deleteCategory(cat.id);
+    }
+    for (const cat of defaultCategories) {
+      await storage.createCategory(cat);
+    }
   }
 
   app.post("/api/seed", isAuthenticated, async (req: any, res) => {

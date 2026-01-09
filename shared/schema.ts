@@ -56,6 +56,7 @@ export interface Category {
   name: string;
   slug: string;
   imageUrl?: string | null;
+  icon?: string | null;
 }
 
 export interface Product {
@@ -132,6 +133,7 @@ export const insertCategorySchema = z.object({
   name: z.string().min(1),
   slug: z.string().min(1),
   imageUrl: z.string().optional(),
+  icon: z.string().optional(),
 });
 
 export const insertProductSchema = z.object({

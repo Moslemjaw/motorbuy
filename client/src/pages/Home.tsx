@@ -2,7 +2,11 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { useCategories, useStories, useProducts, useVendors } from "@/hooks/use-motorbuy";
 import { ProductCard } from "@/components/ProductCard";
-import { ArrowRight, Star, Settings, Wrench, Shield, ChevronRight, Users, Package, TrendingUp } from "lucide-react";
+import { ArrowRight, Star, Settings, Wrench, Shield, ChevronRight, Users, Package, TrendingUp, Cog, CircleStop, Gauge, Zap, Thermometer, Fuel, Wind, Car, Armchair, Circle, Lightbulb, Droplets, type LucideIcon } from "lucide-react";
+
+const iconMap: Record<string, LucideIcon> = {
+  Cog, Settings, CircleStop, Gauge, Zap, Thermometer, Fuel, Wind, Car, Armchair, Circle, Lightbulb, Droplets, Wrench
+};
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 
@@ -115,7 +119,10 @@ export default function Home() {
                   <div className="group cursor-pointer bg-card rounded-xl md:rounded-2xl p-4 md:p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-border hover:border-primary/30 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-20 md:w-32 h-20 md:h-32 bg-gradient-to-bl from-primary/10 to-transparent rounded-bl-full" />
                     <div className="w-10 h-10 md:w-16 md:h-16 bg-gradient-to-br from-primary to-primary/80 rounded-xl md:rounded-2xl flex items-center justify-center mb-3 md:mb-6 text-white group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-primary/20">
-                      <Wrench className="w-5 h-5 md:w-8 md:h-8" />
+                      {(() => {
+                        const IconComponent = cat.icon ? iconMap[cat.icon] : Wrench;
+                        return IconComponent ? <IconComponent className="w-5 h-5 md:w-8 md:h-8" /> : <Wrench className="w-5 h-5 md:w-8 md:h-8" />;
+                      })()}
                     </div>
                     <h3 className="font-display font-bold text-sm md:text-xl mb-1 md:mb-2 group-hover:text-primary transition-colors">{cat.name}</h3>
                     <p className="text-muted-foreground text-xs md:text-sm hidden md:block">Browse {cat.name.toLowerCase()} parts</p>
