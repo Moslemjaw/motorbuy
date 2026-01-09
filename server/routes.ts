@@ -102,7 +102,12 @@ export async function registerRoutes(
 
   app.get(api.roles.get.path, isAuthenticated, async (req: any, res) => {
     try {
-      if (!req.session.userId) {
+      console.log("Role endpoint - Session ID:", req.sessionID);
+      console.log("Role endpoint - Session userId:", req.session.userId);
+      console.log("Role endpoint - Session exists:", !!req.session);
+
+      if (!req.session || !req.session.userId) {
+        console.log("Role endpoint - No session or userId");
         return res.status(401).json({ message: "Not authenticated" });
       }
       const role = await storage.getUserRole(req.session.userId);

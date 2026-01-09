@@ -138,14 +138,24 @@ export function registerAuthRoutes(app: Express) {
       }
 
       req.session.userId = user.id;
-      // Save session explicitly
-      req.session.save((err) => {
-        if (err) {
-          console.error("Session save error:", err);
-        }
+      console.log("Login - Setting session userId:", user.id);
+
+      // Save session and wait for it to complete before responding
+      return new Promise<void>((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) {
+            console.error("Session save error:", err);
+            return reject(err);
+          }
+          console.log(
+            "Login - Session saved successfully, userId:",
+            req.session.userId
+          );
+          console.log("Login - Session ID:", req.sessionID);
+          res.json(user);
+          resolve();
+        });
       });
-      console.log("Login - Session userId set:", req.session.userId);
-      res.json(user);
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ message: "Failed to login" });

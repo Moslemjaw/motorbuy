@@ -30,14 +30,16 @@ const MemoryStoreSession = MemoryStore(session);
 
 app.use(
   session({
+    name: "connect.sid", // Explicit cookie name
     secret: process.env.SESSION_SECRET!,
     resave: true, // Changed to true to ensure session is saved
     saveUninitialized: true, // Changed to true to save session even if not modified
     cookie: {
-      secure: process.env.NODE_ENV === "production", // true in production (HTTPS required)
+      secure: process.env.NODE_ENV === "production", // true in production (HTTPS required for sameSite: "none")
       httpOnly: true,
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // "none" for cross-origin in production
       maxAge: 24 * 60 * 60 * 1000 * 7, // 7 days
+      path: "/", // Ensure cookie is available for all paths
     },
     store: new MemoryStoreSession({
       checkPeriod: 86400000, // 24 hours
