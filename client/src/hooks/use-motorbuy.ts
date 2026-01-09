@@ -8,20 +8,37 @@ export function useRole() {
   return useQuery({
     queryKey: [api.roles.get.path],
     queryFn: async () => {
-      const res = await fetch(buildApiUrl(api.roles.get.path), { credentials: "include" });
-      if (res.status === 401) return null;
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error("Failed to fetch role:", res.status, errorText);
-        throw new Error(`Failed to fetch role: ${res.status}`);
+      try {
+        const res = await fetch(buildApiUrl(api.roles.get.path), {
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        console.log("Role fetch status:", res.status, res.statusText);
+        if (res.status === 401) {
+          console.log("Role fetch: Unauthorized");
+          return null;
+        }
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error("Failed to fetch role:", res.status, errorText);
+          throw new Error(`Failed to fetch role: ${res.status}`);
+        }
+        const data = await res.json();
+        console.log("Role API raw response:", data);
+        const parsed = api.roles.get.responses[200].parse(data);
+        console.log("Role API parsed response:", parsed);
+        return parsed;
+      } catch (error) {
+        console.error("Role fetch error:", error);
+        throw error;
       }
-      const data = await res.json();
-      console.log("Role API response:", data);
-      return api.roles.get.responses[200].parse(data);
     },
     retry: false,
     refetchOnWindowFocus: true,
     staleTime: 0, // Always refetch to get latest role
+    enabled: true, // Always enabled
   });
 }
 
@@ -30,7 +47,9 @@ export function useVendors() {
   return useQuery({
     queryKey: [api.vendors.list.path],
     queryFn: async () => {
-      const res = await fetch(buildApiUrl(api.vendors.list.path), { credentials: "include" });
+      const res = await fetch(buildApiUrl(api.vendors.list.path), {
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Failed to fetch vendors");
       return api.vendors.list.responses[200].parse(await res.json());
     },
@@ -63,8 +82,8 @@ export function useCreateVendor() {
       });
       if (!res.ok) {
         if (res.status === 400) {
-           const error = errorSchemas.validation.parse(await res.json());
-           throw new Error(error.message);
+          const error = errorSchemas.validation.parse(await res.json());
+          throw new Error(error.message);
         }
         throw new Error("Failed to create vendor");
       }
@@ -80,7 +99,13 @@ export function useCreateVendor() {
 export function useApproveVendor() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, isApproved }: { id: string, isApproved: boolean }) => {
+    mutationFn: async ({
+      id,
+      isApproved,
+    }: {
+      id: string;
+      isApproved: boolean;
+    }) => {
       const url = buildUrl(api.vendors.approve.path, { id });
       const res = await fetch(buildApiUrl(url), {
         method: api.vendors.approve.method,
@@ -91,7 +116,8 @@ export function useApproveVendor() {
       if (!res.ok) throw new Error("Failed to update vendor status");
       return api.vendors.approve.responses[200].parse(await res.json());
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.vendors.list.path] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [api.vendors.list.path] }),
   });
 }
 
@@ -102,8 +128,10 @@ export function useProducts(filters?: z.infer<typeof api.products.list.input>) {
     queryFn: async () => {
       // Build query string
       const params = new URLSearchParams();
-      if (filters?.categoryId) params.append("categoryId", String(filters.categoryId));
-      if (filters?.vendorId) params.append("vendorId", String(filters.vendorId));
+      if (filters?.categoryId)
+        params.append("categoryId", String(filters.categoryId));
+      if (filters?.vendorId)
+        params.append("vendorId", String(filters.vendorId));
       if (filters?.search) params.append("search", filters.search);
       if (filters?.sortBy) params.append("sortBy", filters.sortBy);
 
@@ -138,7 +166,7 @@ export function useCreateProduct() {
         ...data,
         stock: Number(data.stock),
       };
-      
+
       const res = await fetch(buildApiUrl(api.products.create.path), {
         method: api.products.create.method,
         headers: { "Content-Type": "application/json" },
@@ -148,7 +176,8 @@ export function useCreateProduct() {
       if (!res.ok) throw new Error("Failed to create product");
       return api.products.create.responses[201].parse(await res.json());
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.products.list.path] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [api.products.list.path] }),
   });
 }
 
@@ -157,7 +186,9 @@ export function useCategories() {
   return useQuery({
     queryKey: [api.categories.list.path],
     queryFn: async () => {
-      const res = await fetch(buildApiUrl(api.categories.list.path), { credentials: "include" });
+      const res = await fetch(buildApiUrl(api.categories.list.path), {
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Failed to fetch categories");
       return api.categories.list.responses[200].parse(await res.json());
     },
@@ -169,7 +200,9 @@ export function useCart() {
   return useQuery({
     queryKey: [api.cart.get.path],
     queryFn: async () => {
-      const res = await fetch(buildApiUrl(api.cart.get.path), { credentials: "include" });
+      const res = await fetch(buildApiUrl(api.cart.get.path), {
+        credentials: "include",
+      });
       if (res.status === 401) return null;
       if (!res.ok) throw new Error("Failed to fetch cart");
       return api.cart.get.responses[200].parse(await res.json());
@@ -191,7 +224,8 @@ export function useAddToCart() {
       if (!res.ok) throw new Error("Failed to add to cart");
       return api.cart.add.responses[201].parse(await res.json());
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.cart.get.path] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [api.cart.get.path] }),
   });
 }
 
@@ -200,10 +234,14 @@ export function useRemoveFromCart() {
   return useMutation({
     mutationFn: async (id: string) => {
       const url = buildUrl(api.cart.remove.path, { id });
-      const res = await fetch(buildApiUrl(url), { method: api.cart.remove.method, credentials: "include" });
+      const res = await fetch(buildApiUrl(url), {
+        method: api.cart.remove.method,
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Failed to remove item");
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.cart.get.path] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [api.cart.get.path] }),
   });
 }
 
@@ -212,7 +250,9 @@ export function useOrders() {
   return useQuery({
     queryKey: [api.orders.list.path],
     queryFn: async () => {
-      const res = await fetch(buildApiUrl(api.orders.list.path), { credentials: "include" });
+      const res = await fetch(buildApiUrl(api.orders.list.path), {
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Failed to fetch orders");
       return api.orders.list.responses[200].parse(await res.json());
     },
@@ -243,7 +283,9 @@ export function useStories() {
   return useQuery({
     queryKey: [api.stories.list.path],
     queryFn: async () => {
-      const res = await fetch(buildApiUrl(api.stories.list.path), { credentials: "include" });
+      const res = await fetch(buildApiUrl(api.stories.list.path), {
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Failed to fetch stories");
       return api.stories.list.responses[200].parse(await res.json());
     },
@@ -263,6 +305,7 @@ export function useCreateStory() {
       if (!res.ok) throw new Error("Failed to create story");
       return api.stories.create.responses[201].parse(await res.json());
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.stories.list.path] }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [api.stories.list.path] }),
   });
 }

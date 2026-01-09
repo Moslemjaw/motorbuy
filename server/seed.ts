@@ -1,12 +1,21 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-import { User, Vendor, Category, Product, Order, OrderItem, PaymentRequest } from "./mongodb";
+import {
+  User,
+  Vendor,
+  Category,
+  Product,
+  Order,
+  OrderItem,
+  PaymentRequest,
+} from "./mongodb";
 
 const demoVendors = [
   {
     userId: "demo-vendor-1",
     storeName: "Al-Faisal Auto Parts",
-    description: "Premium OEM and aftermarket parts for all Japanese and Korean vehicles. Serving Kuwait since 2005.",
+    description:
+      "Premium OEM and aftermarket parts for all Japanese and Korean vehicles. Serving Kuwait since 2005.",
     logoUrl: "https://placehold.co/150x150?text=AFAP",
     coverImageUrl: "https://placehold.co/1200x400?text=Al-Faisal+Auto+Parts",
     bio: "Family-owned business with 20+ years of experience",
@@ -17,7 +26,8 @@ const demoVendors = [
   {
     userId: "demo-vendor-2",
     storeName: "Kuwait Performance Motors",
-    description: "High-performance parts and upgrades for sports cars. Authorized dealer for major brands.",
+    description:
+      "High-performance parts and upgrades for sports cars. Authorized dealer for major brands.",
     logoUrl: "https://placehold.co/150x150?text=KPM",
     coverImageUrl: "https://placehold.co/1200x400?text=Kuwait+Performance",
     bio: "Your destination for performance upgrades",
@@ -28,7 +38,8 @@ const demoVendors = [
   {
     userId: "demo-vendor-3",
     storeName: "Gulf Auto Supply",
-    description: "Wholesale and retail auto parts. Best prices in Kuwait for genuine and OEM parts.",
+    description:
+      "Wholesale and retail auto parts. Best prices in Kuwait for genuine and OEM parts.",
     logoUrl: "https://placehold.co/150x150?text=GAS",
     coverImageUrl: "https://placehold.co/1200x400?text=Gulf+Auto+Supply",
     bio: "Lowest prices guaranteed",
@@ -39,19 +50,63 @@ const demoVendors = [
 ];
 
 const demoUsers = [
-  { id: "demo-vendor-1", email: "vendor1@demo.com", firstName: "Ahmed", lastName: "Al-Faisal" },
-  { id: "demo-vendor-2", email: "vendor2@demo.com", firstName: "Khalid", lastName: "Al-Rashid" },
-  { id: "demo-vendor-3", email: "vendor3@demo.com", firstName: "Mohammed", lastName: "Al-Sabah" },
-  { id: "demo-customer-1", email: "customer1@demo.com", firstName: "Yusuf", lastName: "Ibrahim" },
+  {
+    id: "demo-vendor-1",
+    email: "vendor1@demo.com",
+    firstName: "Ahmed",
+    lastName: "Al-Faisal",
+  },
+  {
+    id: "demo-vendor-2",
+    email: "vendor2@demo.com",
+    firstName: "Khalid",
+    lastName: "Al-Rashid",
+  },
+  {
+    id: "demo-vendor-3",
+    email: "vendor3@demo.com",
+    firstName: "Mohammed",
+    lastName: "Al-Sabah",
+  },
+  {
+    id: "demo-customer-1",
+    email: "customer1@demo.com",
+    firstName: "Yusuf",
+    lastName: "Ibrahim",
+  },
 ];
 
 const categories = [
-  { name: "Engine Parts", slug: "engine-parts", imageUrl: "https://placehold.co/100x100?text=Engine" },
-  { name: "Brakes", slug: "brakes", imageUrl: "https://placehold.co/100x100?text=Brakes" },
-  { name: "Suspension", slug: "suspension", imageUrl: "https://placehold.co/100x100?text=Suspension" },
-  { name: "Electrical", slug: "electrical", imageUrl: "https://placehold.co/100x100?text=Electrical" },
-  { name: "Filters", slug: "filters", imageUrl: "https://placehold.co/100x100?text=Filters" },
-  { name: "Cooling System", slug: "cooling-system", imageUrl: "https://placehold.co/100x100?text=Cooling" },
+  {
+    name: "Engine Parts",
+    slug: "engine-parts",
+    imageUrl: "https://placehold.co/100x100?text=Engine",
+  },
+  {
+    name: "Brakes",
+    slug: "brakes",
+    imageUrl: "https://placehold.co/100x100?text=Brakes",
+  },
+  {
+    name: "Suspension",
+    slug: "suspension",
+    imageUrl: "https://placehold.co/100x100?text=Suspension",
+  },
+  {
+    name: "Electrical",
+    slug: "electrical",
+    imageUrl: "https://placehold.co/100x100?text=Electrical",
+  },
+  {
+    name: "Filters",
+    slug: "filters",
+    imageUrl: "https://placehold.co/100x100?text=Filters",
+  },
+  {
+    name: "Cooling System",
+    slug: "cooling-system",
+    imageUrl: "https://placehold.co/100x100?text=Cooling",
+  },
 ];
 
 export async function seedDatabase() {
@@ -126,28 +181,41 @@ export async function seedDatabase() {
   console.log(`Created ${createdCategories.length} categories`);
 
   const categoryMap: Record<string, mongoose.Types.ObjectId> = {};
-  createdCategories.forEach(cat => {
+  createdCategories.forEach((cat) => {
     categoryMap[cat.slug] = cat._id as mongoose.Types.ObjectId;
   });
 
-  for (const user of demoUsers) {
-    await User.updateOne({ id: user.id }, { $set: user }, { upsert: true });
+  // Create demo users if they don't exist
+  for (const demoUser of demoUsers) {
+    const existingUser = await User.findOne({ email: demoUser.email });
+    if (!existingUser) {
+      const passwordHash = await bcrypt.hash("demo123", 12);
+      await User.create({
+        email: demoUser.email,
+        passwordHash,
+        firstName: demoUser.firstName,
+        lastName: demoUser.lastName,
+        role: demoUser.id.includes("vendor") ? "vendor" : "customer",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    } else {
+      // Update role if user exists
+      const role = demoUser.id.includes("vendor") ? "vendor" : "customer";
+      await User.findByIdAndUpdate(existingUser._id, {
+        role,
+        updatedAt: new Date(),
+      });
+    }
   }
-  console.log(`Created ${demoUsers.length} demo users`);
-
-  // Set roles directly on demo users (no separate Role collection)
-  await User.updateOne({ id: "demo-vendor-1" }, { $set: { role: "vendor" } });
-  await User.updateOne({ id: "demo-vendor-2" }, { $set: { role: "vendor" } });
-  await User.updateOne({ id: "demo-vendor-3" }, { $set: { role: "vendor" } });
-  await User.updateOne({ id: "demo-customer-1" }, { $set: { role: "customer" } });
-  console.log("Set roles on demo users");
+  console.log(`Created/updated ${demoUsers.length} demo users`);
 
   await Vendor.deleteMany({ userId: { $regex: /^demo-/ } });
   const createdVendors = await Vendor.insertMany(demoVendors);
   console.log(`Created ${createdVendors.length} vendors`);
 
   const vendorMap: Record<string, mongoose.Types.ObjectId> = {};
-  createdVendors.forEach(v => {
+  createdVendors.forEach((v) => {
     vendorMap[v.userId] = v._id as mongoose.Types.ObjectId;
   });
 
@@ -158,117 +226,147 @@ export async function seedDatabase() {
       vendorId: vendorMap["demo-vendor-1"],
       categoryId: categoryMap["engine-parts"],
       name: "Toyota Camry Timing Belt Kit",
-      description: "Complete timing belt kit for Toyota Camry 2012-2017. Includes belt, tensioner, and water pump. OEM quality.",
+      description:
+        "Complete timing belt kit for Toyota Camry 2012-2017. Includes belt, tensioner, and water pump. OEM quality.",
       price: "45.000",
       compareAtPrice: "55.000",
       stock: 25,
       brand: "Toyota OEM",
-      images: ["/attached_assets/stock_images/car_engine_parts_aut_02ada9ec.jpg"],
+      images: [
+        "/attached_assets/stock_images/car_engine_parts_aut_02ada9ec.jpg",
+      ],
       warrantyInfo: "1 year warranty",
     },
     {
       vendorId: vendorMap["demo-vendor-1"],
       categoryId: categoryMap["engine-parts"],
       name: "Nissan Altima Spark Plugs Set",
-      description: "High-performance iridium spark plugs for Nissan Altima. Set of 4. Improved fuel efficiency and power.",
+      description:
+        "High-performance iridium spark plugs for Nissan Altima. Set of 4. Improved fuel efficiency and power.",
       price: "28.500",
       compareAtPrice: "35.000",
       stock: 50,
       brand: "NGK",
-      images: ["/attached_assets/stock_images/car_engine_parts_aut_6393f4c6.jpg"],
+      images: [
+        "/attached_assets/stock_images/car_engine_parts_aut_6393f4c6.jpg",
+      ],
       warrantyInfo: "2 years warranty",
     },
     {
       vendorId: vendorMap["demo-vendor-1"],
       categoryId: categoryMap["filters"],
       name: "Honda Accord Air Filter",
-      description: "Premium air filter for Honda Accord 2018-2023. High flow design for better engine breathing.",
+      description:
+        "Premium air filter for Honda Accord 2018-2023. High flow design for better engine breathing.",
       price: "12.750",
       stock: 100,
       brand: "K&N",
-      images: ["/attached_assets/stock_images/car_engine_parts_aut_9487a72a.jpg"],
+      images: [
+        "/attached_assets/stock_images/car_engine_parts_aut_9487a72a.jpg",
+      ],
       warrantyInfo: "Million mile warranty",
     },
     {
       vendorId: vendorMap["demo-vendor-2"],
       categoryId: categoryMap["brakes"],
       name: "BMW 3 Series Performance Brake Pads",
-      description: "High-performance ceramic brake pads for BMW 3 Series F30. Excellent stopping power with low dust.",
+      description:
+        "High-performance ceramic brake pads for BMW 3 Series F30. Excellent stopping power with low dust.",
       price: "65.000",
       compareAtPrice: "80.000",
       stock: 30,
       brand: "Brembo",
-      images: ["/attached_assets/stock_images/car_brake_pads_autom_65e507f7.jpg"],
+      images: [
+        "/attached_assets/stock_images/car_brake_pads_autom_65e507f7.jpg",
+      ],
       warrantyInfo: "2 years warranty",
     },
     {
       vendorId: vendorMap["demo-vendor-2"],
       categoryId: categoryMap["brakes"],
       name: "Mercedes C-Class Brake Rotors",
-      description: "Drilled and slotted brake rotors for Mercedes C-Class W205. Superior heat dissipation.",
+      description:
+        "Drilled and slotted brake rotors for Mercedes C-Class W205. Superior heat dissipation.",
       price: "120.000",
       compareAtPrice: "150.000",
       stock: 15,
       brand: "StopTech",
-      images: ["/attached_assets/stock_images/car_brake_pads_autom_f0810d74.jpg"],
+      images: [
+        "/attached_assets/stock_images/car_brake_pads_autom_f0810d74.jpg",
+      ],
       warrantyInfo: "3 years warranty",
     },
     {
       vendorId: vendorMap["demo-vendor-3"],
       categoryId: categoryMap["suspension"],
       name: "Universal Shock Absorbers Pair",
-      description: "Heavy-duty shock absorbers suitable for most sedans. Front or rear application. Improved ride comfort.",
+      description:
+        "Heavy-duty shock absorbers suitable for most sedans. Front or rear application. Improved ride comfort.",
       price: "35.000",
       compareAtPrice: "42.000",
       stock: 40,
       brand: "Monroe",
-      images: ["/attached_assets/stock_images/car_suspension_parts_b61b7c1f.jpg"],
+      images: [
+        "/attached_assets/stock_images/car_suspension_parts_b61b7c1f.jpg",
+      ],
       warrantyInfo: "5 years warranty",
     },
     {
       vendorId: vendorMap["demo-vendor-3"],
       categoryId: categoryMap["suspension"],
       name: "Coilover Kit - Adjustable",
-      description: "Fully adjustable coilover suspension kit. Fits most vehicles. 32-way damping adjustment.",
+      description:
+        "Fully adjustable coilover suspension kit. Fits most vehicles. 32-way damping adjustment.",
       price: "280.000",
       compareAtPrice: "350.000",
       stock: 10,
       brand: "Tein",
-      images: ["/attached_assets/stock_images/car_suspension_parts_b82fcbb4.jpg"],
+      images: [
+        "/attached_assets/stock_images/car_suspension_parts_b82fcbb4.jpg",
+      ],
       warrantyInfo: "1 year warranty",
     },
     {
       vendorId: vendorMap["demo-vendor-1"],
       categoryId: categoryMap["cooling-system"],
       name: "Radiator for Lexus ES350",
-      description: "OEM replacement radiator for Lexus ES350 2013-2018. Aluminum core with plastic tanks.",
+      description:
+        "OEM replacement radiator for Lexus ES350 2013-2018. Aluminum core with plastic tanks.",
       price: "85.000",
       stock: 8,
       brand: "Denso",
-      images: ["/attached_assets/stock_images/car_engine_parts_aut_02ada9ec.jpg"],
+      images: [
+        "/attached_assets/stock_images/car_engine_parts_aut_02ada9ec.jpg",
+      ],
       warrantyInfo: "2 years warranty",
     },
     {
       vendorId: vendorMap["demo-vendor-2"],
       categoryId: categoryMap["electrical"],
       name: "LED Headlight Bulbs H11",
-      description: "Ultra-bright LED headlight bulbs. 6000K pure white light. Plug and play installation.",
+      description:
+        "Ultra-bright LED headlight bulbs. 6000K pure white light. Plug and play installation.",
       price: "22.000",
       compareAtPrice: "28.000",
       stock: 200,
       brand: "Philips",
-      images: ["/attached_assets/stock_images/car_engine_parts_aut_6393f4c6.jpg"],
+      images: [
+        "/attached_assets/stock_images/car_engine_parts_aut_6393f4c6.jpg",
+      ],
       warrantyInfo: "3 years warranty",
     },
     {
       vendorId: vendorMap["demo-vendor-3"],
       categoryId: categoryMap["filters"],
       name: "Oil Filter Universal Pack (3)",
-      description: "Universal oil filters compatible with most vehicles. Pack of 3. Premium filtration.",
+      description:
+        "Universal oil filters compatible with most vehicles. Pack of 3. Premium filtration.",
       price: "8.500",
       stock: 150,
       brand: "Bosch",
-      images: ["/attached_assets/stock_images/car_engine_parts_aut_9487a72a.jpg"],
+      images: [
+        "/attached_assets/stock_images/car_engine_parts_aut_9487a72a.jpg",
+      ],
       warrantyInfo: "1 year warranty",
     },
   ];
@@ -288,8 +386,18 @@ export async function seedDatabase() {
   });
 
   await OrderItem.insertMany([
-    { orderId: order1._id, productId: createdProducts[0]._id, quantity: 1, price: "45.000" },
-    { orderId: order1._id, productId: createdProducts[3]._id, quantity: 1, price: "65.000" },
+    {
+      orderId: order1._id,
+      productId: createdProducts[0]._id,
+      quantity: 1,
+      price: "45.000",
+    },
+    {
+      orderId: order1._id,
+      productId: createdProducts[3]._id,
+      quantity: 1,
+      price: "65.000",
+    },
   ]);
 
   const vendor1 = await Vendor.findById(vendorMap["demo-vendor-1"]);
@@ -320,8 +428,18 @@ export async function seedDatabase() {
   });
 
   await OrderItem.insertMany([
-    { orderId: order2._id, productId: createdProducts[5]._id, quantity: 1, price: "35.000" },
-    { orderId: order2._id, productId: createdProducts[6]._id, quantity: 1, price: "280.000" },
+    {
+      orderId: order2._id,
+      productId: createdProducts[5]._id,
+      quantity: 1,
+      price: "35.000",
+    },
+    {
+      orderId: order2._id,
+      productId: createdProducts[6]._id,
+      quantity: 1,
+      price: "280.000",
+    },
   ]);
 
   const vendor3 = await Vendor.findById(vendorMap["demo-vendor-3"]);

@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +14,16 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-motorbuy";
 import { useLanguage } from "@/lib/i18n";
 import { Link, useLocation } from "wouter";
-import { Car, Store, Shield, User, Loader2, CheckCircle, Eye, EyeOff } from "lucide-react";
+import {
+  Car,
+  Store,
+  Shield,
+  User,
+  Loader2,
+  CheckCircle,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { buildApiUrl } from "@/lib/api-config";
@@ -16,8 +31,21 @@ import { useQueryClient } from "@tanstack/react-query";
 import carLogo from "@assets/image_2026-01-09_142631252-removebg-preview_1767958016384.png";
 
 export default function AuthPage() {
-  const { user, isLoading, isAuthenticated, login, signup, logout, isLoggingIn, isSigningUp } = useAuth();
-  const { data: roleData, isLoading: isRoleLoading, refetch: refetchRole } = useRole();
+  const {
+    user,
+    isLoading,
+    isAuthenticated,
+    login,
+    signup,
+    logout,
+    isLoggingIn,
+    isSigningUp,
+  } = useAuth();
+  const {
+    data: roleData,
+    isLoading: isRoleLoading,
+    refetch: refetchRole,
+  } = useRole();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { t, isRTL, language } = useLanguage();
@@ -35,17 +63,34 @@ export default function AuthPage() {
 
   // Auto-redirect customers to home page
   useEffect(() => {
-    if (isAuthenticated && user && !isRoleLoading && roleData?.role === "customer") {
+    if (
+      isAuthenticated &&
+      user &&
+      !isRoleLoading &&
+      roleData?.role === "customer"
+    ) {
       setLocation("/");
     }
   }, [isAuthenticated, user, isRoleLoading, roleData, setLocation]);
 
-  // Debug: Log role data
+  // Debug: Log role data and button visibility
   useEffect(() => {
+    console.log("AuthPage - isAuthenticated:", isAuthenticated);
+    console.log("AuthPage - user:", user);
+    console.log("AuthPage - isRoleLoading:", isRoleLoading);
+    console.log("AuthPage - roleData:", roleData);
     if (roleData) {
-      console.log("Role data:", roleData);
+      console.log("AuthPage - roleData.role:", roleData.role);
+      console.log(
+        "AuthPage - Should show vendor button:",
+        roleData.role === "vendor"
+      );
+      console.log(
+        "AuthPage - Should show admin button:",
+        roleData.role === "admin"
+      );
     }
-  }, [roleData]);
+  }, [isAuthenticated, user, isRoleLoading, roleData]);
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [showPassword, setShowPassword] = useState(false);
@@ -64,19 +109,29 @@ export default function AuthPage() {
         // Invalidate and refetch role after login
         queryClient.invalidateQueries({ queryKey: ["/api/roles"] });
         await refetchRole();
-        toast({ title: t("auth.loginSuccess"), description: t("auth.loginSuccessDesc") });
+        toast({
+          title: t("auth.loginSuccess"),
+          description: t("auth.loginSuccessDesc"),
+        });
         // Removed auto-redirect - user can choose where to go from the welcome page
       } else {
         await signup(formData);
         // Invalidate and refetch role after signup
         queryClient.invalidateQueries({ queryKey: ["/api/roles"] });
         await refetchRole();
-        toast({ title: t("auth.signupSuccess"), description: t("auth.signupSuccessDesc") });
+        toast({
+          title: t("auth.signupSuccess"),
+          description: t("auth.signupSuccessDesc"),
+        });
         // Removed auto-redirect - user can choose where to go from the welcome page
       }
     } catch (error: any) {
       const message = error?.message || t("auth.genericError");
-      toast({ title: t("auth.error"), description: message, variant: "destructive" });
+      toast({
+        title: t("auth.error"),
+        description: message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -109,20 +164,31 @@ export default function AuthPage() {
                 </div>
                 <CardTitle className="text-2xl">{t("auth.welcome")}</CardTitle>
                 <CardDescription>
-                  {t("auth.signedInAs")} {user.firstName || user.email || t("auth.defaultUser")}
+                  {t("auth.signedInAs")}{" "}
+                  {user.firstName || user.email || t("auth.defaultUser")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center justify-center gap-3 flex-wrap">
                   <Badge variant="outline" className="text-sm py-1 px-3">
-                    <User className={`w-4 h-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />
+                    <User className={`w-4 h-4 ${isRTL ? "ml-1" : "mr-1"}`} />
                     {user.email}
                   </Badge>
                   {!isRoleLoading && roleData && (
                     <Badge className="text-sm py-1 px-3 capitalize">
-                      {roleData.role === "admin" && <Shield className={`w-4 h-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />}
-                      {roleData.role === "vendor" && <Store className={`w-4 h-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />}
-                      {roleData.role === "customer" && <Car className={`w-4 h-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />}
+                      {roleData.role === "admin" && (
+                        <Shield
+                          className={`w-4 h-4 ${isRTL ? "ml-1" : "mr-1"}`}
+                        />
+                      )}
+                      {roleData.role === "vendor" && (
+                        <Store
+                          className={`w-4 h-4 ${isRTL ? "ml-1" : "mr-1"}`}
+                        />
+                      )}
+                      {roleData.role === "customer" && (
+                        <Car className={`w-4 h-4 ${isRTL ? "ml-1" : "mr-1"}`} />
+                      )}
                       {roleData.role}
                     </Badge>
                   )}
@@ -134,29 +200,67 @@ export default function AuthPage() {
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
                       Loading...
                     </Button>
-                  ) : roleData?.role === "vendor" ? (
-                    <Link href="/vendor/dashboard">
-                      <Button className="w-full" size="lg" data-testid="button-go-dashboard">
-                        {t("auth.goToDashboard") || "Go to Dashboard"}
-                      </Button>
-                    </Link>
-                  ) : roleData?.role === "admin" ? (
-                    <Link href="/admin">
-                      <Button className="w-full" size="lg" data-testid="button-go-dashboard">
-                        {t("auth.goToDashboard") || "Go to Dashboard"}
-                      </Button>
-                    </Link>
-                  ) : null}
-                  
+                  ) : roleData &&
+                    (roleData.role === "vendor" ||
+                      roleData.role === "admin") ? (
+                    roleData.role === "vendor" ? (
+                      <Link href="/vendor/dashboard">
+                        <Button
+                          className="w-full"
+                          size="lg"
+                          data-testid="button-go-dashboard"
+                        >
+                          {t("auth.goToDashboard") || "Go to Dashboard"}
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link href="/admin">
+                        <Button
+                          className="w-full"
+                          size="lg"
+                          data-testid="button-go-dashboard"
+                        >
+                          {t("auth.goToDashboard") || "Go to Dashboard"}
+                        </Button>
+                      </Link>
+                    )
+                  ) : roleData ? (
+                    <div className="text-center p-2 text-xs text-muted-foreground">
+                      Current role: {roleData.role}
+                    </div>
+                  ) : (
+                    <Button
+                      className="w-full"
+                      size="lg"
+                      variant="outline"
+                      onClick={() => {
+                        console.log("Manual refetch triggered");
+                        refetchRole();
+                      }}
+                    >
+                      Retry Loading Role
+                    </Button>
+                  )}
+
                   <Link href="/">
-                    <Button variant={roleData?.role === "vendor" || roleData?.role === "admin" ? "outline" : "default"} className="w-full" size="lg" data-testid="button-go-home">
+                    <Button
+                      variant={
+                        roleData?.role === "vendor" ||
+                        roleData?.role === "admin"
+                          ? "outline"
+                          : "default"
+                      }
+                      className="w-full"
+                      size="lg"
+                      data-testid="button-go-home"
+                    >
                       {t("auth.goHome")}
                     </Button>
                   </Link>
-                  
-                  <Button 
-                    variant="ghost" 
-                    className="w-full" 
+
+                  <Button
+                    variant="ghost"
+                    className="w-full"
                     onClick={handleLogout}
                     data-testid="button-logout"
                   >
@@ -182,10 +286,16 @@ export default function AuthPage() {
           <div className="text-center mb-8">
             <Link href="/">
               <span className="inline-flex items-center gap-2 font-display font-bold text-2xl mb-4 cursor-pointer">
-                <img src={carLogo} alt="MotorBuy" className="w-12 h-12 object-contain" />
+                <img
+                  src={carLogo}
+                  alt="MotorBuy"
+                  className="w-12 h-12 object-contain"
+                />
                 {language === "ar" ? (
                   <span>
-                    <span className="text-[hsl(var(--logo-accent))]">موتور</span>
+                    <span className="text-[hsl(var(--logo-accent))]">
+                      موتور
+                    </span>
                     <span className="text-primary">باي</span>
                   </span>
                 ) : (
@@ -197,16 +307,20 @@ export default function AuthPage() {
               </span>
             </Link>
             <p className="text-muted-foreground mt-2">
-              {mode === "login" ? t("auth.welcomeSubtitle") : t("auth.createSubtitle")}
+              {mode === "login"
+                ? t("auth.welcomeSubtitle")
+                : t("auth.createSubtitle")}
             </p>
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle>{mode === "login" ? t("auth.login") : t("auth.createAccount")}</CardTitle>
+              <CardTitle>
+                {mode === "login" ? t("auth.login") : t("auth.createAccount")}
+              </CardTitle>
               <CardDescription>
-                {mode === "login" 
-                  ? t("auth.enterEmail") 
+                {mode === "login"
+                  ? t("auth.enterEmail")
                   : t("auth.createSubtitle")}
               </CardDescription>
             </CardHeader>
@@ -220,7 +334,12 @@ export default function AuthPage() {
                         id="firstName"
                         placeholder={isRTL ? "محمد" : "John"}
                         value={formData.firstName}
-                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            firstName: e.target.value,
+                          })
+                        }
                         required
                         data-testid="input-first-name"
                       />
@@ -231,7 +350,9 @@ export default function AuthPage() {
                         id="lastName"
                         placeholder={isRTL ? "العلي" : "Doe"}
                         value={formData.lastName}
-                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, lastName: e.target.value })
+                        }
                         required
                         data-testid="input-last-name"
                       />
@@ -246,7 +367,9 @@ export default function AuthPage() {
                     type="email"
                     placeholder="you@example.com"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
                     required
                     data-testid="input-email"
                   />
@@ -258,9 +381,13 @@ export default function AuthPage() {
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
-                      placeholder={mode === "signup" ? t("auth.passwordHint") : ""}
+                      placeholder={
+                        mode === "signup" ? t("auth.passwordHint") : ""
+                      }
                       value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, password: e.target.value })
+                      }
                       required
                       minLength={mode === "signup" ? 6 : undefined}
                       data-testid="input-password"
@@ -269,23 +396,35 @@ export default function AuthPage() {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className={`absolute top-0 h-full px-3 ${isRTL ? 'left-0' : 'right-0'}`}
+                      className={`absolute top-0 h-full px-3 ${
+                        isRTL ? "left-0" : "right-0"
+                      }`}
                       onClick={() => setShowPassword(!showPassword)}
                       data-testid="button-toggle-password"
                     >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full" 
+                <Button
+                  type="submit"
+                  className="w-full"
                   size="lg"
                   disabled={isLoggingIn || isSigningUp}
                   data-testid="button-submit"
                 >
-                  {(isLoggingIn || isSigningUp) && <Loader2 className={`w-4 h-4 animate-spin ${isRTL ? 'ml-2' : 'mr-2'}`} />}
+                  {(isLoggingIn || isSigningUp) && (
+                    <Loader2
+                      className={`w-4 h-4 animate-spin ${
+                        isRTL ? "ml-2" : "mr-2"
+                      }`}
+                    />
+                  )}
                   {mode === "login" ? t("auth.login") : t("auth.createAccount")}
                 </Button>
               </form>
@@ -294,8 +433,8 @@ export default function AuthPage() {
                 {mode === "login" ? (
                   <p>
                     {t("auth.noAccount")}{" "}
-                    <button 
-                      onClick={() => setMode("signup")} 
+                    <button
+                      onClick={() => setMode("signup")}
                       className="text-primary font-medium hover:underline"
                       data-testid="button-switch-to-signup"
                     >
@@ -305,8 +444,8 @@ export default function AuthPage() {
                 ) : (
                   <p>
                     {t("auth.haveAccount")}{" "}
-                    <button 
-                      onClick={() => setMode("login")} 
+                    <button
+                      onClick={() => setMode("login")}
                       className="text-primary font-medium hover:underline"
                       data-testid="button-switch-to-login"
                     >
@@ -330,12 +469,20 @@ export default function AuthPage() {
               </div>
             </div>
             <Link href="/products">
-              <Button variant="outline" className="w-full" data-testid="button-guest-continue">
+              <Button
+                variant="outline"
+                className="w-full"
+                data-testid="button-guest-continue"
+              >
                 {t("auth.continueAsGuest")}
               </Button>
             </Link>
             <Link href="/">
-              <Button variant="ghost" className="w-full" data-testid="button-back-home">
+              <Button
+                variant="ghost"
+                className="w-full"
+                data-testid="button-back-home"
+              >
                 {t("auth.backHome")}
               </Button>
             </Link>
