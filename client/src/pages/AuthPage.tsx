@@ -125,7 +125,7 @@ export default function AuthPage() {
                   {isRoleLoading ? (
                     <Button className="w-full" size="lg" disabled>
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      Loading role...
+                      Loading...
                     </Button>
                   ) : roleData?.role === "vendor" ? (
                     <Link href="/vendor/dashboard">
@@ -139,20 +139,7 @@ export default function AuthPage() {
                         {t("auth.goToDashboard") || "Go to Dashboard"}
                       </Button>
                     </Link>
-                  ) : roleData ? (
-                    <div className="text-xs text-muted-foreground text-center p-2">
-                      Current role: {roleData.role || "unknown"}
-                    </div>
-                  ) : (
-                    <Button 
-                      className="w-full" 
-                      size="lg" 
-                      variant="outline"
-                      onClick={() => refetchRole()}
-                    >
-                      Refresh Role
-                    </Button>
-                  )}
+                  ) : null}
                   
                   <Link href="/">
                     <Button variant={roleData?.role === "vendor" || roleData?.role === "admin" ? "outline" : "default"} className="w-full" size="lg" data-testid="button-go-home">
