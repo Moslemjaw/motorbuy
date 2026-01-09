@@ -30,30 +30,17 @@ export default function AuthPage() {
     lastName: "",
   });
 
-  const getRedirectPath = async () => {
-    try {
-      const res = await fetch(buildApiUrl("/api/role"), { credentials: "include" });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.role === "vendor") return "/vendor/dashboard";
-        if (data.role === "admin") return "/admin";
-      }
-    } catch {}
-    return "/";
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (mode === "login") {
         await login({ email: formData.email, password: formData.password });
         toast({ title: t("auth.loginSuccess"), description: t("auth.loginSuccessDesc") });
-        const redirectPath = await getRedirectPath();
-        setLocation(redirectPath);
+        // Removed auto-redirect - user can choose where to go from the welcome page
       } else {
         await signup(formData);
         toast({ title: t("auth.signupSuccess"), description: t("auth.signupSuccessDesc") });
-        setLocation("/");
+        // Removed auto-redirect - user can choose where to go from the welcome page
       }
     } catch (error: any) {
       const message = error?.message || t("auth.genericError");
