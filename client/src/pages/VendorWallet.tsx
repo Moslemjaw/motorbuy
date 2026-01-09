@@ -71,9 +71,9 @@ export default function VendorWallet() {
     );
   }
 
-  const balance = walletData?.balance || myVendor?.walletBalance || "0";
-  const commissionRate = walletData?.commissionRate || myVendor?.commissionRate || "0.05";
-  const commissionPercent = (parseFloat(commissionRate) * 100).toFixed(0);
+  const balance = walletData?.balance || myVendor?.pendingPayoutKwd || "0";
+  const commissionValue = walletData?.commissionRate || myVendor?.commissionValue || "10";
+  const commissionPercent = myVendor?.commissionType === "percentage" ? commissionValue : "fixed";
   const canRequestPayment = parseFloat(balance) > 0;
 
   const getStatusIcon = (status: string) => {

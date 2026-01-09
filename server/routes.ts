@@ -368,6 +368,106 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/vendor/profile", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== 'vendor') return res.status(403).json({ message: "Not a vendor" });
+      
+      const vendor = await storage.getVendorByUserId(req.session.userId);
+      if (!vendor) return res.json(null);
+      res.json(vendor);
+    } catch (e) {
+      console.error("Error getting vendor profile:", e);
+      res.status(500).json({ message: "Failed to get vendor profile" });
+    }
+  });
+
+  app.post("/api/vendor/profile", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== 'vendor') return res.status(403).json({ message: "Not a vendor" });
+      
+      const existingVendor = await storage.getVendorByUserId(req.session.userId);
+      if (existingVendor) {
+        return res.status(400).json({ message: "Vendor profile already exists" });
+      }
+      
+      const { storeName, description, logoUrl, bio } = req.body;
+      if (!storeName) return res.status(400).json({ message: "Store name is required" });
+      
+      const vendor = await storage.createVendor({
+        userId: req.session.userId,
+        storeName,
+        description: description || "",
+        logoUrl: logoUrl || `https://placehold.co/150x150?text=${encodeURIComponent(storeName.charAt(0))}`,
+        bio: bio || "",
+        isApproved: false,
+        commissionType: "percentage",
+        commissionValue: "10",
+        grossSalesKwd: "0",
+        pendingPayoutKwd: "0",
+        lifetimePayoutsKwd: "0",
+      });
+      
+      res.status(201).json(vendor);
+    } catch (e) {
+      console.error("Error creating vendor profile:", e);
+      res.status(500).json({ message: "Failed to create vendor profile" });
+    }
+  });
+
+  app.patch("/api/vendor/profile", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== 'vendor') return res.status(403).json({ message: "Not a vendor" });
+      
+      const vendor = await storage.getVendorByUserId(req.session.userId);
+      if (!vendor) return res.status(404).json({ message: "Vendor profile not found" });
+      
+      const { storeName, description, logoUrl, coverImageUrl, bio } = req.body;
+      const updates: any = {};
+      if (storeName !== undefined) updates.storeName = storeName;
+      if (description !== undefined) updates.description = description;
+      if (logoUrl !== undefined) updates.logoUrl = logoUrl;
+      if (coverImageUrl !== undefined) updates.coverImageUrl = coverImageUrl;
+      if (bio !== undefined) updates.bio = bio;
+      
+      const updated = await storage.updateVendor(vendor.id, updates);
+      res.json(updated);
+    } catch (e) {
+      console.error("Error updating vendor profile:", e);
+      res.status(500).json({ message: "Failed to update vendor profile" });
+    }
+  });
+
+  app.get("/api/vendor/analytics", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== 'vendor') return res.status(403).json({ message: "Not a vendor" });
+      
+      const vendor = await storage.getVendorByUserId(req.session.userId);
+      if (!vendor) return res.json({ totalProducts: 0, totalOrders: 0, totalRevenue: "0", pendingOrders: 0 });
+      
+      const products = await storage.getProducts({ vendorId: vendor.id });
+      const orders = await storage.getVendorOrders(vendor.id);
+      
+      const totalRevenue = orders.reduce((sum: number, o: any) => sum + parseFloat(o.total || "0"), 0);
+      const pendingOrders = orders.filter((o: any) => o.status === 'pending' || o.status === 'processing').length;
+      
+      res.json({
+        totalProducts: products.length,
+        totalOrders: orders.length,
+        totalRevenue: totalRevenue.toFixed(3),
+        pendingOrders,
+        pendingPayoutKwd: vendor.pendingPayoutKwd || "0",
+        grossSalesKwd: vendor.grossSalesKwd || "0",
+      });
+    } catch (e) {
+      console.error("Error getting vendor analytics:", e);
+      res.status(500).json({ message: "Failed to get vendor analytics" });
+    }
+  });
+
   app.get(api.products.list.path, async (req, res) => {
     const products = await storage.getProducts(req.query as any);
     res.json(products);

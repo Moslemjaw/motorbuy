@@ -1,14 +1,17 @@
 import { Navbar } from "@/components/Navbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
-import { useRole, useVendors, useProducts, useCategories } from "@/hooks/use-motorbuy";
-import { Package, ShoppingCart, Loader2, ArrowLeft, Plus, Image, Trash2, BookOpen } from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { useRole, useProducts, useCategories } from "@/hooks/use-motorbuy";
+import { 
+  Package, ShoppingCart, Loader2, Plus, Image, Trash2, BookOpen, 
+  Store, TrendingUp, DollarSign, Clock, LayoutDashboard
+} from "lucide-react";
+import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,29 +20,46 @@ import { formatKWD } from "@/lib/currency";
 import { useUpload } from "@/hooks/use-upload";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Order, VendorStory } from "@shared/schema";
+import type { Order, VendorStory, Vendor } from "@shared/schema";
+
+interface VendorAnalytics {
+  totalProducts: number;
+  totalOrders: number;
+  totalRevenue: string;
+  pendingOrders: number;
+  pendingPayoutKwd: string;
+  grossSalesKwd: string;
+}
 
 export default function VendorDashboard() {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { data: roleData, isLoading: isRoleLoading } = useRole();
-  const { data: vendors } = useVendors();
   const { data: products } = useProducts();
   const { data: categories } = useCategories();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const myVendor = vendors?.find(v => v.userId === user?.id);
-  const myProducts = products?.filter(p => p.vendorId === myVendor?.id) || [];
+  const { data: vendorProfile, isLoading: isProfileLoading } = useQuery<Vendor | null>({
+    queryKey: ["/api/vendor/profile"],
+    enabled: !!user && roleData?.role === "vendor",
+  });
+
+  const { data: analytics } = useQuery<VendorAnalytics>({
+    queryKey: ["/api/vendor/analytics"],
+    enabled: !!vendorProfile,
+  });
+
+  const myProducts = products?.filter(p => p.vendorId === vendorProfile?.id) || [];
 
   const { data: vendorOrders, isLoading: isOrdersLoading } = useQuery<Order[]>({
-    queryKey: ["/api/vendor/orders", myVendor?.id],
-    enabled: !!myVendor?.id,
+    queryKey: ["/api/vendor/orders"],
+    enabled: !!vendorProfile,
   });
 
   const { data: stories, isLoading: isStoriesLoading } = useQuery<VendorStory[]>({
     queryKey: ["/api/stories"],
   });
-  const myStories = stories?.filter(s => s.vendorId === myVendor?.id) || [];
+  const myStories = stories?.filter(s => s.vendorId === vendorProfile?.id) || [];
 
   const [productName, setProductName] = useState("");
   const [productDesc, setProductDesc] = useState("");
@@ -53,6 +73,9 @@ export default function VendorDashboard() {
 
   const [storyContent, setStoryContent] = useState("");
   const [storyImage, setStoryImage] = useState<string | null>(null);
+
+  const [storeName, setStoreName] = useState("");
+  const [storeDescription, setStoreDescription] = useState("");
 
   const productImageRef = useRef<HTMLInputElement>(null);
   const storyImageRef = useRef<HTMLInputElement>(null);
@@ -73,10 +96,21 @@ export default function VendorDashboard() {
     onError: (error) => toast({ title: "Upload Failed", description: error.message, variant: "destructive" }),
   });
 
+  const createProfileMutation = useMutation({
+    mutationFn: async (data: any) => apiRequest("POST", "/api/vendor/profile", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vendor/profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vendors"] });
+      toast({ title: "Shop Created", description: "Your vendor shop has been set up!" });
+    },
+    onError: () => toast({ title: "Error", description: "Failed to create shop.", variant: "destructive" }),
+  });
+
   const addProductMutation = useMutation({
     mutationFn: async (data: any) => apiRequest("POST", "/api/products", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vendor/analytics"] });
       toast({ title: "Product Added" });
       setProductName(""); setProductDesc(""); setProductPrice(""); setProductComparePrice("");
       setProductStock(""); setProductBrand(""); setProductCategory(""); setProductImages([]); setProductWarranty("");
@@ -103,7 +137,13 @@ export default function VendorDashboard() {
     onError: () => toast({ title: "Error", variant: "destructive" }),
   });
 
-  if (isAuthLoading || isRoleLoading) {
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated) {
+      setLocation("/");
+    }
+  }, [isAuthLoading, isAuthenticated, setLocation]);
+
+  if (isAuthLoading || isRoleLoading || isProfileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="animate-spin w-8 h-8" />
@@ -111,19 +151,43 @@ export default function VendorDashboard() {
     );
   }
 
-  if (!isAuthenticated || !user || roleData?.role !== "vendor") {
-    setLocation("/");
+  if (!isAuthenticated || !user) {
     return null;
   }
 
+  if (roleData?.role !== "vendor") {
+    return (
+      <div className="min-h-screen bg-background font-body">
+        <Navbar />
+        <div className="container mx-auto px-4 py-16 text-center">
+          <Store className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+          <h1 className="text-2xl font-bold mb-2">Vendor Access Required</h1>
+          <p className="text-muted-foreground mb-6">You need a vendor account to access the dashboard.</p>
+          <Button onClick={() => setLocation("/")} data-testid="button-go-home">Go Home</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const handleCreateProfile = () => {
+    if (!storeName.trim()) {
+      toast({ title: "Store Name Required", variant: "destructive" });
+      return;
+    }
+    createProfileMutation.mutate({
+      storeName: storeName.trim(),
+      description: storeDescription.trim(),
+    });
+  };
+
   const handleAddProduct = () => {
-    if (!productName || !productDesc || !productPrice || !productCategory || !myVendor) {
+    if (!productName || !productDesc || !productPrice || !productCategory || !vendorProfile) {
       toast({ title: "Missing Fields", description: "Please fill all required fields.", variant: "destructive" });
       return;
     }
     addProductMutation.mutate({
-      vendorId: myVendor.id,
-      categoryId: parseInt(productCategory),
+      vendorId: vendorProfile.id,
+      categoryId: productCategory,
       name: productName,
       description: productDesc,
       price: productPrice,
@@ -141,11 +205,81 @@ export default function VendorDashboard() {
       return;
     }
     addStoryMutation.mutate({
-      vendorId: myVendor?.id,
+      vendorId: vendorProfile?.id,
       content: storyContent,
       imageUrl: storyImage,
     });
   };
+
+  if (!vendorProfile) {
+    return (
+      <div className="min-h-screen bg-background font-body pb-20">
+        <Navbar />
+        
+        <div className="bg-primary/10 py-8 md:py-12 border-b border-primary/20">
+          <div className="container mx-auto px-4">
+            <h1 className="text-2xl md:text-3xl font-display font-bold mb-2">Set Up Your Shop</h1>
+            <p className="text-muted-foreground">Create your vendor profile to start selling on MotorBuy.</p>
+          </div>
+        </div>
+
+        <div className="container mx-auto px-4 py-8 max-w-lg">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Store className="w-5 h-5" />
+                Create Your Shop
+              </CardTitle>
+              <CardDescription>
+                Fill in your store details to get started
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="storeName">Store Name *</Label>
+                <Input 
+                  id="storeName"
+                  value={storeName} 
+                  onChange={(e) => setStoreName(e.target.value)} 
+                  placeholder="e.g., AutoParts Kuwait" 
+                  data-testid="input-store-name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="storeDesc">Store Description</Label>
+                <Textarea 
+                  id="storeDesc"
+                  value={storeDescription} 
+                  onChange={(e) => setStoreDescription(e.target.value)} 
+                  placeholder="Tell customers about your shop..."
+                  className="min-h-[100px]"
+                  data-testid="input-store-description"
+                />
+              </div>
+              <Button 
+                className="w-full" 
+                onClick={handleCreateProfile} 
+                disabled={createProfileMutation.isPending}
+                data-testid="button-create-shop"
+              >
+                {createProfileMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Store className="w-4 h-4 mr-2" />
+                    Create My Shop
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background font-body pb-20">
@@ -153,17 +287,76 @@ export default function VendorDashboard() {
       
       <div className="bg-primary/10 py-6 md:py-12 mb-6 md:mb-8 border-b border-primary/20">
         <div className="container mx-auto px-4">
-          <Link href="/vendor/account">
-            <Button variant="ghost" size="sm" className="mb-3 md:mb-4" data-testid="button-back">
-              <ArrowLeft className="w-4 h-4 mr-2" /> Back
-            </Button>
-          </Link>
-          <h1 className="text-2xl md:text-3xl font-display font-bold mb-1 md:mb-2">Vendor Dashboard</h1>
-          <p className="text-sm md:text-base text-muted-foreground">Manage orders, products, and stories.</p>
+          <div className="flex items-center gap-3 mb-2">
+            <LayoutDashboard className="w-6 h-6 md:w-8 md:h-8" />
+            <h1 className="text-2xl md:text-3xl font-display font-bold">Vendor Dashboard</h1>
+          </div>
+          <p className="text-sm md:text-base text-muted-foreground">{vendorProfile.storeName}</p>
+          {!vendorProfile.isApproved && (
+            <Badge variant="secondary" className="mt-2">Pending Approval</Badge>
+          )}
         </div>
       </div>
 
       <div className="container mx-auto px-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                  <Package className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Products</p>
+                  <p className="font-bold text-lg" data-testid="text-vendor-products">{analytics?.totalProducts || myProducts.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                  <ShoppingCart className="w-5 h-5 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Orders</p>
+                  <p className="font-bold text-lg" data-testid="text-vendor-orders">{analytics?.totalOrders || 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                  <TrendingUp className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Revenue</p>
+                  <p className="font-bold text-lg" data-testid="text-vendor-revenue">{analytics?.grossSalesKwd || "0"} KWD</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                  <DollarSign className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Pending Payout</p>
+                  <p className="font-bold text-lg" data-testid="text-vendor-payout">{analytics?.pendingPayoutKwd || "0"} KWD</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         <Tabs defaultValue="orders" className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-6 h-auto">
             <TabsTrigger value="orders" className="py-3 text-xs md:text-sm" data-testid="tab-orders">Orders</TabsTrigger>
@@ -185,6 +378,7 @@ export default function VendorDashboard() {
                   <div className="text-center py-8 text-muted-foreground">
                     <ShoppingCart className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p>No orders yet</p>
+                    <p className="text-sm mt-1">Orders will appear here when customers purchase your products.</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -289,6 +483,7 @@ export default function VendorDashboard() {
                     <div className="text-center py-8 text-muted-foreground">
                       <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p>No products yet</p>
+                      <p className="text-sm mt-1">Add your first product using the form.</p>
                     </div>
                   ) : (
                     <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -358,6 +553,7 @@ export default function VendorDashboard() {
                     <div className="text-center py-8 text-muted-foreground">
                       <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p>No stories yet</p>
+                      <p className="text-sm mt-1">Share updates with your customers.</p>
                     </div>
                   ) : (
                     <div className="space-y-3 max-h-96 overflow-y-auto">
