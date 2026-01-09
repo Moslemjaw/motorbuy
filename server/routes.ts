@@ -6,6 +6,16 @@ import { registerObjectStorageRoutes } from "./replit_integrations/object_storag
 import { api } from "@shared/routes";
 import { User, PaymentRequest } from "./mongodb";
 
+// Helper function to normalize IDs for comparison
+function normalizeId(id: any): string {
+  if (!id) return "";
+  if (typeof id === "string") return id.trim();
+  if (typeof id === "object" && id.toString)
+    return String(id.toString()).trim();
+  if (typeof id === "object" && id.id) return String(id.id).trim();
+  return String(id).trim();
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -1028,24 +1038,28 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Vendor profile not found" });
       }
 
-      // Compare vendorIds as strings to handle ObjectId vs string formats
-      // Normalize both IDs by converting to string and removing any whitespace
-      const storyVendorId = String(story.vendorId || "").trim();
-      const vendorId = String(vendor.id || "").trim();
+      // Compare vendorIds using normalized comparison
+      const storyVendorId = normalizeId(story.vendorId || story.vendor?.id);
+      const vendorId = normalizeId(vendor.id);
 
       console.log("Story update - Comparing IDs:", {
         storyVendorId,
         vendorId,
         storyId: story.id,
-        storyVendorIdType: typeof story.vendorId,
-        vendorIdType: typeof vendor.id,
+        storyVendorIdRaw: story.vendorId,
+        storyVendorRaw: story.vendor,
+        vendorIdRaw: vendor.id,
         match: storyVendorId === vendorId,
       });
 
       if (!storyVendorId || !vendorId || storyVendorId !== vendorId) {
-        return res
-          .status(403)
-          .json({ message: "You can only update your own stories" });
+        return res.status(403).json({
+          message: "You can only update your own stories",
+          debug: {
+            storyVendorId,
+            vendorId,
+          },
+        });
       }
 
       const updates = req.body;
@@ -1087,24 +1101,30 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Vendor profile not found" });
       }
 
-      // Compare vendorIds as strings to handle ObjectId vs string formats
-      // Normalize both IDs by converting to string and removing any whitespace
-      const storyVendorId = String(storyToDelete.vendorId || "").trim();
-      const vendorId = String(vendor.id || "").trim();
+      // Compare vendorIds using normalized comparison
+      const storyVendorId = normalizeId(
+        storyToDelete.vendorId || storyToDelete.vendor?.id
+      );
+      const vendorId = normalizeId(vendor.id);
 
       console.log("Story delete - Comparing IDs:", {
         storyVendorId,
         vendorId,
         storyId: storyToDelete.id,
-        storyVendorIdType: typeof storyToDelete.vendorId,
-        vendorIdType: typeof vendor.id,
+        storyVendorIdRaw: storyToDelete.vendorId,
+        storyVendorRaw: storyToDelete.vendor,
+        vendorIdRaw: vendor.id,
         match: storyVendorId === vendorId,
       });
 
       if (!storyVendorId || !vendorId || storyVendorId !== vendorId) {
-        return res
-          .status(403)
-          .json({ message: "You can only delete your own stories" });
+        return res.status(403).json({
+          message: "You can only delete your own stories",
+          debug: {
+            storyVendorId,
+            vendorId,
+          },
+        });
       }
 
       await storage.deleteStory(req.params.id);
