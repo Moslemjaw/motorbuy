@@ -1,8 +1,13 @@
 import bcrypt from "bcryptjs";
-import { User, Role } from "./mongodb";
+import { User } from "./mongodb";
 import { Request, Response, NextFunction, Express } from "express";
 
-export async function createUser(email: string, password: string, firstName: string, lastName: string) {
+export async function createUser(
+  email: string,
+  password: string,
+  firstName: string,
+  lastName: string
+) {
   const existingUser = await User.findOne({ email: email.toLowerCase() });
   if (existingUser) {
     throw new Error("User with this email already exists");
@@ -14,11 +19,10 @@ export async function createUser(email: string, password: string, firstName: str
     passwordHash,
     firstName,
     lastName,
+    role: "customer", // Default role
     createdAt: new Date(),
     updatedAt: new Date(),
   });
-
-  await Role.create({ userId: user._id.toString(), role: "customer" });
 
   return {
     id: user._id.toString(),
@@ -56,7 +60,7 @@ export async function validateUser(email: string, password: string) {
 export async function getUserById(id: string) {
   const user = await User.findById(id);
   if (!user) return null;
-  
+
   return {
     id: user._id.toString(),
     email: user.email,
@@ -76,7 +80,11 @@ declare module "express-session" {
   }
 }
 
-export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
+export function isAuthenticated(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   if (req.session && req.session.userId) {
     return next();
   }
@@ -87,23 +95,27 @@ export function registerAuthRoutes(app: Express) {
   app.post("/api/auth/signup", async (req, res) => {
     try {
       const { email, password, firstName, lastName } = req.body;
-      
+
       if (!email || !password || !firstName || !lastName) {
         return res.status(400).json({ message: "All fields are required" });
       }
 
       if (password.length < 6) {
-        return res.status(400).json({ message: "Password must be at least 6 characters" });
+        return res
+          .status(400)
+          .json({ message: "Password must be at least 6 characters" });
       }
 
       const user = await createUser(email, password, firstName, lastName);
       req.session.userId = user.id;
-      
+
       res.status(201).json(user);
     } catch (error: any) {
       console.error("Signup error:", error);
       if (error.message.includes("already exists")) {
-        return res.status(400).json({ message: "An account with this email already exists" });
+        return res
+          .status(400)
+          .json({ message: "An account with this email already exists" });
       }
       res.status(500).json({ message: "Failed to create account" });
     }
@@ -112,9 +124,11 @@ export function registerAuthRoutes(app: Express) {
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { email, password } = req.body;
-      
+
       if (!email || !password) {
-        return res.status(400).json({ message: "Email and password are required" });
+        return res
+          .status(400)
+          .json({ message: "Email and password are required" });
       }
 
       const user = await validateUser(email, password);

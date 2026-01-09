@@ -1,5 +1,5 @@
 import { 
-  User, Role, Vendor, Category, Product, Order, OrderItem, VendorStory, CartItem, PaymentRequest 
+  User, Vendor, Category, Product, Order, OrderItem, VendorStory, CartItem, PaymentRequest 
 } from "./mongodb";
 import mongoose from "mongoose";
 
@@ -63,14 +63,18 @@ function toPlainObject(doc: any): any {
 
 export class MongoStorage implements IStorage {
   async getUserRole(userId: string): Promise<string> {
-    const role = await Role.findOne({ userId });
-    return role?.role || "customer";
+    const user = await User.findById(userId);
+    return user?.role || "customer";
   }
 
   async setUserRole(userId: string, role: "customer" | "vendor" | "admin"): Promise<any> {
-    await Role.deleteMany({ userId });
-    const newRole = await Role.create({ userId, role });
-    return toPlainObject(newRole);
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { role, updatedAt: new Date() },
+      { new: true }
+    );
+    if (!user) throw new Error("User not found");
+    return toPlainObject(user);
   }
 
   async getVendors(): Promise<any[]> {
@@ -122,19 +126,15 @@ export class MongoStorage implements IStorage {
 
   async getAllUsers(): Promise<any[]> {
     const users = await User.find({});
-    const usersWithRoles = await Promise.all(users.map(async (user: any) => {
-      const role = await Role.findOne({ userId: user._id.toString() });
-      return {
-        id: user._id.toString(),
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        profileImageUrl: user.profileImageUrl,
-        createdAt: user.createdAt,
-        role: role?.role || "customer"
-      };
+    return users.map((user: any) => ({
+      id: user._id.toString(),
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      profileImageUrl: user.profileImageUrl,
+      createdAt: user.createdAt,
+      role: user.role || "customer"
     }));
-    return usersWithRoles;
   }
 
   async getAnalytics(): Promise<any> {

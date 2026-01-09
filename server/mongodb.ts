@@ -25,13 +25,9 @@ const userSchema = new mongoose.Schema({
   phone: String,
   address: String,
   city: String,
+  role: { type: String, enum: ["customer", "vendor", "admin"], default: "customer" },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
-});
-
-const roleSchema = new mongoose.Schema({
-  userId: { type: String, required: true },
-  role: { type: String, enum: ["customer", "vendor", "admin"], default: "customer" },
 });
 
 const vendorSchema = new mongoose.Schema({
@@ -118,7 +114,6 @@ const sessionSchema = new mongoose.Schema({
 });
 
 export const User = mongoose.models.User || mongoose.model("User", userSchema);
-export const Role = mongoose.models.Role || mongoose.model("Role", roleSchema);
 export const Vendor = mongoose.models.Vendor || mongoose.model("Vendor", vendorSchema);
 export const Category = mongoose.models.Category || mongoose.model("Category", categorySchema);
 export const Product = mongoose.models.Product || mongoose.model("Product", productSchema);

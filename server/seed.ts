@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-import { User, Role, Vendor, Category, Product, Order, OrderItem, PaymentRequest } from "./mongodb";
+import { User, Vendor, Category, Product, Order, OrderItem, PaymentRequest } from "./mongodb";
 
 const demoVendors = [
   {
@@ -69,14 +69,16 @@ export async function seedDatabase() {
       passwordHash,
       firstName: "Vendor",
       lastName: "Test",
+      role: "vendor",
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    console.log("✅ Created vendor@test.com user");
+    console.log("✅ Created vendor@test.com user with vendor role");
   } else {
     vendorUser.passwordHash = passwordHash;
+    vendorUser.role = "vendor";
     await vendorUser.save();
-    console.log("✅ Updated vendor@test.com user");
+    console.log("✅ Updated vendor@test.com user with vendor role");
   }
 
   // Create or update admin@test.com
@@ -87,21 +89,17 @@ export async function seedDatabase() {
       passwordHash,
       firstName: "Admin",
       lastName: "Test",
+      role: "admin",
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    console.log("✅ Created admin@test.com user");
+    console.log("✅ Created admin@test.com user with admin role");
   } else {
     adminUser.passwordHash = passwordHash;
+    adminUser.role = "admin";
     await adminUser.save();
-    console.log("✅ Updated admin@test.com user");
+    console.log("✅ Updated admin@test.com user with admin role");
   }
-
-  // Set roles for test users
-  await Role.deleteMany({ userId: { $in: [vendorUser._id.toString(), adminUser._id.toString()] } });
-  await Role.create({ userId: vendorUser._id.toString(), role: "vendor" });
-  await Role.create({ userId: adminUser._id.toString(), role: "admin" });
-  console.log("✅ Set roles for test users (vendor@test.com = vendor, admin@test.com = admin)");
 
   await Category.deleteMany({});
   const createdCategories = await Category.insertMany(categories);
@@ -117,14 +115,12 @@ export async function seedDatabase() {
   }
   console.log(`Created ${demoUsers.length} demo users`);
 
-  await Role.deleteMany({ userId: { $regex: /^demo-/ } });
-  await Role.insertMany([
-    { userId: "demo-vendor-1", role: "vendor" },
-    { userId: "demo-vendor-2", role: "vendor" },
-    { userId: "demo-vendor-3", role: "vendor" },
-    { userId: "demo-customer-1", role: "customer" },
-  ]);
-  console.log("Created demo roles");
+  // Set roles directly on demo users (no separate Role collection)
+  await User.updateOne({ id: "demo-vendor-1" }, { $set: { role: "vendor" } });
+  await User.updateOne({ id: "demo-vendor-2" }, { $set: { role: "vendor" } });
+  await User.updateOne({ id: "demo-vendor-3" }, { $set: { role: "vendor" } });
+  await User.updateOne({ id: "demo-customer-1" }, { $set: { role: "customer" } });
+  console.log("Set roles on demo users");
 
   await Vendor.deleteMany({ userId: { $regex: /^demo-/ } });
   const createdVendors = await Vendor.insertMany(demoVendors);
