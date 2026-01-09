@@ -27,13 +27,16 @@ export default function Cart() {
     return null;
   }
 
-  const total = cartItems?.reduce((sum, item) => {
-    if (!item.product) return sum;
+  // Filter out items without products (deleted products)
+  const validCartItems = cartItems?.filter(item => item.product && item.product.id) || [];
+  
+  const total = validCartItems.reduce((sum, item) => {
+    if (!item.product || !item.product.price) return sum;
     return sum + (Number(item.product.price) * item.quantity);
-  }, 0) || 0;
+  }, 0);
 
   const handleCheckout = () => {
-    if (!cartItems || cartItems.length === 0) {
+    if (validCartItems.length === 0) {
       toast({ 
         title: t("cart.empty"), 
         description: t("cart.emptyDesc"), 
@@ -141,13 +144,13 @@ export default function Cart() {
         >
           <h1 className="text-3xl lg:text-4xl font-display font-bold mb-2">{t("cart.title")}</h1>
           <p className="text-muted-foreground">
-            {cartItems && cartItems.length > 0
-              ? `${cartItems.length} ${cartItems.length > 1 ? t("cart.items") : t("cart.item")}` 
+            {validCartItems.length > 0
+              ? `${validCartItems.length} ${validCartItems.length > 1 ? t("cart.items") : t("cart.item")}` 
               : t("cart.empty")}
           </p>
         </motion.div>
 
-        {!cartItems || cartItems.length === 0 ? (
+        {validCartItems.length === 0 ? (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -169,7 +172,7 @@ export default function Cart() {
         ) : (
           <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
             <div className="lg:col-span-2 space-y-3 md:space-y-4">
-              {cartItems.map((item, index) => {
+              {validCartItems.map((item, index) => {
                 if (!item.product) return null;
                 
                 return (
@@ -287,7 +290,7 @@ export default function Cart() {
                 <Button 
                   className="w-full h-14 text-lg rounded-xl shadow-lg shadow-primary/20" 
                   onClick={handleCheckout} 
-                  disabled={isOrdering || cartItems.length === 0}
+                  disabled={isOrdering || validCartItems.length === 0}
                   data-testid="button-checkout"
                 >
                   {isOrdering ? (

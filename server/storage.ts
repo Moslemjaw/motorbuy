@@ -262,14 +262,27 @@ export class MongoStorage implements IStorage {
 
   async getCartItems(userId: string): Promise<any[]> {
     const items = await CartItem.find({ userId }).populate('productId');
-    return items.map(item => {
-      const obj = toPlainObject(item);
-      if (obj.productId && typeof obj.productId === 'object') {
-        obj.product = toPlainObject(obj.productId);
-        delete obj.productId;
-      }
-      return obj;
-    });
+    return items
+      .map(item => {
+        const obj = toPlainObject(item);
+        // Check if productId was populated (it's an object) or if it's still an ID
+        if (obj.productId) {
+          if (typeof obj.productId === 'object' && obj.productId !== null) {
+            // Product was populated successfully
+            obj.product = toPlainObject(obj.productId);
+            delete obj.productId;
+          } else if (typeof obj.productId === 'string') {
+            // Product wasn't populated, try to fetch it
+            // This shouldn't happen with proper populate, but handle it
+            return null;
+          }
+        } else {
+          // Product doesn't exist (was deleted)
+          return null;
+        }
+        return obj;
+      })
+      .filter(item => item !== null && item.product !== null && item.product !== undefined);
   }
 
   async addToCart(item: any): Promise<any> {
@@ -307,11 +320,16 @@ export class MongoStorage implements IStorage {
       id,
       { quantity },
       { new: true }
-    );
+    ).populate('productId');
     if (!updated) {
       throw new Error("Cart item not found");
     }
-    return toPlainObject(updated);
+    const obj = toPlainObject(updated);
+    if (obj.productId && typeof obj.productId === 'object') {
+      obj.product = toPlainObject(obj.productId);
+      delete obj.productId;
+    }
+    return obj;
   }
 
   async removeFromCart(id: string): Promise<void> {
