@@ -13,7 +13,7 @@ export function Footer() {
           <div className="col-span-2 md:col-span-1">
             <Link href="/">
               <span className="font-display font-bold text-xl flex items-center gap-2 mb-4 cursor-pointer">
-                <img src={carLogo} alt="MotorBuy" className="w-9 h-9 object-contain" />
+                <img src={carLogo} alt="MotorBuy" className="w-11 h-11 object-contain" />
                 {language === "ar" ? (
                   <span>
                     <span className="text-[hsl(var(--logo-accent))]">موتور</span>
