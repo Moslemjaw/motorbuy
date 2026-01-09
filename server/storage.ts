@@ -32,7 +32,9 @@ export interface IStorage {
   createGuestOrder(guestEmail: string, guestName: string, guestPhone: string, total: string, items: { productId: string; quantity: number; price: string }[]): Promise<any>;
   getOrders(userId: string): Promise<any[]>;
   getStories(): Promise<any[]>;
+  getStory(id: string): Promise<any | undefined>;
   createStory(story: any): Promise<any>;
+  updateStory(id: string, updates: any): Promise<any>;
   deleteStory(id: string): Promise<void>;
   getPaymentRequests(vendorId: string): Promise<any[]>;
   createPaymentRequest(vendorId: string, amount: string): Promise<any>;
@@ -291,6 +293,12 @@ export class MongoStorage implements IStorage {
       cartData.productId = new mongoose.Types.ObjectId(cartData.productId);
     }
     
+    // Verify product exists
+    const product = await Product.findById(cartData.productId);
+    if (!product) {
+      throw new Error("Product not found");
+    }
+    
     // Check if item already exists in cart
     const existingItem = await CartItem.findOne({
       userId: cartData.userId,
@@ -301,12 +309,18 @@ export class MongoStorage implements IStorage {
       // Update quantity if item already exists
       existingItem.quantity = (existingItem.quantity || 1) + (cartData.quantity || 1);
       await existingItem.save();
-      return toPlainObject(existingItem);
+      const obj = toPlainObject(existingItem);
+      // Populate product for response
+      obj.product = toPlainObject(product);
+      return obj;
     }
     
     // Create new item if it doesn't exist
     const newItem = await CartItem.create(cartData);
-    return toPlainObject(newItem);
+    const obj = toPlainObject(newItem);
+    // Populate product for response
+    obj.product = toPlainObject(product);
+    return obj;
   }
 
   async updateCartItemQuantity(id: string, quantity: number): Promise<any> {

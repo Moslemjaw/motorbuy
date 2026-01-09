@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRole, useProducts, useCategories, useDeleteProduct } from "@/hooks/use-motorbuy";
 import { 
   Package, ShoppingCart, Loader2, Plus, Image, Trash2, BookOpen, 
-  Store, TrendingUp, DollarSign, Clock, Wallet, Send, Camera, Save, Edit, AlertTriangle
+  Store, TrendingUp, DollarSign, Clock, Wallet, Send, Camera, Save, Edit, AlertTriangle, X
 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -196,13 +196,32 @@ export default function VendorDashboard() {
     },
   });
 
+  const [editingStory, setEditingStory] = useState<any | null>(null);
+  const [isEditStoryDialogOpen, setIsEditStoryDialogOpen] = useState(false);
+
+  const updateStoryMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => apiRequest("PATCH", `/api/stories/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
+      toast({ title: "Spotlight Updated", description: "Your spotlight has been updated." });
+      setIsEditStoryDialogOpen(false);
+      setEditingStory(null);
+      setStoryContent("");
+      setStoryImage(null);
+      if (storyImageRef.current) {
+        storyImageRef.current.value = "";
+      }
+    },
+    onError: () => toast({ title: "Error", description: "Failed to update spotlight.", variant: "destructive" }),
+  });
+
   const deleteStoryMutation = useMutation({
     mutationFn: async (id: string) => apiRequest("DELETE", `/api/stories/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
-      toast({ title: "Spotlight Deleted" });
+      toast({ title: "Spotlight Deleted", description: "Your spotlight has been removed." });
     },
-    onError: () => toast({ title: "Error", variant: "destructive" }),
+    onError: () => toast({ title: "Error", description: "Failed to delete spotlight.", variant: "destructive" }),
   });
 
   const updateShopMutation = useMutation({
@@ -350,6 +369,50 @@ export default function VendorDashboard() {
       vendorId: vendorProfile.id,
       content: storyContent || undefined,
       imageUrl: storyImage || null,
+    });
+  };
+
+  const handleEditStory = (story: any) => {
+    setEditingStory(story);
+    setStoryContent(story.content || "");
+    setStoryImage(story.imageUrl || null);
+    setIsEditStoryDialogOpen(true);
+  };
+
+  const handleUpdateStory = () => {
+    if (!editingStory) return;
+    if (!storyContent && !storyImage) {
+      toast({ title: "Empty Spotlight", description: "Add content or an image.", variant: "destructive" });
+      return;
+    }
+    updateStoryMutation.mutate({
+      id: editingStory.id,
+      data: {
+        content: storyContent || null,
+        imageUrl: storyImage || null,
+      },
+    });
+  };
+
+  const handleEditStory = (story: any) => {
+    setEditingStory(story);
+    setStoryContent(story.content || "");
+    setStoryImage(story.imageUrl || null);
+    setIsEditStoryDialogOpen(true);
+  };
+
+  const handleUpdateStory = () => {
+    if (!editingStory) return;
+    if (!storyContent && !storyImage) {
+      toast({ title: "Empty Spotlight", description: "Add content or an image.", variant: "destructive" });
+      return;
+    }
+    updateStoryMutation.mutate({
+      id: editingStory.id,
+      data: {
+        content: storyContent || null,
+        imageUrl: storyImage || null,
+      },
     });
   };
 
@@ -547,26 +610,37 @@ export default function VendorDashboard() {
               {myStories.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">No spotlights yet</p>
               ) : (
-                <div className="space-y-3 max-h-[250px] overflow-y-auto">
-                  {myStories.slice(0, 5).map((story) => (
-                    <div key={story.id} className="text-sm p-3 bg-muted/50 rounded-lg" data-testid={`story-row-${story.id}`}>
+                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                  {myStories.map((story) => (
+                    <div key={story.id} className="text-sm p-3 bg-muted/50 rounded-lg hover:bg-muted/70 transition-colors" data-testid={`story-row-${story.id}`}>
                       {story.imageUrl && (
-                        <img src={story.imageUrl} alt="" className="w-full h-20 object-cover rounded mb-2" />
+                        <img src={story.imageUrl} alt="" className="w-full h-24 object-cover rounded mb-2" />
                       )}
-                      <p className="line-clamp-2">{story.content}</p>
+                      <p className="line-clamp-2 mb-2">{story.content || "No content"}</p>
                       <div className="flex items-center justify-between mt-2">
                         <p className="text-xs text-muted-foreground">
                           {story.createdAt ? new Date(story.createdAt).toLocaleDateString() : ""}
                         </p>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-6 w-6" 
-                          onClick={() => deleteStoryMutation.mutate(story.id)}
-                          data-testid={`button-delete-story-${story.id}`}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-7 w-7" 
+                            onClick={() => handleEditStory(story)}
+                            data-testid={`button-edit-story-${story.id}`}
+                          >
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-7 w-7 text-destructive hover:bg-destructive/10" 
+                            onClick={() => deleteStoryMutation.mutate(story.id)}
+                            data-testid={`button-delete-story-${story.id}`}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -1061,6 +1135,93 @@ export default function VendorDashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Story Dialog */}
+      <Dialog open={isEditStoryDialogOpen} onOpenChange={setIsEditStoryDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Spotlight</DialogTitle>
+            <DialogDescription>
+              Update your spotlight content and image. Click save when you're done.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="editStoryContent">Content</Label>
+              <Textarea
+                id="editStoryContent"
+                value={storyContent}
+                onChange={(e) => setStoryContent(e.target.value)}
+                placeholder="Share news, promotions, or new arrivals..."
+                className="min-h-[100px] resize-none"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Image</Label>
+              <input 
+                ref={storyImageRef} 
+                type="file" 
+                accept="image/*" 
+                className="hidden" 
+                onChange={(e) => { 
+                  const f = e.target.files?.[0]; 
+                  if (f) uploadStoryImage(f); 
+                }} 
+              />
+              <div className="flex gap-2 flex-wrap">
+                {storyImage && (
+                  <div className="relative">
+                    <img src={storyImage} alt="" className="w-32 h-32 object-cover rounded border" />
+                    <Button 
+                      variant="destructive" 
+                      size="icon" 
+                      className="absolute -top-2 -right-2 h-6 w-6" 
+                      onClick={() => setStoryImage(null)}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                )}
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={() => storyImageRef.current?.click()} 
+                  disabled={isUploadingStory}
+                >
+                  {isUploadingStory ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Image className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsEditStoryDialogOpen(false);
+              setEditingStory(null);
+              setStoryContent("");
+              setStoryImage(null);
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateStory} disabled={updateStoryMutation.isPending}>
+              {updateStoryMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Update Spotlight
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

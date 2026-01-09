@@ -215,10 +215,13 @@ export function useCart() {
       const res = await fetch(buildApiUrl(api.cart.get.path), {
         credentials: "include",
       });
-      if (res.status === 401) return null;
+      if (res.status === 401) return [];
       if (!res.ok) throw new Error("Failed to fetch cart");
-      return api.cart.get.responses[200].parse(await res.json());
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
+    staleTime: 0, // Always fetch fresh data
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -233,11 +236,17 @@ export function useAddToCart() {
         credentials: "include",
       });
       if (res.status === 401) throw new Error("Please login to add to cart");
-      if (!res.ok) throw new Error("Failed to add to cart");
-      return api.cart.add.responses[201].parse(await res.json());
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.message || "Failed to add to cart");
+      }
+      return await res.json();
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: [api.cart.get.path] }),
+    onSuccess: () => {
+      // Invalidate and refetch cart immediately
+      queryClient.invalidateQueries({ queryKey: [api.cart.get.path] });
+      queryClient.refetchQueries({ queryKey: [api.cart.get.path] });
+    },
   });
 }
 

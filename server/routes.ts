@@ -835,17 +835,19 @@ export async function registerRoutes(
         return res.status(401).json({ message: "Not authenticated" });
       }
       const input = api.cart.add.input.parse(req.body);
+      console.log("Adding to cart:", { userId: req.session.userId, input });
       const item = await storage.addToCart({
         ...input,
         userId: req.session.userId,
       });
+      console.log("Item added to cart:", item);
       res.status(201).json(item);
     } catch (e: any) {
       console.error("Error adding to cart:", e);
       if (e.message && e.message.includes("validation")) {
         return res.status(400).json({ message: e.message });
       }
-      res.status(400).json({ message: "Error adding to cart" });
+      res.status(400).json({ message: e.message || "Error adding to cart" });
     }
   });
 
@@ -981,6 +983,36 @@ export async function registerRoutes(
     } catch (e: any) {
       console.error("Error creating story:", e);
       res.status(400).json({ message: e.message || "Validation error" });
+    }
+  });
+
+  app.patch("/api/stories/:id", isAuthenticated, async (req: any, res) => {
+    const role = await storage.getUserRole(req.session.userId);
+    if (role !== "vendor")
+      return res
+        .status(403)
+        .json({ message: "Only vendors can update stories" });
+
+    try {
+      // Verify the story belongs to the vendor
+      const story = await storage.getStory(req.params.id);
+      if (!story) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+
+      const vendor = await storage.getVendorByUserId(req.session.userId);
+      if (!vendor || story.vendorId !== vendor.id) {
+        return res
+          .status(403)
+          .json({ message: "You can only update your own stories" });
+      }
+
+      const updates = req.body;
+      const updatedStory = await storage.updateStory(req.params.id, updates);
+      res.json(updatedStory);
+    } catch (e: any) {
+      console.error("Error updating story:", e);
+      res.status(400).json({ message: e.message || "Failed to update story" });
     }
   });
 
