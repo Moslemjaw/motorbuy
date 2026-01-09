@@ -1054,34 +1054,44 @@ export async function registerRoutes(
         .json({ message: "Only vendors can update stories" });
 
     try {
-      // Verify the story belongs to the vendor
-      const story = await storage.getStory(req.params.id);
-      if (!story) {
-        return res.status(404).json({ message: "Story not found" });
-      }
-
+      // Get vendor profile first
       const vendor = await storage.getVendorByUserId(req.session.userId);
       if (!vendor) {
         return res.status(404).json({ message: "Vendor profile not found" });
       }
 
-      // Compare vendorIds using normalized comparison
-      // Try multiple sources for story vendorId
-      const storyVendorIdSource =
-        story.vendorId || story.vendor?.id || story.vendor?._id;
-      const vendorIdSource = vendor.id || vendor._id;
+      // Get story directly from database to check vendorId without population issues
+      const { VendorStory } = await import("./mongodb");
+      const mongoose = await import("mongoose");
 
-      const idsMatch = compareIds(storyVendorIdSource, vendorIdSource);
+      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        return res.status(400).json({ message: "Invalid story ID" });
+      }
+
+      const storyDoc = await VendorStory.findById(req.params.id).lean();
+      if (!storyDoc) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+
+      // Extract vendorId from the raw document (it's an ObjectId)
+      const storyVendorIdRaw = storyDoc.vendorId;
+      const vendorIdRaw = vendor.id || vendor._id;
+
+      // Normalize both IDs for comparison
+      const storyVendorId = normalizeId(storyVendorIdRaw);
+      const vendorId = normalizeId(vendorIdRaw);
+
+      const idsMatch = compareIds(storyVendorIdRaw, vendorIdRaw);
 
       console.log("Story update - Comparing IDs:", {
-        storyVendorId: normalizeId(storyVendorIdSource),
-        vendorId: normalizeId(vendorIdSource),
-        storyId: story.id,
-        storyVendorIdRaw: story.vendorId,
-        storyVendorSource: storyVendorIdSource,
-        storyVendorRaw: story.vendor,
-        vendorIdRaw: vendor.id,
-        vendorIdSource: vendorIdSource,
+        storyVendorId,
+        vendorId,
+        storyId: req.params.id,
+        storyVendorIdRaw: storyVendorIdRaw?.toString(),
+        storyVendorIdType: typeof storyVendorIdRaw,
+        vendorIdRaw: vendorIdRaw,
+        vendorIdType: typeof vendorIdRaw,
+        vendorObject: { id: vendor.id, _id: vendor._id },
         match: idsMatch,
       });
 
@@ -1089,8 +1099,8 @@ export async function registerRoutes(
         return res.status(403).json({
           message: "You can only update your own stories",
           debug: {
-            storyVendorId: normalizeId(storyVendorIdSource),
-            vendorId: normalizeId(vendorIdSource),
+            storyVendorId,
+            vendorId,
             error: "VendorId mismatch",
           },
         });
@@ -1109,14 +1119,7 @@ export async function registerRoutes(
     const role = await storage.getUserRole(req.session.userId);
 
     try {
-      // Use getStory for consistency and better performance
-      const storyToDelete = await storage.getStory(req.params.id);
-
-      if (!storyToDelete) {
-        return res.status(404).json({ message: "Story not found" });
-      }
-
-      // Admins can delete any story, vendors can only delete their own
+      // Admins can delete any story
       if (role === "admin") {
         await storage.deleteStory(req.params.id);
         res.status(204).send();
@@ -1129,31 +1132,44 @@ export async function registerRoutes(
           .json({ message: "Only vendors and admins can delete stories" });
       }
 
-      // Verify the story belongs to the vendor
+      // Get vendor profile first
       const vendor = await storage.getVendorByUserId(req.session.userId);
       if (!vendor) {
         return res.status(404).json({ message: "Vendor profile not found" });
       }
 
-      // Compare vendorIds using normalized comparison
-      // Try multiple sources for story vendorId
-      const storyVendorIdSource =
-        storyToDelete.vendorId ||
-        storyToDelete.vendor?.id ||
-        storyToDelete.vendor?._id;
-      const vendorIdSource = vendor.id || vendor._id;
+      // Get story directly from database to check vendorId without population issues
+      const { VendorStory } = await import("./mongodb");
+      const mongoose = await import("mongoose");
 
-      const idsMatch = compareIds(storyVendorIdSource, vendorIdSource);
+      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        return res.status(400).json({ message: "Invalid story ID" });
+      }
+
+      const storyDoc = await VendorStory.findById(req.params.id).lean();
+      if (!storyDoc) {
+        return res.status(404).json({ message: "Story not found" });
+      }
+
+      // Extract vendorId from the raw document (it's an ObjectId)
+      const storyVendorIdRaw = storyDoc.vendorId;
+      const vendorIdRaw = vendor.id || vendor._id;
+
+      // Normalize both IDs for comparison
+      const storyVendorId = normalizeId(storyVendorIdRaw);
+      const vendorId = normalizeId(vendorIdRaw);
+
+      const idsMatch = compareIds(storyVendorIdRaw, vendorIdRaw);
 
       console.log("Story delete - Comparing IDs:", {
-        storyVendorId: normalizeId(storyVendorIdSource),
-        vendorId: normalizeId(vendorIdSource),
-        storyId: storyToDelete.id,
-        storyVendorIdRaw: storyToDelete.vendorId,
-        storyVendorSource: storyVendorIdSource,
-        storyVendorRaw: storyToDelete.vendor,
-        vendorIdRaw: vendor.id,
-        vendorIdSource: vendorIdSource,
+        storyVendorId,
+        vendorId,
+        storyId: req.params.id,
+        storyVendorIdRaw: storyVendorIdRaw?.toString(),
+        storyVendorIdType: typeof storyVendorIdRaw,
+        vendorIdRaw: vendorIdRaw,
+        vendorIdType: typeof vendorIdRaw,
+        vendorObject: { id: vendor.id, _id: vendor._id },
         match: idsMatch,
       });
 
@@ -1161,8 +1177,8 @@ export async function registerRoutes(
         return res.status(403).json({
           message: "You can only delete your own stories",
           debug: {
-            storyVendorId: normalizeId(storyVendorIdSource),
-            vendorId: normalizeId(vendorIdSource),
+            storyVendorId,
+            vendorId,
             error: "VendorId mismatch",
           },
         });
