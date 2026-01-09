@@ -50,7 +50,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-4 md:mb-6 tracking-tight ${isRTL ? 'leading-[1.6]' : 'leading-tight'}`}
+              className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-bold tracking-tight ${isRTL ? 'leading-[1.8] mb-6 md:mb-8' : 'leading-tight mb-4 md:mb-6'}`}
             >
               {t("hero.title")} <span className="text-primary">{t("hero.title.highlight")}</span>
             </motion.h1>
