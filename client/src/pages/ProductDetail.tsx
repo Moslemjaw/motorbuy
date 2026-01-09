@@ -21,15 +21,22 @@ export default function ProductDetail() {
   const isPending = addToCartMutation.isPending;
 
   const handleAddToCart = () => {
-    if (!isAuthenticated) {
-        toast({ title: "Please login", description: "You need to be logged in to add items to cart", variant: "destructive" });
-        return;
-    }
     if (!product) return;
     
     addToCartMutation.mutate({ productId: product.id, quantity: 1 }, {
       onSuccess: () => toast({ title: "Added to cart", description: `${product.name} added` }),
-      onError: (err: Error) => toast({ title: "Error", description: err.message, variant: "destructive" })
+      onError: (err: Error) => {
+        // Show appropriate error message
+        if (err.message.includes("login") || err.message.includes("authenticated")) {
+          toast({ 
+            title: "Please login", 
+            description: "You need to be logged in to add items to cart", 
+            variant: "destructive" 
+          });
+        } else {
+          toast({ title: "Error", description: err.message, variant: "destructive" });
+        }
+      }
     });
   };
 

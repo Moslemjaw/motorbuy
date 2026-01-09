@@ -87,8 +87,10 @@ export function isAuthenticated(
   next: NextFunction
 ) {
   if (req.session && req.session.userId) {
+    console.log("isAuthenticated - Session userId:", req.session.userId);
     return next();
   }
+  console.log("isAuthenticated - No session or userId. Session:", req.session);
   return res.status(401).json({ message: "Not authenticated" });
 }
 

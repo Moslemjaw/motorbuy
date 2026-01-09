@@ -18,13 +18,19 @@ export function ProductCard({ product }: ProductCardProps) {
   const addToCartMutation = useAddToCart();
   const { toast } = useToast();
   const { t, isRTL } = useLanguage();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, isLoading: isAuthLoading } = useAuth();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!isAuthenticated) {
-        toast({ title: t("product.pleaseLogin"), description: t("product.loginRequired"), variant: "destructive" });
-        return;
+    
+    // Quick check - if we know user is not authenticated, show message immediately
+    if (!isAuthLoading && !isAuthenticated && !user) {
+      toast({ 
+        title: t("product.pleaseLogin") || "Please login", 
+        description: t("product.loginRequired") || "You need to be logged in to add items to cart", 
+        variant: "destructive" 
+      });
+      return;
     }
     
     addToCartMutation.mutate({ productId: product.id, quantity: 1 }, {
@@ -32,7 +38,16 @@ export function ProductCard({ product }: ProductCardProps) {
         toast({ title: t("product.addedToCart"), description: `${product.name} ${t("product.addedToCartDesc")}` });
       },
       onError: (err: Error) => {
-        toast({ title: t("auth.error"), description: err.message, variant: "destructive" });
+        // Show appropriate error message
+        if (err.message.includes("login") || err.message.includes("authenticated") || err.message.includes("401")) {
+          toast({ 
+            title: t("product.pleaseLogin") || "Please login", 
+            description: t("product.loginRequired") || "You need to be logged in to add items to cart", 
+            variant: "destructive" 
+          });
+        } else {
+          toast({ title: t("auth.error"), description: err.message, variant: "destructive" });
+        }
       }
     });
   };

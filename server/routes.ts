@@ -798,13 +798,20 @@ export async function registerRoutes(
 
   app.post(api.cart.add.path, isAuthenticated, async (req: any, res) => {
     try {
+      if (!req.session || !req.session.userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
       const input = api.cart.add.input.parse(req.body);
       const item = await storage.addToCart({
         ...input,
         userId: req.session.userId,
       });
       res.status(201).json(item);
-    } catch (e) {
+    } catch (e: any) {
+      console.error("Error adding to cart:", e);
+      if (e.message && e.message.includes("validation")) {
+        return res.status(400).json({ message: e.message });
+      }
       res.status(400).json({ message: "Error adding to cart" });
     }
   });
