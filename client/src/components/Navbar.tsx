@@ -1,7 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole, useCart } from "@/hooks/use-motorbuy";
-import { ShoppingCart, Menu, User, Store, ShieldCheck, LogOut, Home, Package, Users, BookOpen, X } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
+import { ShoppingCart, Menu, User, Store, ShieldCheck, LogOut, Home, Package, Users, BookOpen, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,26 +20,31 @@ export function Navbar() {
   const { user, logout, isAuthenticated } = useAuth();
   const { data: roleData } = useRole();
   const { data: cart } = useCart();
+  const { language, setLanguage, t, isRTL } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
 
   const cartCount = cart?.reduce((acc, item) => acc + item.quantity, 0) || 0;
   const role = roleData?.role;
 
   const navLinks = [
-    { href: "/", label: "Home", icon: Home },
-    { href: "/products", label: "All Parts", icon: Package },
-    { href: "/vendors", label: "Vendors", icon: Users },
-    { href: "/stories", label: "Stories", icon: BookOpen },
+    { href: "/", label: t("nav.home"), icon: Home },
+    { href: "/products", label: t("nav.products"), icon: Package },
+    { href: "/vendors", label: t("nav.vendors"), icon: Users },
+    { href: "/stories", label: t("section.spotlight"), icon: BookOpen },
   ];
 
   const closeSheet = () => setIsOpen(false);
 
+  const toggleLanguage = () => {
+    setLanguage(language === "en" ? "ar" : "en");
+  };
+
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 h-14 md:h-16 flex items-center justify-between gap-2">
         <div className="flex items-center gap-4 md:gap-8">
-          <Link href="/" className="font-display font-bold text-lg md:text-2xl text-primary flex items-center gap-1.5 md:gap-2">
-            <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs md:text-base">
+          <Link href="/" className="font-display font-bold text-lg md:text-xl text-primary flex items-center gap-2">
+            <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
               M
             </div>
             <span>MotorBuy</span>
@@ -49,7 +55,7 @@ export function Navbar() {
               <Link 
                 key={link.href}
                 href={link.href} 
-                className={`text-sm font-medium transition-colors ${location === link.href ? 'text-primary' : 'hover:text-primary'}`}
+                className={`text-sm font-medium transition-colors ${location === link.href ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 {link.label}
               </Link>
@@ -57,7 +63,19 @@ export function Navbar() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-1 md:gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={toggleLanguage}
+            className="gap-1.5 text-xs font-medium px-2 md:px-3"
+            data-testid="button-language-toggle"
+          >
+            <Globe className="h-4 w-4" />
+            <span className="hidden sm:inline">{language === "en" ? "العربية" : "English"}</span>
+            <span className="sm:hidden">{language === "en" ? "AR" : "EN"}</span>
+          </Button>
+
           <Link href="/cart">
             <Button variant="ghost" size="icon" className="relative" data-testid="button-cart">
               <ShoppingCart className="h-5 w-5" />
@@ -90,13 +108,13 @@ export function Navbar() {
                       <Link href="/vendor/account">
                         <DropdownMenuItem>
                           <User className="mr-2 h-4 w-4" />
-                          <span>My Account</span>
+                          <span>{t("nav.account")}</span>
                         </DropdownMenuItem>
                       </Link>
                       <Link href="/vendor/dashboard">
                         <DropdownMenuItem>
                           <Store className="mr-2 h-4 w-4" />
-                          <span>Dashboard</span>
+                          <span>{t("nav.dashboard")}</span>
                         </DropdownMenuItem>
                       </Link>
                     </>
@@ -105,13 +123,13 @@ export function Navbar() {
                       <Link href="/account">
                         <DropdownMenuItem>
                           <User className="mr-2 h-4 w-4" />
-                          <span>My Account</span>
+                          <span>{t("nav.account")}</span>
                         </DropdownMenuItem>
                       </Link>
                       <Link href="/orders">
                         <DropdownMenuItem>
                           <ShoppingCart className="mr-2 h-4 w-4" />
-                          <span>Order History</span>
+                          <span>{t("customer.orders")}</span>
                         </DropdownMenuItem>
                       </Link>
                     </>
@@ -121,7 +139,7 @@ export function Navbar() {
                     <Link href="/admin">
                       <DropdownMenuItem>
                         <ShieldCheck className="mr-2 h-4 w-4" />
-                        <span>Admin Portal</span>
+                        <span>{t("nav.admin")}</span>
                       </DropdownMenuItem>
                     </Link>
                   )}
@@ -129,14 +147,14 @@ export function Navbar() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => logout()} className="text-destructive">
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
+                    <span>{t("nav.logout")}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
               <Link href="/auth">
-                <Button variant="default" size="sm" data-testid="button-login">
-                  Log In
+                <Button size="sm" data-testid="button-login">
+                  {t("nav.login")}
                 </Button>
               </Link>
             )}
@@ -149,9 +167,11 @@ export function Navbar() {
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[280px] sm:w-[320px] p-0">
+              <SheetContent side={isRTL ? "left" : "right"} className="w-[280px] sm:w-[320px] p-0">
                 <SheetHeader className="p-4 border-b">
-                  <SheetTitle className="text-left font-display">Menu</SheetTitle>
+                  <SheetTitle className={`${isRTL ? 'text-right' : 'text-left'} font-display`}>
+                    {t("nav.home")}
+                  </SheetTitle>
                 </SheetHeader>
                 
                 <div className="flex flex-col h-[calc(100%-60px)]">
@@ -172,20 +192,20 @@ export function Navbar() {
                         <div className="border-t my-2" />
                         <div className="p-2">
                           <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            Account
+                            {t("nav.account")}
                           </div>
                           {role === 'vendor' ? (
                             <>
                               <Link href="/vendor/account" onClick={closeSheet}>
                                 <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted">
                                   <User className="w-5 h-5" />
-                                  <span className="font-medium">My Account</span>
+                                  <span className="font-medium">{t("nav.account")}</span>
                                 </div>
                               </Link>
                               <Link href="/vendor/dashboard" onClick={closeSheet}>
                                 <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted">
                                   <Package className="w-5 h-5" />
-                                  <span className="font-medium">Dashboard</span>
+                                  <span className="font-medium">{t("nav.dashboard")}</span>
                                 </div>
                               </Link>
                             </>
@@ -194,13 +214,13 @@ export function Navbar() {
                               <Link href="/account" onClick={closeSheet}>
                                 <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted">
                                   <User className="w-5 h-5" />
-                                  <span className="font-medium">My Account</span>
+                                  <span className="font-medium">{t("nav.account")}</span>
                                 </div>
                               </Link>
                               <Link href="/orders" onClick={closeSheet}>
                                 <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted">
                                   <Package className="w-5 h-5" />
-                                  <span className="font-medium">Order History</span>
+                                  <span className="font-medium">{t("customer.orders")}</span>
                                 </div>
                               </Link>
                             </>
@@ -210,7 +230,7 @@ export function Navbar() {
                             <Link href="/admin" onClick={closeSheet}>
                               <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted">
                                 <ShieldCheck className="w-5 h-5" />
-                                <span className="font-medium">Admin Portal</span>
+                                <span className="font-medium">{t("nav.admin")}</span>
                               </div>
                             </Link>
                           )}
@@ -238,13 +258,13 @@ export function Navbar() {
                           data-testid="button-logout-mobile"
                         >
                           <LogOut className="w-4 h-4" />
-                          Log out
+                          {t("nav.logout")}
                         </Button>
                       </div>
                     ) : (
                       <Link href="/auth" onClick={closeSheet}>
                         <Button className="w-full" data-testid="button-login-mobile">
-                          Log In
+                          {t("nav.login")}
                         </Button>
                       </Link>
                     )}
