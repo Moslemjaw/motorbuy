@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,14 +12,23 @@ import { Car, Store, Shield, User, Loader2, CheckCircle, Eye, EyeOff } from "luc
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { buildApiUrl } from "@/lib/api-config";
+import { useQueryClient } from "@tanstack/react-query";
 import carLogo from "@assets/image_2026-01-09_142631252-removebg-preview_1767958016384.png";
 
 export default function AuthPage() {
   const { user, isLoading, isAuthenticated, login, signup, logout, isLoggingIn, isSigningUp } = useAuth();
-  const { data: roleData, isLoading: isRoleLoading } = useRole();
+  const { data: roleData, isLoading: isRoleLoading, refetch: refetchRole } = useRole();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { t, isRTL, language } = useLanguage();
+  const queryClient = useQueryClient();
+
+  // Refetch role when user becomes authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      refetchRole();
+    }
+  }, [isAuthenticated, user, refetchRole]);
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [showPassword, setShowPassword] = useState(false);
@@ -35,10 +44,16 @@ export default function AuthPage() {
     try {
       if (mode === "login") {
         await login({ email: formData.email, password: formData.password });
+        // Invalidate and refetch role after login
+        queryClient.invalidateQueries({ queryKey: ["/api/roles"] });
+        await refetchRole();
         toast({ title: t("auth.loginSuccess"), description: t("auth.loginSuccessDesc") });
         // Removed auto-redirect - user can choose where to go from the welcome page
       } else {
         await signup(formData);
+        // Invalidate and refetch role after signup
+        queryClient.invalidateQueries({ queryKey: ["/api/roles"] });
+        await refetchRole();
         toast({ title: t("auth.signupSuccess"), description: t("auth.signupSuccessDesc") });
         // Removed auto-redirect - user can choose where to go from the welcome page
       }
@@ -97,13 +112,18 @@ export default function AuthPage() {
                 </div>
 
                 <div className="grid gap-3">
-                  {(roleData?.role === "vendor" || roleData?.role === "admin") && (
+                  {isRoleLoading ? (
+                    <Button className="w-full" size="lg" disabled>
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      Loading role...
+                    </Button>
+                  ) : (roleData?.role === "vendor" || roleData?.role === "admin") ? (
                     <Link href={roleData.role === "vendor" ? "/vendor/dashboard" : "/admin"}>
                       <Button className="w-full" size="lg" data-testid="button-go-dashboard">
                         {t("auth.goToDashboard") || "Go to Dashboard"}
                       </Button>
                     </Link>
-                  )}
+                  ) : null}
                   
                   <Link href="/">
                     <Button variant={roleData?.role === "vendor" || roleData?.role === "admin" ? "outline" : "default"} className="w-full" size="lg" data-testid="button-go-home">
