@@ -13,9 +13,9 @@ export function Footer() {
             <Link href="/">
               <span className="font-display font-bold text-xl text-primary flex items-center gap-2 mb-4 cursor-pointer">
                 <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
-                  M
+                  {t("brand.letter")}
                 </span>
-                <span>MotorBuy</span>
+                <span>{t("brand.name")}</span>
               </span>
             </Link>
             <p className="text-sm text-muted-foreground mb-6 max-w-xs">

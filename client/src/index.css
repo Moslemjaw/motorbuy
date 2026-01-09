@@ -42,6 +42,12 @@
   
   --font-display: 'Exo 2', sans-serif;
   --font-body: 'Inter', sans-serif;
+  --font-arabic: 'Cairo', sans-serif;
+}
+
+[dir="rtl"] {
+  --font-display: 'Cairo', sans-serif;
+  --font-body: 'Cairo', sans-serif;
 }
 
 .dark {

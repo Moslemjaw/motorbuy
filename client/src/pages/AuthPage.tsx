@@ -167,9 +167,9 @@ export default function AuthPage() {
             <Link href="/">
               <span className="inline-flex items-center gap-2 text-primary font-display font-bold text-2xl mb-4 cursor-pointer">
                 <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-base">
-                  M
+                  {t("brand.letter")}
                 </span>
-                MotorBuy
+                {t("brand.name")}
               </span>
             </Link>
             <p className="text-muted-foreground mt-2">

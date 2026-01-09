@@ -135,6 +135,7 @@ export default function Home() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
             {categories?.slice(0, 10).map((cat, index) => {
               const IconComponent = cat.icon ? iconMap[cat.icon] : Wrench;
+              const translatedName = t(`cat.${cat.slug}`) !== `cat.${cat.slug}` ? t(`cat.${cat.slug}`) : cat.name;
               return (
                 <motion.div
                   key={cat.id}
@@ -147,7 +148,7 @@ export default function Home() {
                       <div className="w-12 h-12 md:w-14 md:h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-3 mx-auto group-hover:bg-primary/20 transition-colors">
                         {IconComponent && <IconComponent className="w-6 h-6 md:w-7 md:h-7 text-primary" />}
                       </div>
-                      <h3 className="font-medium text-xs md:text-sm group-hover:text-primary transition-colors line-clamp-2">{cat.name}</h3>
+                      <h3 className="font-medium text-xs md:text-sm group-hover:text-primary transition-colors line-clamp-2">{translatedName}</h3>
                     </div>
                   </Link>
                 </motion.div>

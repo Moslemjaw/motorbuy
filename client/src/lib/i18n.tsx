@@ -7,6 +7,10 @@ interface Translations {
 }
 
 const en: Translations = {
+  // Brand
+  "brand.name": "MotorBuy",
+  "brand.letter": "M",
+  
   // Navbar
   "nav.home": "Home",
   "nav.products": "Products",
@@ -129,9 +133,29 @@ const en: Translations = {
   "customer.orders": "My Orders",
   "customer.wishlist": "Wishlist",
   "customer.profile": "Profile",
+  
+  // Categories
+  "cat.engine-parts": "Engine Parts",
+  "cat.brakes": "Brakes",
+  "cat.suspension": "Suspension",
+  "cat.electrical": "Electrical",
+  "cat.filters": "Filters",
+  "cat.cooling-system": "Cooling System",
+  "cat.transmission": "Transmission",
+  "cat.fuel-system": "Fuel System",
+  "cat.exhaust": "Exhaust",
+  "cat.body-parts": "Body Parts",
+  "cat.interior": "Interior",
+  "cat.wheels-tires": "Wheels & Tires",
+  "cat.lighting": "Lighting",
+  "cat.fluids-chemicals": "Fluids & Chemicals",
 };
 
 const ar: Translations = {
+  // Brand
+  "brand.name": "موتورباي",
+  "brand.letter": "م",
+  
   // Navbar
   "nav.home": "الرئيسية",
   "nav.products": "المنتجات",
@@ -254,6 +278,22 @@ const ar: Translations = {
   "customer.orders": "طلباتي",
   "customer.wishlist": "المفضلة",
   "customer.profile": "الملف الشخصي",
+  
+  // Categories
+  "cat.engine-parts": "قطع المحرك",
+  "cat.brakes": "الفرامل",
+  "cat.suspension": "نظام التعليق",
+  "cat.electrical": "الكهربائيات",
+  "cat.filters": "الفلاتر",
+  "cat.cooling-system": "نظام التبريد",
+  "cat.transmission": "ناقل الحركة",
+  "cat.fuel-system": "نظام الوقود",
+  "cat.exhaust": "نظام العادم",
+  "cat.body-parts": "قطع الهيكل",
+  "cat.interior": "الداخلية",
+  "cat.wheels-tires": "العجلات والإطارات",
+  "cat.lighting": "الإضاءة",
+  "cat.fluids-chemicals": "السوائل والكيماويات",
 };
 
 const translations: Record<Language, Translations> = { en, ar };

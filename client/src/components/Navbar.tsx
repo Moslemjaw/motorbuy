@@ -45,9 +45,9 @@ export function Navbar() {
         <div className="flex items-center gap-4 md:gap-8">
           <Link href="/" className="font-display font-bold text-lg md:text-xl text-primary flex items-center gap-2">
             <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
-              M
+              {t("brand.letter")}
             </div>
-            <span>MotorBuy</span>
+            <span>{t("brand.name")}</span>
           </Link>
           
           <div className="hidden md:flex gap-6">
