@@ -1,4 +1,5 @@
 import { Navbar } from "@/components/Navbar";
+import { LoadingPage } from "@/components/LoadingPage";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -34,8 +35,9 @@ export default function Cart() {
   };
 
   if (isLoading) return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <Loader2 className="animate-spin w-10 h-10 text-primary" />
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <LoadingPage message="Loading cart..." />
     </div>
   );
 
