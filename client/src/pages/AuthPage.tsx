@@ -72,7 +72,7 @@ export default function AuthPage() {
     }
   }, [isAuthenticated, user, isRoleLoading, roleData, refetchRole]);
 
-  // Auto-redirect customers to home page
+  // Auto-redirect customers to home page (fallback if handleSubmit redirect didn't work)
   useEffect(() => {
     if (
       isAuthenticated &&
@@ -80,7 +80,11 @@ export default function AuthPage() {
       !isRoleLoading &&
       roleData?.role === "customer"
     ) {
-      setLocation("/");
+      // Use a small delay to ensure the redirect happens smoothly
+      const timer = setTimeout(() => {
+        setLocation("/");
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [isAuthenticated, user, isRoleLoading, roleData, setLocation]);
 
@@ -119,22 +123,34 @@ export default function AuthPage() {
         await login({ email: formData.email, password: formData.password });
         // Invalidate and refetch role after login
         queryClient.invalidateQueries({ queryKey: ["/api/roles"] });
-        await refetchRole();
+        const roleResult = await refetchRole();
+
+        // Check if user is a customer and redirect immediately
+        if (roleResult.data?.role === "customer") {
+          setLocation("/");
+          return;
+        }
+
         toast({
           title: t("auth.loginSuccess"),
           description: t("auth.loginSuccessDesc"),
         });
-        // Removed auto-redirect - user can choose where to go from the welcome page
       } else {
         await signup(formData);
         // Invalidate and refetch role after signup
         queryClient.invalidateQueries({ queryKey: ["/api/roles"] });
-        await refetchRole();
+        const roleResult = await refetchRole();
+
+        // Check if user is a customer and redirect immediately
+        if (roleResult.data?.role === "customer") {
+          setLocation("/");
+          return;
+        }
+
         toast({
           title: t("auth.signupSuccess"),
           description: t("auth.signupSuccessDesc"),
         });
-        // Removed auto-redirect - user can choose where to go from the welcome page
       }
     } catch (error: any) {
       const message = error?.message || t("auth.genericError");
@@ -159,13 +175,16 @@ export default function AuthPage() {
     );
   }
 
-  // Show loading page for customers while redirecting
-  if (
-    isAuthenticated &&
-    user &&
-    (isRoleLoading || roleData?.role === "customer")
-  ) {
-    return <LoadingPage message="Redirecting to home..." />;
+  // Show loading page for customers while redirecting (immediate check)
+  if (isAuthenticated && user) {
+    // If role is loading, show loading page
+    if (isRoleLoading) {
+      return <LoadingPage message="Loading..." />;
+    }
+    // If role is customer, show loading page and redirect will happen
+    if (roleData?.role === "customer") {
+      return <LoadingPage message="Redirecting to home..." />;
+    }
   }
 
   // Show loading page if authenticated but role data is not available (retry button would appear)
