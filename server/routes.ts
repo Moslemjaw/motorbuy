@@ -13,6 +13,25 @@ export async function registerRoutes(
   registerAuthRoutes(app);
   registerObjectStorageRoutes(app);
 
+  // One-time setup endpoint to seed database (no auth required for initial setup)
+  app.post("/api/setup/seed", async (req: any, res) => {
+    try {
+      const { seedDatabase } = await import("./seed");
+      const result = await seedDatabase();
+      res.json({ 
+        message: "Database seeded successfully!",
+        testUsers: {
+          vendor: { email: "vendor@test.com", password: "test123", role: "vendor" },
+          admin: { email: "admin@test.com", password: "test123", role: "admin" }
+        },
+        ...result
+      });
+    } catch (e) {
+      console.error("Seeding error:", e);
+      res.status(500).json({ message: "Seeding failed", error: String(e) });
+    }
+  });
+
   // One-time setup endpoint to assign initial roles (no auth required for setup)
   app.post("/api/setup/roles", async (req: any, res) => {
     try {
@@ -727,15 +746,30 @@ export async function registerRoutes(
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const existingProducts = await storage.getProducts();
-      if (existingProducts.length > 0) {
-        return res.status(400).json({ message: "Database already has data. Clear it first before seeding." });
+      const { clearFirst } = req.body;
+      
+      // Optionally clear existing data if requested
+      if (clearFirst) {
+        const { Product, Order, OrderItem, Vendor, Category, PaymentRequest, VendorStory, CartItem } = await import("./mongodb");
+        await Product.deleteMany({});
+        await Order.deleteMany({});
+        await OrderItem.deleteMany({});
+        await Vendor.deleteMany({});
+        await Category.deleteMany({});
+        await PaymentRequest.deleteMany({});
+        await VendorStory.deleteMany({});
+        await CartItem.deleteMany({});
+        console.log("Cleared existing data");
       }
 
       const { seedDatabase } = await import("./seed");
       const result = await seedDatabase();
       res.json({ 
-        message: "Database seeded successfully with demo data",
+        message: "Database seeded successfully with demo data and test users",
+        testUsers: {
+          vendor: { email: "vendor@test.com", password: "test123", role: "vendor" },
+          admin: { email: "admin@test.com", password: "test123", role: "admin" }
+        },
         ...result
       });
     } catch (e) {

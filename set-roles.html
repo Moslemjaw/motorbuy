@@ -71,10 +71,25 @@
 </head>
 <body>
     <div class="container">
-        <h1>Set User Roles</h1>
-        <p>Click the buttons below to assign roles to users:</p>
+        <h1>Database Setup</h1>
+        <p>Use the buttons below to seed the database or set user roles:</p>
         
-        <div>
+        <div style="margin-bottom: 30px; padding: 20px; background: #e7f3ff; border-radius: 6px;">
+            <h2 style="margin-top: 0; color: #0066cc;">Seed Database</h2>
+            <p style="margin-bottom: 15px;">This will create the database with test users, products, categories, and vendors.</p>
+            <button class="button" style="background: #0066cc;" onclick="seedDatabase()">
+                Seed Database
+            </button>
+            <p style="margin-top: 10px; font-size: 14px; color: #666;">
+                <strong>Test Users Created:</strong><br>
+                • vendor@test.com (password: test123) - Vendor role<br>
+                • admin@test.com (password: test123) - Admin role
+            </p>
+        </div>
+
+        <div style="padding: 20px; background: #f9f9f9; border-radius: 6px;">
+            <h2 style="margin-top: 0; color: #333;">Or Set Individual Roles</h2>
+            <p style="margin-bottom: 15px;">If users already exist, you can set their roles individually:</p>
             <button class="button vendor" onclick="setRole('vendor@test.com', 'vendor')">
                 Set Vendor Role
             </button>
@@ -88,6 +103,44 @@
 
     <script>
         const API_URL = 'https://motorbuy.onrender.com';
+        
+        async function seedDatabase() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result';
+            resultDiv.textContent = 'Seeding database... This may take a moment...';
+            resultDiv.classList.add('show');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/setup/seed`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success show';
+                    let message = `✅ Success! ${data.message}\n\n`;
+                    if (data.testUsers) {
+                        message += `Test Users Created:\n`;
+                        message += `• ${data.testUsers.vendor.email} (password: ${data.testUsers.vendor.password}) - ${data.testUsers.vendor.role}\n`;
+                        message += `• ${data.testUsers.admin.email} (password: ${data.testUsers.admin.password}) - ${data.testUsers.admin.role}\n\n`;
+                    }
+                    if (data.categories) message += `Categories: ${data.categories}\n`;
+                    if (data.vendors) message += `Vendors: ${data.vendors}\n`;
+                    if (data.products) message += `Products: ${data.products}\n`;
+                    resultDiv.textContent = message;
+                } else {
+                    resultDiv.className = 'result error show';
+                    resultDiv.textContent = `❌ Error: ${data.message || 'Failed to seed database'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error show';
+                resultDiv.textContent = `❌ Error: ${error.message}`;
+            }
+        }
         
         async function setRole(email, role) {
             const resultDiv = document.getElementById('result');

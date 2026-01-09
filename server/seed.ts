@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 import { User, Role, Vendor, Category, Product, Order, OrderItem, PaymentRequest } from "./mongodb";
 
 const demoVendors = [
@@ -55,6 +56,52 @@ const categories = [
 
 export async function seedDatabase() {
   console.log("Starting database seeding...");
+
+  // Create test users with passwords
+  const testPassword = "test123"; // Default password for test users
+  const passwordHash = await bcrypt.hash(testPassword, 12);
+
+  // Create or update vendor@test.com
+  let vendorUser = await User.findOne({ email: "vendor@test.com" });
+  if (!vendorUser) {
+    vendorUser = await User.create({
+      email: "vendor@test.com",
+      passwordHash,
+      firstName: "Vendor",
+      lastName: "Test",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    console.log("✅ Created vendor@test.com user");
+  } else {
+    vendorUser.passwordHash = passwordHash;
+    await vendorUser.save();
+    console.log("✅ Updated vendor@test.com user");
+  }
+
+  // Create or update admin@test.com
+  let adminUser = await User.findOne({ email: "admin@test.com" });
+  if (!adminUser) {
+    adminUser = await User.create({
+      email: "admin@test.com",
+      passwordHash,
+      firstName: "Admin",
+      lastName: "Test",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    console.log("✅ Created admin@test.com user");
+  } else {
+    adminUser.passwordHash = passwordHash;
+    await adminUser.save();
+    console.log("✅ Updated admin@test.com user");
+  }
+
+  // Set roles for test users
+  await Role.deleteMany({ userId: { $in: [vendorUser._id.toString(), adminUser._id.toString()] } });
+  await Role.create({ userId: vendorUser._id.toString(), role: "vendor" });
+  await Role.create({ userId: adminUser._id.toString(), role: "admin" });
+  console.log("✅ Set roles for test users (vendor@test.com = vendor, admin@test.com = admin)");
 
   await Category.deleteMany({});
   const createdCategories = await Category.insertMany(categories);
