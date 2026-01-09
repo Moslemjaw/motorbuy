@@ -37,11 +37,10 @@ export function ProductCard({ product }: ProductCardProps) {
     
     addToCartMutation.mutate({ productId: product.id, quantity: 1 }, {
       onSuccess: () => {
-        toast({ title: t("product.addedToCart"), description: `${product.name} ${t("product.addedToCartDesc")}` });
-        // Redirect to cart page after adding item
-        setTimeout(() => {
-          setLocation("/cart");
-        }, 500);
+        toast({ 
+          title: t("product.addedToCart"), 
+          description: `${product.name} ${t("product.addedToCartDesc")}`
+        });
       },
       onError: (err: Error) => {
         // Show appropriate error message and redirect to auth
