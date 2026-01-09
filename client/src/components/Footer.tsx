@@ -98,7 +98,7 @@ export function Footer() {
         </div>
         
         <div className="border-t mt-10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} MotorBuy. {t("footer.rights")}.</p>
+          <p>&copy; {new Date().getFullYear()} {t("brand.name")}. {t("footer.rights")}.</p>
           <div className="flex items-center gap-4">
             <span className="text-xs">Kuwait</span>
           </div>

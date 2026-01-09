@@ -187,7 +187,7 @@ const ar: Translations = {
   "section.newArrivals.subtitle": "مخزون جديد من أفضل موردينا",
   "section.spotlight": "عروض الموردين",
   "section.spotlight.subtitle": "عروض ترويجية وتحديثات مميزة من موردينا",
-  "section.whyUs": "لماذا موتورباي؟",
+  "section.whyUs": "لماذا نحن؟",
   "section.whyUs.subtitle": "سوقك الموثوق لقطع غيار السيارات في الكويت",
   
   // Features
@@ -241,7 +241,7 @@ const ar: Translations = {
   "auth.loginSuccess": "مرحباً بعودتك!",
   "auth.loginSuccessDesc": "تم تسجيل الدخول بنجاح.",
   "auth.signupSuccess": "تم إنشاء الحساب!",
-  "auth.signupSuccessDesc": "مرحباً بك في موتورباي.",
+  "auth.signupSuccessDesc": "مرحباً بك معنا.",
   "auth.loggedOut": "تم تسجيل الخروج",
   "auth.loggedOutDesc": "تم تسجيل خروجك بنجاح.",
   "auth.error": "خطأ",
@@ -254,7 +254,7 @@ const ar: Translations = {
   "auth.defaultUser": "مستخدم",
   
   // Footer
-  "footer.about": "عن موتورباي",
+  "footer.about": "من نحن",
   "footer.aboutText": "سوقك الموثوق لقطع غيار السيارات عالية الجودة في الكويت.",
   "footer.services": "خدماتنا",
   "footer.support": "الدعم",
