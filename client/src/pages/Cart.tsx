@@ -2,7 +2,8 @@ import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart, useRemoveFromCart, useCreateOrder } from "@/hooks/use-motorbuy";
-import { Trash2, ShoppingBag, ArrowRight, Loader2, ShieldCheck, Truck, CreditCard } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
+import { Trash2, ShoppingBag, ArrowRight, ArrowLeft, Loader2, ShieldCheck, Truck, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { formatKWD } from "@/lib/currency";
@@ -14,17 +15,18 @@ export default function Cart() {
   const { mutate: createOrder, isPending: isOrdering } = useCreateOrder();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { t, isRTL } = useLanguage();
 
   const total = cartItems?.reduce((sum, item) => sum + (Number(item.product.price) * item.quantity), 0) || 0;
 
   const handleCheckout = () => {
     createOrder(undefined, {
       onSuccess: () => {
-        toast({ title: "Order Placed!", description: "Your parts are on the way." });
+        toast({ title: t("cart.orderPlaced"), description: t("cart.orderPlacedDesc") });
         setLocation("/account");
       },
       onError: () => {
-        toast({ title: "Checkout Simulation", description: "Order placement logic would go here." });
+        toast({ title: t("cart.checkoutSim"), description: t("cart.checkoutSimDesc") });
       }
     });
   };
@@ -34,6 +36,8 @@ export default function Cart() {
       <Loader2 className="animate-spin w-10 h-10 text-primary" />
     </div>
   );
+
+  const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
 
   return (
     <div className="min-h-screen bg-background font-body">
@@ -45,9 +49,11 @@ export default function Cart() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl lg:text-4xl font-display font-bold mb-2">Shopping Cart</h1>
+          <h1 className="text-3xl lg:text-4xl font-display font-bold mb-2">{t("cart.title")}</h1>
           <p className="text-muted-foreground">
-            {cartItems?.length ? `${cartItems.length} item${cartItems.length > 1 ? 's' : ''} in your cart` : 'Your cart is empty'}
+            {cartItems?.length 
+              ? `${cartItems.length} ${cartItems.length > 1 ? t("cart.items") : t("cart.item")}` 
+              : t("cart.empty")}
           </p>
         </motion.div>
 
@@ -60,13 +66,13 @@ export default function Cart() {
             <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
               <ShoppingBag className="w-12 h-12 text-muted-foreground" />
             </div>
-            <h2 className="text-2xl font-display font-bold mb-3">Your cart is empty</h2>
+            <h2 className="text-2xl font-display font-bold mb-3">{t("cart.empty")}</h2>
             <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-              Looks like you haven't added any parts yet. Start exploring our collection!
+              {t("cart.emptyDesc")}
             </p>
             <Link href="/products">
               <Button size="lg" className="rounded-full px-8" data-testid="button-start-shopping">
-                Start Shopping <ArrowRight className="ml-2 w-4 h-4" />
+                {t("cart.startShopping")} <ArrowIcon className={`w-4 h-4 ${isRTL ? 'mr-2' : 'ml-2'}`} />
               </Button>
             </Link>
           </motion.div>
@@ -76,7 +82,7 @@ export default function Cart() {
               {cartItems.map((item, index) => (
                 <motion.div 
                   key={item.id}
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0, x: isRTL ? 20 : -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
                   className="flex gap-3 md:gap-5 p-3 md:p-5 bg-card border rounded-xl md:rounded-2xl items-center hover:shadow-lg transition-shadow"
@@ -92,7 +98,7 @@ export default function Cart() {
                   <div className="flex-1 min-w-0">
                     <h3 className="font-display font-bold text-sm md:text-lg truncate">{item.product.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="secondary" className="text-xs">Qty: {item.quantity}</Badge>
+                      <Badge variant="secondary" className="text-xs">{t("cart.qty")}: {item.quantity}</Badge>
                     </div>
                     <div className="font-bold text-base md:hidden mt-1">{formatKWD(Number(item.product.price) * item.quantity)}</div>
                   </div>
@@ -118,19 +124,19 @@ export default function Cart() {
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-card border rounded-2xl p-6 sticky top-24 shadow-lg"
               >
-                <h3 className="font-display font-bold text-xl mb-6">Order Summary</h3>
+                <h3 className="font-display font-bold text-xl mb-6">{t("cart.orderSummary")}</h3>
                 
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Subtotal</span>
+                    <span className="text-muted-foreground">{t("cart.subtotal")}</span>
                     <span className="font-medium">{formatKWD(total)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Shipping</span>
-                    <span className="text-green-600 font-medium">Free</span>
+                    <span className="text-muted-foreground">{t("cart.shipping")}</span>
+                    <span className="text-green-600 font-medium">{t("cart.free")}</span>
                   </div>
                   <div className="border-t pt-4 flex justify-between items-baseline">
-                    <span className="font-bold text-lg">Total</span>
+                    <span className="font-bold text-lg">{t("cart.total")}</span>
                     <span className="font-bold text-2xl text-primary">{formatKWD(total)}</span>
                   </div>
                 </div>
@@ -144,22 +150,22 @@ export default function Cart() {
                   {isOrdering ? (
                     <Loader2 className="animate-spin w-5 h-5" />
                   ) : (
-                    <>Proceed to Checkout <ArrowRight className="ml-2 w-5 h-5" /></>
+                    <>{t("cart.checkout")} <ArrowIcon className={`w-5 h-5 ${isRTL ? 'mr-2' : 'ml-2'}`} /></>
                   )}
                 </Button>
 
                 <div className="mt-6 pt-6 border-t space-y-3">
                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
                     <ShieldCheck className="w-5 h-5 text-green-600" />
-                    <span>Secure checkout</span>
+                    <span>{t("cart.secureCheckout")}</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
                     <Truck className="w-5 h-5 text-primary" />
-                    <span>Free shipping on all orders</span>
+                    <span>{t("cart.freeShipping")}</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
                     <CreditCard className="w-5 h-5 text-primary" />
-                    <span>Multiple payment options</span>
+                    <span>{t("cart.paymentOptions")}</span>
                   </div>
                 </div>
               </motion.div>
@@ -170,8 +176,8 @@ export default function Cart() {
 
       <footer className="gradient-dark text-white py-12 mt-16">
         <div className="container mx-auto px-4 text-center">
-          <div className="font-display font-bold text-2xl mb-2">MotorBuy</div>
-          <p className="text-white/50 text-sm">Kuwait's premier auto parts marketplace</p>
+          <div className="font-display font-bold text-2xl mb-2">{t("brand.name")}</div>
+          <p className="text-white/50 text-sm">{t("cart.tagline")}</p>
         </div>
       </footer>
     </div>

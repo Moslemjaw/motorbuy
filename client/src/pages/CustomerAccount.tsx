@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-motorbuy";
+import { useLanguage } from "@/lib/i18n";
 import { User, Loader2, Settings, Phone, MapPin, Mail, Camera, FileText, Package } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,7 @@ export default function CustomerAccount() {
   const { data: roleData, isLoading: isRoleLoading } = useRole();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { t, isRTL } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [phone, setPhone] = useState("");
@@ -41,10 +43,10 @@ export default function CustomerAccount() {
   const { uploadFile, isUploading } = useUpload({
     onSuccess: (response) => {
       setProfileImageUrl(response.objectPath);
-      toast({ title: "Photo Uploaded", description: "Your profile photo has been uploaded." });
+      toast({ title: t("account.photoUploaded"), description: t("account.photoUploadedDesc") });
     },
     onError: (error) => {
-      toast({ title: "Upload Failed", description: error.message, variant: "destructive" });
+      toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
     },
   });
 
@@ -54,10 +56,10 @@ export default function CustomerAccount() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      toast({ title: "Settings Saved", description: "Your account settings have been updated." });
+      toast({ title: t("account.settingsSaved"), description: t("account.settingsSavedDesc") });
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to save settings.", variant: "destructive" });
+      toast({ title: t("auth.error"), description: t("auth.genericError"), variant: "destructive" });
     },
   });
 
@@ -111,8 +113,8 @@ export default function CustomerAccount() {
       
       <div className="bg-primary/10 py-6 md:py-12 mb-6 md:mb-8 border-b border-primary/20">
         <div className="container mx-auto px-4">
-          <h1 className="text-2xl md:text-3xl font-display font-bold mb-1 md:mb-2">My Account</h1>
-          <p className="text-sm md:text-base text-muted-foreground">Manage your profile and settings.</p>
+          <h1 className="text-2xl md:text-3xl font-display font-bold mb-1 md:mb-2">{t("account.title")}</h1>
+          <p className="text-sm md:text-base text-muted-foreground">{t("account.subtitle")}</p>
         </div>
       </div>
 
@@ -120,7 +122,7 @@ export default function CustomerAccount() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" /> Profile
+              <User className="w-5 h-5" /> {t("account.profile")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -134,7 +136,7 @@ export default function CustomerAccount() {
                   </div>
                 )}
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} data-testid="input-photo-file" />
-                <button onClick={handlePhotoClick} disabled={isUploading} className="absolute bottom-0 right-0 w-6 h-6 md:w-7 md:h-7 bg-primary text-white rounded-full flex items-center justify-center shadow-lg disabled:opacity-50" data-testid="button-change-photo">
+                <button onClick={handlePhotoClick} disabled={isUploading} className={`absolute bottom-0 ${isRTL ? 'left-0' : 'right-0'} w-6 h-6 md:w-7 md:h-7 bg-primary text-white rounded-full flex items-center justify-center shadow-lg disabled:opacity-50`} data-testid="button-change-photo">
                   {isUploading ? <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" /> : <Camera className="w-3 h-3 md:w-4 md:h-4" />}
                 </button>
               </div>
@@ -146,7 +148,7 @@ export default function CustomerAccount() {
             
             <div className="pt-4 border-t">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-muted-foreground">Role</span>
+                <span className="text-sm text-muted-foreground">{t("account.role")}</span>
                 <Badge variant="secondary">{roleData?.role || "customer"}</Badge>
               </div>
             </div>
@@ -154,13 +156,13 @@ export default function CustomerAccount() {
             <div className="flex gap-2">
               <Link href="/orders" className="flex-1">
                 <Button variant="outline" className="w-full" data-testid="button-view-orders">
-                  <Package className="w-4 h-4 mr-2" /> Order History
+                  <Package className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} /> {t("account.orderHistory")}
                 </Button>
               </Link>
             </div>
 
             <Button variant="outline" className="w-full" onClick={() => logout()} data-testid="button-logout">
-              Logout
+              {t("account.logout")}
             </Button>
           </CardContent>
         </Card>
@@ -168,46 +170,46 @@ export default function CustomerAccount() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Settings className="w-5 h-5" /> Account Settings
+              <Settings className="w-5 h-5" /> {t("account.settings")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="flex items-center gap-2 text-sm">
-                <Mail className="w-4 h-4" /> Email
+                <Mail className="w-4 h-4" /> {t("account.email")}
               </Label>
               <Input id="email" value={user.email || ""} disabled className="bg-muted" data-testid="input-email" />
-              <p className="text-xs text-muted-foreground">Email is managed by your Replit account</p>
+              <p className="text-xs text-muted-foreground">{t("account.emailManaged")}</p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="bio" className="flex items-center gap-2 text-sm">
-                <FileText className="w-4 h-4" /> Bio
+                <FileText className="w-4 h-4" /> {t("account.bio")}
               </Label>
-              <Textarea id="bio" placeholder="Tell us about yourself..." value={bio} onChange={(e) => setBio(e.target.value)} className="min-h-[80px]" data-testid="input-bio" />
+              <Textarea id="bio" placeholder={t("account.bioPlaceholder")} value={bio} onChange={(e) => setBio(e.target.value)} className="min-h-[80px]" data-testid="input-bio" />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="phone" className="flex items-center gap-2 text-sm">
-                <Phone className="w-4 h-4" /> Phone Number
+                <Phone className="w-4 h-4" /> {t("account.phone")}
               </Label>
               <Input id="phone" placeholder="+965 XXXX XXXX" value={phone} onChange={(e) => setPhone(e.target.value)} data-testid="input-phone" />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="address" className="flex items-center gap-2 text-sm">
-                <MapPin className="w-4 h-4" /> Address
+                <MapPin className="w-4 h-4" /> {t("account.address")}
               </Label>
-              <Input id="address" placeholder="Street address" value={address} onChange={(e) => setAddress(e.target.value)} data-testid="input-address" />
+              <Input id="address" placeholder={isRTL ? "عنوان الشارع" : "Street address"} value={address} onChange={(e) => setAddress(e.target.value)} data-testid="input-address" />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="city" className="text-sm">City / Area</Label>
-              <Input id="city" placeholder="e.g., Salmiya, Kuwait City" value={city} onChange={(e) => setCity(e.target.value)} data-testid="input-city" />
+              <Label htmlFor="city" className="text-sm">{t("account.city")}</Label>
+              <Input id="city" placeholder={isRTL ? "مثال: السالمية، مدينة الكويت" : "e.g., Salmiya, Kuwait City"} value={city} onChange={(e) => setCity(e.target.value)} data-testid="input-city" />
             </div>
 
             <Button className="w-full" onClick={handleSaveSettings} disabled={updateProfileMutation.isPending} data-testid="button-save-settings">
-              {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+              {updateProfileMutation.isPending ? t("account.saving") : t("account.saveChanges")}
             </Button>
           </CardContent>
         </Card>
