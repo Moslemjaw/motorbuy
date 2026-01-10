@@ -7,7 +7,6 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useProducts, useCategories, useVendors } from "@/hooks/use-motorbuy";
 import { useState, useRef, useEffect } from "react";
-import carEngineImage from "@assets/stock_images/car_engine_parts_aut_6393f4c6.jpg";
 
 export default function Home() {
   const { t, isRTL } = useLanguage();
@@ -118,108 +117,57 @@ export default function Home() {
 
       <section className="relative overflow-hidden bg-background pt-16 md:pt-20 pb-16 md:pb-24">
         {/* Background blobs for visual interest */}
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl opacity-50 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-3xl opacity-50 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-50 to-white dark:from-blue-950/20 dark:to-background -z-20" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-blue-200/30 dark:bg-blue-900/20 rounded-[100%] blur-3xl -z-10 opacity-50 pointer-events-none" />
 
-        <div className="container relative z-10 px-4 mx-auto">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
-            {/* Text Content */}
-            <div className={`flex-1 text-center ${isRTL ? 'lg:text-right' : 'lg:text-left'}`}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <div className={`inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary/10 text-primary hover:bg-primary/20 mb-6 ${isRTL ? 'ml-auto' : 'mr-auto'}`}>
-                  <span className="flex h-2 w-2 rounded-full bg-primary mr-2"></span>
-                  {t("hero.badge")}
-                </div>
-                
-                <h1 className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight text-foreground ${isRTL ? 'leading-tight' : 'leading-tight'} mb-6`}>
-                  {t("hero.title")} <span className="text-primary">{t("hero.title.highlight")}</span>
-                </h1>
-                
-                <p className={`text-lg md:text-xl text-muted-foreground mb-8 max-w-xl mx-auto ${isRTL ? 'lg:mr-0' : 'lg:ml-0'} leading-relaxed`}>
-                  {t("hero.subtitle")}
-                </p>
-                
-                <div className={`flex flex-wrap gap-4 justify-center ${isRTL ? 'lg:justify-end' : 'lg:justify-start'}`}>
-                  <Link href="/products">
-                    <Button size="lg" className="rounded-full px-8 h-12 text-base font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all" data-testid="button-shop-parts">
-                      {t("hero.shopParts")} <ArrowRight className={`w-4 h-4 ${isRTL ? 'mr-2 rotate-180' : 'ml-2'}`} />
-                    </Button>
-                  </Link>
-                  <Link href="/vendors">
-                    <Button size="lg" variant="outline" className="rounded-full px-8 h-12 text-base font-semibold border-input bg-background hover:bg-accent hover:text-accent-foreground" data-testid="button-browse-vendors">
-                      {t("hero.browseVendors")}
-                    </Button>
-                  </Link>
-                </div>
-
-                {/* Stats Row */}
-                <div className={`flex flex-wrap gap-8 md:gap-12 mt-12 pt-8 border-t border-border/50 justify-center ${isRTL ? 'lg:justify-end' : 'lg:justify-start'}`}>
-                  {stats.map((stat, i) => (
-                    <div key={i} className="text-center lg:text-left">
-                      <div className="text-3xl font-bold font-display text-foreground">{stat.value}+</div>
-                      <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mt-1">{stat.label}</div>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
+        <div className="container relative z-10 px-4 mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="max-w-4xl mx-auto"
+          >
+            <div className="inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary/10 text-primary hover:bg-primary/20 mb-6">
+              <span className="flex h-2 w-2 rounded-full bg-primary mr-2"></span>
+              {t("hero.badge")}
+            </div>
+            
+            <h1 className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight text-foreground ${isRTL ? 'leading-tight' : 'leading-tight'} mb-6`}>
+              {t("hero.title")} <span className="text-primary block mt-2">{t("hero.title.highlight")}</span>
+            </h1>
+            
+            <p className={`text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed`}>
+              {t("hero.subtitle")}
+            </p>
+            
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Link href="/products">
+                <Button size="lg" className="rounded-full px-8 h-12 text-base font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all" data-testid="button-shop-parts">
+                  {t("hero.shopParts")} <ArrowRight className={`w-4 h-4 ${isRTL ? 'mr-2 rotate-180' : 'ml-2'}`} />
+                </Button>
+              </Link>
+              <Link href="/vendors">
+                <Button size="lg" variant="outline" className="rounded-full px-8 h-12 text-base font-semibold border-input bg-background hover:bg-accent hover:text-accent-foreground" data-testid="button-browse-vendors">
+                  {t("hero.browseVendors")}
+                </Button>
+              </Link>
             </div>
 
-            {/* Hero Image */}
-            <div className="flex-1 w-full max-w-xl lg:max-w-none">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.7, delay: 0.2 }}
-                className="relative"
-              >
-                <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/10 aspect-square lg:aspect-[4/3]">
-                   <img 
-                    src={carEngineImage} 
-                    alt="Car Engine" 
-                    className="w-full h-full object-cover"
-                   />
-                   {/* Overlay gradient */}
-                   <div className="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent pointer-events-none" />
+            {/* Stats Row */}
+            <div className="flex flex-wrap gap-8 md:gap-16 mt-16 justify-center">
+              {stats.map((stat, i) => (
+                <div key={i} className="flex flex-col items-center">
+                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-3">
+                    <stat.icon className="w-8 h-8" />
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold font-display text-foreground">{stat.value}+</div>
+                    <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mt-1">{stat.label}</div>
+                  </div>
                 </div>
-                
-                {/* Floating Badge 1 */}
-                <motion.div 
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5, duration: 0.5 }}
-                  className={`absolute -bottom-6 ${isRTL ? '-right-6 md:-right-8' : '-left-6 md:-left-8'} md:bottom-8 bg-card p-4 rounded-2xl shadow-xl border flex items-center gap-4 z-20 max-w-[200px]`}
-                >
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
-                    <ShieldCheck className="w-5 h-5" />
-                  </div>
-                  <div className={isRTL ? "text-right" : "text-left"}>
-                    <div className="font-bold text-sm">{t("feature.quality")}</div>
-                    <div className="text-xs text-muted-foreground">{t("hero.badge.quality")}</div>
-                  </div>
-                </motion.div>
-
-                 {/* Floating Badge 2 */}
-                 <motion.div 
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.7, duration: 0.5 }}
-                  className={`absolute -top-6 ${isRTL ? '-left-6 md:-left-8' : '-right-6 md:-right-8'} md:top-8 bg-card p-4 rounded-2xl shadow-xl border flex items-center gap-4 z-20 max-w-[200px]`}
-                >
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-                    <Truck className="w-5 h-5" />
-                  </div>
-                  <div className={isRTL ? "text-right" : "text-left"}>
-                    <div className="font-bold text-sm">{t("feature.delivery")}</div>
-                    <div className="text-xs text-muted-foreground">{t("hero.badge.delivery")}</div>
-                  </div>
-                </motion.div>
-              </motion.div>
+              ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
