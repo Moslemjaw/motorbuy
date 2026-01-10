@@ -7,6 +7,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { ArrowRight, Shield, ChevronRight, Users, Package, TrendingUp, Cog, Settings, CircleStop, Gauge, Zap, Thermometer, Fuel, Wind, Car, Armchair, Circle, Lightbulb, Droplets, Wrench, Truck, Headphones, CreditCard, Megaphone, ChevronLeft, type LucideIcon } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 
 const iconMap: Record<string, LucideIcon> = {
   Cog, Settings, CircleStop, Gauge, Zap, Thermometer, Fuel, Wind, Car, Armchair, Circle, Lightbulb, Droplets, Wrench
@@ -33,6 +34,60 @@ export default function Home() {
     { icon: Headphones, title: t("feature.support"), desc: t("feature.support.desc") },
     { icon: CreditCard, title: t("feature.secure"), desc: t("feature.secure.desc") },
   ];
+
+  const categoriesTrackRef = useRef<HTMLDivElement | null>(null);
+  const isInteractingRef = useRef(false);
+  const interactionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isInteracting, setIsInteracting] = useState(false);
+
+  const handleInteractionStart = () => {
+    setIsInteracting(true);
+    isInteractingRef.current = true;
+    if (interactionTimeoutRef.current) {
+      clearTimeout(interactionTimeoutRef.current);
+      interactionTimeoutRef.current = null;
+    }
+  };
+
+  const handleInteractionEnd = () => {
+    if (interactionTimeoutRef.current) {
+      clearTimeout(interactionTimeoutRef.current);
+    }
+    interactionTimeoutRef.current = setTimeout(() => {
+      setIsInteracting(false);
+      isInteractingRef.current = false;
+    }, 1200);
+  };
+
+  useEffect(() => {
+    const el = categoriesTrackRef.current;
+    if (!el || !categories?.length) return;
+    let frame: number;
+
+    const step = () => {
+      if (!el) return;
+      if (!isInteractingRef.current) {
+        const maxScroll = el.scrollWidth / 2;
+        const delta = isRTL ? -0.6 : 0.6;
+        el.scrollLeft += delta;
+        if (!isRTL && el.scrollLeft >= maxScroll) {
+          el.scrollLeft -= maxScroll;
+        } else if (isRTL && el.scrollLeft <= 0) {
+          el.scrollLeft += maxScroll;
+        }
+      }
+      frame = requestAnimationFrame(step);
+    };
+
+    frame = requestAnimationFrame(step);
+    return () => {
+      cancelAnimationFrame(frame);
+      if (interactionTimeoutRef.current) {
+        clearTimeout(interactionTimeoutRef.current);
+        interactionTimeoutRef.current = null;
+      }
+    };
+  }, [categories, isRTL]);
 
   return (
     <div className="min-h-screen bg-background font-body">
@@ -216,37 +271,35 @@ export default function Home() {
           {/* Mobile: Auto-scrolling Carousel (All 10 categories) */}
           {categories && categories.length > 0 ? (
             <div className="md:hidden relative -mx-4 px-4">
-              <div 
-                className={`flex gap-3 animate-scroll-categories-auto ${isRTL ? 'animate-scroll-categories-auto-rtl' : ''} hover-pause`}
-                onMouseEnter={(e) => e.currentTarget.style.animationPlayState = 'paused'}
-                onMouseLeave={(e) => e.currentTarget.style.animationPlayState = 'running'}
-                onTouchStart={(e) => e.currentTarget.style.animationPlayState = 'paused'}
-                onTouchEnd={(e) => {
-                  setTimeout(() => {
-                    e.currentTarget.style.animationPlayState = 'running';
-                  }, 1000);
-                }}
+              <div
+                className="overflow-x-auto scrollbar-hide scroll-smooth"
+                ref={categoriesTrackRef}
+                onMouseEnter={handleInteractionStart}
+                onMouseLeave={handleInteractionEnd}
+                onTouchStart={handleInteractionStart}
+                onTouchEnd={handleInteractionEnd}
               >
-                {/* Duplicate items for seamless infinite loop */}
-                {[...categories.slice(0, 10), ...categories.slice(0, 10), ...categories.slice(0, 10), ...categories.slice(0, 10)].map((cat, index) => {
-                  const IconComponent = cat.icon ? iconMap[cat.icon] : Wrench;
-                  const translatedName = t(`cat.${cat.slug}`) !== `cat.${cat.slug}` ? t(`cat.${cat.slug}`) : cat.name;
-                  return (
-                    <div
-                      key={`${cat.id}-${index}`}
-                      className="flex-shrink-0 w-[calc((100vw-2rem-0.75rem*2)/3)]"
-                    >
-                      <Link href={`/products?categoryId=${cat.id}`}>
-                        <div className="group cursor-pointer bg-card rounded-xl p-4 border hover:border-primary/30 hover:shadow-md transition-all text-center h-full flex flex-col items-center justify-center">
-                          <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
-                            {IconComponent && <IconComponent className="w-6 h-6 text-primary" />}
+                <div className="scroll-loop-track">
+                  {[...categories.slice(0, 10), ...categories.slice(0, 10)].map((cat, index) => {
+                    const IconComponent = cat.icon ? iconMap[cat.icon] : Wrench;
+                    const translatedName = t(`cat.${cat.slug}`) !== `cat.${cat.slug}` ? t(`cat.${cat.slug}`) : cat.name;
+                    return (
+                      <div
+                        key={`${cat.id}-${index}`}
+                        className="flex-shrink-0 w-[calc((100vw-2rem-0.75rem*2)/3)]"
+                      >
+                        <Link href={`/products?categoryId=${cat.id}`}>
+                          <div className="group cursor-pointer bg-card rounded-xl p-4 border hover:border-primary/30 hover:shadow-md transition-all text-center h-full flex flex-col items-center justify-center">
+                            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+                              {IconComponent && <IconComponent className="w-6 h-6 text-primary" />}
+                            </div>
+                            <h3 className="font-medium text-xs group-hover:text-primary transition-colors line-clamp-2 min-h-[2.5rem] flex items-center justify-center">{translatedName}</h3>
                           </div>
-                          <h3 className="font-medium text-xs group-hover:text-primary transition-colors line-clamp-2 min-h-[2.5rem] flex items-center justify-center">{translatedName}</h3>
-                        </div>
-                      </Link>
-                    </div>
-                  );
-                })}
+                        </Link>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
               {/* Scroll Indicator */}
               <div className="flex items-center justify-center gap-2 mt-4">
@@ -255,7 +308,7 @@ export default function Home() {
                   {categories.slice(0, 10).map((_, i) => (
                     <div
                       key={i}
-                      className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30 animate-pulse"
+                      className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30 animate-scroll-dot"
                     />
                   ))}
                 </div>
