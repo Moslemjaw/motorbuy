@@ -92,6 +92,14 @@ const en: Translations = {
   "common.cancelled": "Cancelled",
   "common.image": "Image",
   "common.error": "Error",
+  "common.logout": "Logout",
+  "common.more": "More",
+  "common.name": "Name",
+  "common.email": "Email",
+  "common.role": "Role",
+  "common.total": "Total",
+  "common.status": "Status",
+  "common.date": "Date",
   
   // Product
   "product.off": "{percent}% OFF",
@@ -387,8 +395,9 @@ const en: Translations = {
   "vendor.dashboard.loading": "Loading dashboard...",
   
   // Admin
-  "admin.dashboard.title": "Dashboard",
+  "admin.dashboard.title": "Admin Panel",
   "admin.dashboard.manage": "Manage your marketplace",
+  "admin.dashboard.welcomeBack": "Welcome back! Here's your marketplace overview.",
   "admin.dashboard.tabAnalytics": "Analytics",
   "admin.dashboard.tabVendors": "Vendors",
   "admin.dashboard.tabUsers": "Users",
@@ -404,8 +413,13 @@ const en: Translations = {
   "admin.dashboard.totalProducts": "Total Products",
   "admin.dashboard.totalUsers": "Total Users",
   "admin.dashboard.totalVendors": "Total Vendors",
+  "admin.dashboard.activeVendors": "Active Vendors",
   "admin.dashboard.totalCategories": "Total Categories",
   "admin.dashboard.vendorManagement": "Vendor Management",
+  "admin.dashboard.outstanding": "Outstanding",
+  "admin.dashboard.balance": "Balance",
+  "admin.dashboard.requestPay": "Request Pay",
+  "admin.dashboard.orderId": "Order ID",
   "admin.dashboard.addVendor": "Add Vendor",
   "admin.dashboard.createVendor": "Create New Vendor",
   "admin.dashboard.storeName": "Store name",
@@ -450,6 +464,8 @@ const en: Translations = {
   "admin.dashboard.requestUpdated": "Request Updated",
   "admin.dashboard.requestUpdatedDesc": "Vendor request has been updated successfully",
   "admin.dashboard.error": "Error",
+  "admin.dashboard.requestStatus": "Pending",
+  "admin.dashboard.requestedBy": "Requested By",
   
   // Auth Dashboard Buttons
   "auth.goToVendorDashboard": "Go To Vendor Dashboard",
@@ -1088,7 +1104,9 @@ const ar: Translations = {
   "admin.dashboard.totalProducts": "إجمالي المنتجات",
   "admin.dashboard.totalUsers": "إجمالي المستخدمين",
   "admin.dashboard.totalVendors": "إجمالي البائعين",
+  "admin.dashboard.activeVendors": "الموردين النشطين",
   "admin.dashboard.totalCategories": "إجمالي الفئات",
+  "admin.dashboard.welcomeBack": "مرحباً بعودتك! إليك نظرة عامة على السوق.",
   "admin.dashboard.vendorManagement": "إدارة البائعين",
   "admin.dashboard.addVendor": "إضافة بائع",
   "admin.dashboard.createVendor": "إنشاء بائع جديد",
@@ -1134,6 +1152,8 @@ const ar: Translations = {
   "admin.dashboard.requestUpdated": "تم تحديث الطلب",
   "admin.dashboard.requestUpdatedDesc": "تم تحديث طلب المورد بنجاح",
   "admin.dashboard.error": "خطأ",
+  "admin.dashboard.requestStatus": "قيد الانتظار",
+  "admin.dashboard.requestedBy": "طلب من",
   
   // Auth Dashboard Buttons
   "auth.goToVendorDashboard": "الذهاب إلى لوحة تحكم المورد",

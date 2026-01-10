@@ -51,6 +51,7 @@ import { useLanguage } from "@/lib/i18n";
 import { formatKWD } from "@/lib/currency";
 import carLogo from "@assets/image_2026-01-09_142631252-removebg-preview_1767958016384.png";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Navbar } from "@/components/Navbar";
 
 function buildApiUrl(path: string) {
   return path.startsWith("/") ? path : `/${path}`;
@@ -89,13 +90,15 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Desktop Sidebar */}
-      <aside className={`hidden lg:flex flex-col w-64 bg-white border-r border-gray-200 sticky top-0 h-screen overflow-y-auto`}>
-        <div className="p-6 flex flex-col items-center border-b border-gray-100">
-          <img src={carLogo} alt="MotorBuy" className="h-12 mb-2" />
-          <span className="font-display font-bold text-xl text-primary">Admin Panel</span>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="flex">
+        {/* Desktop Sidebar */}
+        <aside className={`hidden lg:flex flex-col w-64 bg-white border-r border-gray-200 sticky top-0 h-screen overflow-y-auto`}>
+          <div className="p-6 flex flex-col items-center border-b border-gray-100">
+            <img src={carLogo} alt="MotorBuy" className="h-12 mb-2" />
+            <span className="font-display font-bold text-xl text-primary">{t("admin.dashboard.title")}</span>
+          </div>
         
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map((item) => (
@@ -126,7 +129,7 @@ export default function AdminDashboard() {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto pb-20 lg:pb-0 lg:pt-0">
+      <div className="flex-1 overflow-y-auto pb-20 lg:pb-0 lg:pt-16">
         <div className="container mx-auto px-4 py-4 lg:py-6">
           {/* Header */}
           <div className={`mb-4 ${isRTL ? "text-right" : "text-left"}`}>
@@ -445,7 +448,7 @@ function VendorsSection() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <h2 className="text-xl font-semibold">Vendor Management</h2>
+        <h2 className="text-xl font-semibold">{t("admin.dashboard.vendorManagement")}</h2>
         <Button
           onClick={() => setShowCreateForm(!showCreateForm)}
           data-testid="button-add-vendor"
@@ -537,10 +540,10 @@ function VendorsSection() {
                               vendor.isApproved ? "default" : "secondary"
                             }
                           >
-                            {vendor.isApproved ? "Approved" : "Pending"}
+                            {vendor.isApproved ? t("admin.dashboard.approved") : t("admin.dashboard.pending")}
                           </Badge>
                           {vendor.hasPendingRequest && (
-                            <Badge variant="destructive">Payout Request</Badge>
+                            <Badge variant="destructive">{t("admin.dashboard.payoutRequest")}</Badge>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground line-clamp-1">
@@ -552,7 +555,7 @@ function VendorsSection() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-6">
                       <div className="bg-muted/50 rounded-lg p-3 text-center">
                         <div className="text-xs text-muted-foreground mb-1">
-                          Commission
+                          {t("admin.dashboard.commission")}
                         </div>
                         {editingVendor === vendor.id ? (
                           <div className="flex items-center gap-1 justify-center">
@@ -622,7 +625,7 @@ function VendorsSection() {
 
                       <div className="bg-muted/50 rounded-lg p-3 text-center">
                         <div className="text-xs text-muted-foreground mb-1">
-                          Gross Sales
+                          {t("admin.dashboard.grossSales")}
                         </div>
                         <div className="font-semibold text-sm">
                           {parseFloat(vendor.grossSalesKwd || "0").toFixed(3)}
@@ -642,7 +645,7 @@ function VendorsSection() {
                         }`}
                       >
                         <div className="text-xs text-muted-foreground mb-1">
-                          {isNegative ? "Outstanding" : "Balance"}
+                          {isNegative ? t("admin.dashboard.outstanding") : t("admin.dashboard.balance")}
                         </div>
                         <div
                           className={`font-semibold text-sm ${
@@ -664,7 +667,7 @@ function VendorsSection() {
                              variant="destructive"
                              onClick={() => toast({ title: "Feature coming soon", description: "Payment request to vendor email." })}
                            >
-                             Request Pay
+                             {t("admin.dashboard.requestPay")}
                            </Button>
                         ) : balance > 0 ? (
                           <Button
@@ -679,7 +682,7 @@ function VendorsSection() {
                             ) : (
                               <DollarSign className="w-3 h-3 mr-1" />
                             )}
-                            Payout
+                            {t("admin.dashboard.processPayout")}
                           </Button>
                         ) : (
                             <span className="text-xs text-muted-foreground">-</span>
@@ -807,11 +810,11 @@ function OrdersSection() {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Order ID</TableHead>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Total</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Date</TableHead>
+                        <TableHead>{t("admin.dashboard.orderId")}</TableHead>
+                        <TableHead>{t("admin.dashboard.customer")}</TableHead>
+                        <TableHead>{t("common.total")}</TableHead>
+                        <TableHead>{t("common.status")}</TableHead>
+                        <TableHead>{t("common.date")}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -902,8 +905,8 @@ function CategoriesSection() {
                     <CardTitle>{t("admin.dashboard.createCategory")}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex gap-4">
-                    <Input placeholder="Name" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} />
-                    <Input placeholder="Slug" value={newCategorySlug} onChange={e => setNewCategorySlug(e.target.value)} />
+                    <Input placeholder={t("admin.dashboard.categoryName")} value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} />
+                    <Input placeholder={t("admin.dashboard.categorySlug")} value={newCategorySlug} onChange={e => setNewCategorySlug(e.target.value)} />
                     <Button onClick={() => createCategoryMutation.mutate({ name: newCategoryName, slug: newCategorySlug })}>
                         <Plus className="w-4 h-4" />
                     </Button>
@@ -1087,10 +1090,10 @@ function PayoutsSection() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Vendor</TableHead>
-                            <TableHead>Amount</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Date</TableHead>
+                            <TableHead>{t("admin.dashboard.tabVendors")}</TableHead>
+                            <TableHead>{t("dashboard.amount")}</TableHead>
+                            <TableHead>{t("common.status")}</TableHead>
+                            <TableHead>{t("common.date")}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
