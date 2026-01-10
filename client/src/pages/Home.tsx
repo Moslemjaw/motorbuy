@@ -178,7 +178,7 @@ export default function Home() {
       },
       {
         label: t("stats.vendors"),
-        value: vendors?.filter((v) => v.isApproved).length || 0,
+        value: vendors?.length || 0,
         icon: Users,
       },
       {
@@ -192,12 +192,13 @@ export default function Home() {
 
   // Compute vendors with ads indicator
   const vendorsWithAds = useMemo(() => {
-    const approvedVendors = vendors?.filter((v) => v.isApproved) || [];
+    // Show all vendors (not just approved) for now
+    const allVendors = vendors || [];
     const vendorIdsWithAds = new Set(
       stories?.map((story) => story.vendorId) || []
     );
 
-    return approvedVendors
+    return allVendors
       .map((vendor) => ({
         ...vendor,
         hasAd: vendorIdsWithAds.has(vendor.id),
