@@ -949,11 +949,14 @@ export async function registerRoutes(
         city: req.body.customerCity,
       };
 
+      const paymentMethod = req.body.paymentMethod || "cod";
+
       const order = await storage.createOrder(
         req.session.userId,
         total.toFixed(3),
         items,
-        customerInfo
+        customerInfo,
+        paymentMethod
       );
       await storage.clearCart(req.session.userId);
       res.status(201).json(order);

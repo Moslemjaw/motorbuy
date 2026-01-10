@@ -177,8 +177,8 @@ export default function AuthPage() {
   if (isAuthenticated && user) {
     // If role is customer, redirect immediately (no auth page content)
     if (roleData?.role === "customer") {
-      // Redirect is handled by useEffect, but show loading page while it happens
-      return <LoadingPage message="Redirecting to home..." />;
+      // Return null instead of LoadingPage to avoid potential rendering issues during redirect
+      return null;
     }
     // If role is loading, show loading page (might be customer)
     if (isRoleLoading) {

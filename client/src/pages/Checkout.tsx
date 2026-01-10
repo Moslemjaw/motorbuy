@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCart, useCreateOrder } from "@/hooks/use-motorbuy";
 import { useLanguage } from "@/lib/i18n";
-import { ShoppingBag, Loader2, ArrowRight, ArrowLeft, CheckCircle } from "lucide-react";
+import { ShoppingBag, Loader2, ArrowRight, ArrowLeft, CheckCircle, CreditCard, Banknote } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { formatKWD } from "@/lib/currency";
@@ -26,6 +27,9 @@ export default function Checkout() {
   const { t, isRTL } = useLanguage();
   const queryClient = useQueryClient();
 
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [successOrder, setSuccessOrder] = useState<any>(null);
+
   // Form state
   const [formData, setFormData] = useState({
     name: user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : "",
@@ -34,6 +38,8 @@ export default function Checkout() {
     address: user?.address || "",
     city: user?.city || "",
   });
+
+  const [paymentMethod, setPaymentMethod] = useState("cod");
 
   // Redirect to auth if not authenticated
   if (!isAuthenticated && !isCartLoading) {
@@ -71,7 +77,7 @@ export default function Checkout() {
     }
 
     try {
-      // Create order with customer information
+      // Create order with customer information and payment method
       const res = await fetch(buildApiUrl(api.orders.create.path), {
         method: api.orders.create.method,
         headers: { "Content-Type": "application/json" },
@@ -82,6 +88,7 @@ export default function Checkout() {
           customerPhone: formData.phone,
           customerAddress: formData.address,
           customerCity: formData.city,
+          paymentMethod: paymentMethod,
         }),
       });
 
@@ -96,14 +103,10 @@ export default function Checkout() {
       queryClient.invalidateQueries({ queryKey: [api.orders.list.path] });
       queryClient.invalidateQueries({ queryKey: [api.cart.get.path] });
 
-      toast({
-        title: "Order Placed Successfully!",
-        description: "Your order has been received and will be processed soon.",
-      });
+      setSuccessOrder(order);
+      setIsSuccess(true);
+      window.scrollTo(0, 0);
 
-      setTimeout(() => {
-        setLocation("/orders");
-      }, 1500);
     } catch (error: any) {
       toast({
         title: "Checkout Error",
@@ -118,6 +121,72 @@ export default function Checkout() {
       <div className="min-h-screen bg-background">
         <Navbar />
         <LoadingPage message="Loading checkout..." />
+      </div>
+    );
+  }
+
+  if (isSuccess && successOrder) {
+    return (
+      <div className="min-h-screen bg-background font-body">
+        <Navbar />
+        <div className="container mx-auto px-4 py-16">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="max-w-2xl mx-auto text-center space-y-8"
+          >
+            <div className="w-24 h-24 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
+            </div>
+            
+            <h1 className="text-3xl md:text-4xl font-display font-bold text-green-600 dark:text-green-400">
+              Order Placed Successfully!
+            </h1>
+            
+            <p className="text-muted-foreground text-lg">
+              Thank you for your purchase. Your order has been received and will be processed soon.
+            </p>
+
+            <Card className="text-left border-2 border-green-100 dark:border-green-900/30">
+              <CardHeader>
+                <CardTitle>Order Details</CardTitle>
+                <CardDescription>Order #{successOrder.id.slice(-8)}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-muted-foreground">Total Amount</span>
+                  <span className="font-bold text-lg">{formatKWD(successOrder.total)}</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-muted-foreground">Payment Method</span>
+                  <span className="font-medium capitalize">
+                    {successOrder.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment'}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-muted-foreground block mb-1">Shipping To</span>
+                  <p className="font-medium">{successOrder.customerName || successOrder.guestName}</p>
+                  <p>{successOrder.customerAddress}</p>
+                  <p>{successOrder.customerCity}</p>
+                  <p>{successOrder.customerPhone || successOrder.guestPhone}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/products">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                  Continue Shopping
+                </Button>
+              </Link>
+              <Link href="/orders">
+                <Button size="lg" className="w-full sm:w-auto">
+                  View My Orders
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
+        </div>
       </div>
     );
   }
@@ -157,14 +226,14 @@ export default function Checkout() {
         </motion.div>
 
         <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
             <Card className="p-6 md:p-8 rounded-2xl shadow-xl border-2 border-primary/10">
               <CardHeader className="pb-6">
                 <CardTitle className="text-2xl">Shipping Information</CardTitle>
                 <CardDescription>Please provide your delivery details</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form id="checkout-form" onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid gap-2">
                     <Label htmlFor="name">Full Name <span className="text-destructive">*</span></Label>
                     <Input
@@ -229,24 +298,40 @@ export default function Checkout() {
                       disabled={isOrdering}
                     />
                   </div>
-
-                  <Button 
-                    type="submit" 
-                    className="w-full h-14 text-lg rounded-xl shadow-lg shadow-primary/20 mt-6" 
-                    disabled={isOrdering}
-                  >
-                    {isOrdering ? (
-                      <>
-                        <Loader2 className="animate-spin w-5 h-5 mr-2" />
-                        Processing Order...
-                      </>
-                    ) : (
-                      <>
-                        Place Order <ArrowIcon className={`w-5 h-5 ${isRTL ? 'mr-2' : 'ml-2'}`} />
-                      </>
-                    )}
-                  </Button>
                 </form>
+              </CardContent>
+            </Card>
+
+            <Card className="p-6 md:p-8 rounded-2xl shadow-xl border-2 border-primary/10">
+              <CardHeader className="pb-6">
+                <CardTitle className="text-2xl">Payment Method</CardTitle>
+                <CardDescription>Select how you would like to pay</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <RadioGroupItem value="cod" id="cod" className="peer sr-only" />
+                    <Label
+                      htmlFor="cod"
+                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full"
+                    >
+                      <Banknote className="mb-3 h-6 w-6" />
+                      <span className="font-semibold">Cash on Delivery</span>
+                      <span className="text-xs text-muted-foreground mt-1">Pay when you receive</span>
+                    </Label>
+                  </div>
+                  <div>
+                    <RadioGroupItem value="online" id="online" className="peer sr-only" disabled />
+                    <Label
+                      htmlFor="online"
+                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-not-allowed opacity-60 h-full"
+                    >
+                      <CreditCard className="mb-3 h-6 w-6" />
+                      <span className="font-semibold">Online Payment</span>
+                      <span className="text-xs text-muted-foreground mt-1">Coming Soon</span>
+                    </Label>
+                  </div>
+                </RadioGroup>
               </CardContent>
             </Card>
           </div>
@@ -285,6 +370,24 @@ export default function Checkout() {
                     <span className="font-bold text-2xl text-primary">{formatKWD(total)}</span>
                   </div>
                 </div>
+
+                <Button 
+                  type="submit"
+                  form="checkout-form"
+                  className="w-full h-14 text-lg rounded-xl shadow-lg shadow-primary/20 mt-6" 
+                  disabled={isOrdering}
+                >
+                  {isOrdering ? (
+                    <>
+                      <Loader2 className="animate-spin w-5 h-5 mr-2" />
+                      Processing Order...
+                    </>
+                  ) : (
+                    <>
+                      Place Order <ArrowIcon className={`w-5 h-5 ${isRTL ? 'mr-2' : 'ml-2'}`} />
+                    </>
+                  )}
+                </Button>
               </CardContent>
             </Card>
           </div>
@@ -293,4 +396,3 @@ export default function Checkout() {
     </div>
   );
 }
-

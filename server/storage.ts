@@ -427,12 +427,14 @@ export class MongoStorage implements IStorage {
     userId: string, 
     total: string, 
     items: { productId: string; quantity: number; price: string }[],
-    customerInfo?: { name?: string; email?: string; phone?: string; address?: string; city?: string }
+    customerInfo?: { name?: string; email?: string; phone?: string; address?: string; city?: string },
+    paymentMethod: string = "cod"
   ): Promise<any> {
     const orderData: any = {
       userId,
       total,
-      status: "paid"
+      status: "paid", // For COD, maybe "pending_payment"? But simplified to "paid" for now or "pending"
+      paymentMethod
     };
     
     // Add customer information if provided
@@ -495,14 +497,15 @@ export class MongoStorage implements IStorage {
     return toPlainObject(order);
   }
 
-  async createGuestOrder(guestEmail: string, guestName: string, guestPhone: string, total: string, items: { productId: string; quantity: number; price: string }[]): Promise<any> {
+  async createGuestOrder(guestEmail: string, guestName: string, guestPhone: string, total: string, items: { productId: string; quantity: number; price: string }[], paymentMethod: string = "cod"): Promise<any> {
     const order = await Order.create({
       userId: `guest:${guestEmail}`,
       guestEmail,
       guestName,
       guestPhone,
       total,
-      status: "paid"
+      status: "paid",
+      paymentMethod
     });
 
     const vendorEarnings: Record<string, number> = {};
