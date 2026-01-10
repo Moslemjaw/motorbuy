@@ -343,6 +343,89 @@ export async function registerRoutes(
     }
   );
 
+  // Vendor Requests Management
+  app.get("/api/admin/vendor-requests", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      const requests = await storage.getVendorRequests();
+      res.json(requests);
+    } catch (e) {
+      console.error("Error fetching vendor requests:", e);
+      res.status(500).json({ message: "Failed to fetch vendor requests" });
+    }
+  });
+
+  app.patch("/api/admin/vendor-requests/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { status, notes } = req.body;
+      if (!["pending", "approved", "rejected"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+
+      // Get the request
+      const requests = await storage.getVendorRequests();
+      const request = requests.find(r => r.id === req.params.id);
+      if (!request) {
+        return res.status(404).json({ message: "Request not found" });
+      }
+
+      // Update the request
+      const { VendorRequest } = await import("./mongodb");
+      const updated = await VendorRequest.findByIdAndUpdate(
+        req.params.id,
+        {
+          status,
+          notes,
+          processedBy: req.session.userId,
+          processedAt: new Date(),
+        },
+        { new: true }
+      );
+
+      // If approved, create vendor profile and update user role
+      if (status === "approved") {
+        const user = await (await import("./mongodb")).User.findById(request.userId);
+        if (user) {
+          await storage.setUserRole(request.userId, "vendor");
+          
+          // Check if vendor profile already exists
+          const existingVendor = await storage.getVendorByUserId(request.userId);
+          if (!existingVendor) {
+            await storage.createVendor({
+              userId: request.userId,
+              storeName: request.companyName,
+              description: `Contact: ${request.phone}, ${request.email}`,
+              isApproved: true,
+            });
+          }
+        }
+      }
+
+      res.json(updated ? {
+        id: updated._id.toString(),
+        userId: updated.userId,
+        companyName: updated.companyName,
+        phone: updated.phone,
+        email: updated.email,
+        status: updated.status,
+        notes: updated.notes,
+        createdAt: updated.createdAt,
+        processedAt: updated.processedAt,
+      } : null);
+    } catch (e: any) {
+      console.error("Error updating vendor request:", e);
+      res.status(500).json({ message: e.message || "Failed to update vendor request" });
+    }
+  });
+
   app.post("/api/admin/vendors", isAuthenticated, async (req: any, res) => {
     try {
       const role = await storage.getUserRole(req.session.userId);

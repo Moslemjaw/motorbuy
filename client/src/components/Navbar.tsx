@@ -62,7 +62,7 @@ export function Navbar() {
             )}
           </Link>
           
-          <div className="hidden md:flex gap-6">
+          <div className="hidden md:flex gap-6 items-center">
             {navLinks.slice(1).map((link) => (
               <Link 
                 key={link.href}
@@ -72,6 +72,14 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
+            {(!isAuthenticated || (role !== 'vendor' && role !== 'admin')) && (
+              <Link href="/become-vendor">
+                <Button size="sm" variant="outline" className="gap-2">
+                  <Store className="h-4 w-4" />
+                  {t("account.becomeVendor")}
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
@@ -144,6 +152,12 @@ export function Navbar() {
                           <span>{t("customer.orders")}</span>
                         </DropdownMenuItem>
                       </Link>
+                      <Link href="/become-vendor">
+                        <DropdownMenuItem>
+                          <Store className="mr-2 h-4 w-4" />
+                          <span>{t("account.becomeVendor")}</span>
+                        </DropdownMenuItem>
+                      </Link>
                     </>
                   )}
                   
@@ -197,6 +211,14 @@ export function Navbar() {
                           </div>
                         </Link>
                       ))}
+                      {(!isAuthenticated || (role !== 'vendor' && role !== 'admin')) && (
+                        <Link href="/become-vendor" onClick={closeSheet}>
+                          <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted">
+                            <Store className="w-5 h-5" />
+                            <span className="font-medium">{t("account.becomeVendor")}</span>
+                          </div>
+                        </Link>
+                      )}
                     </div>
                     
                     {isAuthenticated && (
@@ -233,6 +255,12 @@ export function Navbar() {
                                 <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted">
                                   <Package className="w-5 h-5" />
                                   <span className="font-medium">{t("customer.orders")}</span>
+                                </div>
+                              </Link>
+                              <Link href="/become-vendor" onClick={closeSheet}>
+                                <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted">
+                                  <Store className="w-5 h-5" />
+                                  <span className="font-medium">{t("account.becomeVendor")}</span>
                                 </div>
                               </Link>
                             </>

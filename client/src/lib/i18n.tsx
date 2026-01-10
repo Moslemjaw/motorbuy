@@ -40,7 +40,7 @@ const en: Translations = {
   "section.categories.subtitle": "Find exactly what your vehicle needs",
   "section.newArrivals": "New Arrivals",
   "section.newArrivals.subtitle": "Fresh stock from our top vendors",
-  "section.ads": "Vendor Ads",
+  "section.ads": "Featured Ads",
   "section.ads.subtitle": "Featured promotions and updates from our vendors",
   "section.featuredAds": "Featured Ads",
   "section.featuredAds.subtitle": "Latest promotions and deals from our trusted vendors",
@@ -372,6 +372,7 @@ const en: Translations = {
   "admin.dashboard.tabAds": "Ads",
   "admin.dashboard.tabOrders": "Orders",
   "admin.dashboard.tabPayouts": "Payouts",
+  "admin.dashboard.tabVendorRequests": "Vendor Requests",
   "admin.dashboard.recentOrders": "Recent Orders",
   "admin.dashboard.noOrders": "No orders yet.",
   "admin.dashboard.totalRevenue": "Total Revenue",
@@ -410,6 +411,21 @@ const en: Translations = {
   "admin.dashboard.noPayoutRequests": "No pending payout requests.",
   "admin.dashboard.requested": "Requested",
   "admin.dashboard.processPayout": "Pay Vendor",
+  "admin.dashboard.tabVendorRequests": "Vendor Requests",
+  "admin.dashboard.vendorRequests": "Vendor Registration Requests",
+  "admin.dashboard.vendorRequestsDesc": "Review and manage vendor registration requests from customers",
+  "admin.dashboard.pendingRequests": "Pending Requests",
+  "admin.dashboard.processedRequests": "Processed Requests",
+  "admin.dashboard.noPendingRequests": "No pending vendor requests",
+  "admin.dashboard.phone": "Phone",
+  "admin.dashboard.email": "Email",
+  "admin.dashboard.requestedOn": "Requested On",
+  "admin.dashboard.processedOn": "Processed On",
+  "admin.dashboard.approve": "Approve",
+  "admin.dashboard.reject": "Reject",
+  "admin.dashboard.requestUpdated": "Request Updated",
+  "admin.dashboard.requestUpdatedDesc": "Vendor request has been updated successfully",
+  "admin.dashboard.error": "Error",
   
   // Auth Dashboard Buttons
   "auth.goToVendorDashboard": "Go To Vendor Dashboard",
@@ -468,7 +484,7 @@ const en: Translations = {
   "vendors.location": "Kuwait",
   
   // Ads Page
-  "ads.title": "Vendor Ads",
+  "ads.title": "Featured Ads",
   "ads.subtitle": "Latest updates, promotions, and announcements from our trusted vendors.",
   "ads.feedBadge": "Latest Ads",
   "ads.noAds": "No ads yet",
@@ -477,7 +493,7 @@ const en: Translations = {
   "ads.recently": "Recently",
   "ads.noContent": "No content",
   // Legacy stories keys (for compatibility)
-  "stories.title": "Vendor Ads",
+  "stories.title": "Featured Ads",
   "stories.subtitle": "Latest updates, promotions, and announcements from our trusted vendors.",
   "stories.feedBadge": "Latest Ads",
   "stories.noStories": "No ads yet",
@@ -691,7 +707,7 @@ const ar: Translations = {
   "section.categories.subtitle": "اعثر على ما تحتاجه سيارتك بالضبط",
   "section.newArrivals": "وصل حديثاً",
   "section.newArrivals.subtitle": "مخزون جديد من أفضل موردينا",
-  "section.ads": "اعلانات الموردين",
+  "section.ads": "الإعلانات المميزة",
   "section.ads.subtitle": "اعلانات ترويجية وتحديثات مميزة من موردينا",
   "section.featuredAds": "الإعلانات المميزة",
   "section.featuredAds.subtitle": "أحدث العروض والصفقات من موردينا الموثوقين",
@@ -1119,7 +1135,7 @@ const ar: Translations = {
   "vendors.location": "الكويت",
   
   // Ads Page
-  "ads.title": "اعلانات الموردين",
+  "ads.title": "الإعلانات المميزة",
   "ads.subtitle": "آخر التحديثات والعروض الترويجية والإعلانات من موردينا الموثوقين.",
   "ads.feedBadge": "آخر الإعلانات",
   "ads.noAds": "لا توجد إعلانات حتى الآن",
@@ -1128,7 +1144,7 @@ const ar: Translations = {
   "ads.recently": "مؤخراً",
   "ads.noContent": "لا يوجد محتوى",
   // Legacy stories keys (for compatibility)
-  "stories.title": "اعلانات الموردين",
+  "stories.title": "الإعلانات المميزة",
   "stories.subtitle": "آخر التحديثات والعروض الترويجية والإعلانات من موردينا الموثوقين.",
   "stories.feedBadge": "آخر الإعلانات",
   "stories.noStories": "لا توجد إعلانات حتى الآن",

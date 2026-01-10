@@ -34,6 +34,7 @@ import {
   Trash2,
   UserCog,
   BookOpen,
+  FileText,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -104,6 +105,7 @@ export default function AdminDashboard() {
         "ads",
         "orders",
         "payouts",
+        "vendor-requests",
       ].includes(hash)
     ) {
       return hash;
@@ -174,6 +176,11 @@ export default function AdminDashboard() {
       icon: DollarSign,
       label: t("admin.dashboard.tabPayouts"),
     },
+    {
+      value: "vendor-requests",
+      icon: FileText,
+      label: t("admin.dashboard.tabVendorRequests"),
+    },
   ];
 
   return (
@@ -236,6 +243,7 @@ export default function AdminDashboard() {
               {activeTab === "ads" && <AdsSection />}
               {activeTab === "orders" && <OrdersSection />}
               {activeTab === "payouts" && <PayoutsSection />}
+              {activeTab === "vendor-requests" && <VendorRequestsSection />}
             </div>
           </div>
         </div>
@@ -1690,6 +1698,184 @@ function PayoutsSection() {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function VendorRequestsSection() {
+  const { t, isRTL } = useLanguage();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  interface VendorRequest {
+    id: string;
+    userId: string;
+    companyName: string;
+    phone: string;
+    email: string;
+    status: string;
+    notes?: string;
+    createdAt: string;
+    processedAt?: string;
+  }
+
+  const { data: requests, isLoading } = useQuery<VendorRequest[]>({
+    queryKey: ["/api/admin/vendor-requests"],
+    queryFn: async () => {
+      const res = await fetch(buildApiUrl("/api/admin/vendor-requests"), {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch vendor requests");
+      return res.json();
+    },
+  });
+
+  const updateRequestMutation = useMutation({
+    mutationFn: async ({ id, status, notes }: { id: string; status: string; notes?: string }) => {
+      const res = await apiRequest("PATCH", `/api/admin/vendor-requests/${id}`, { status, notes });
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.message || "Failed to update request");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/vendor-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/vendors/financials"] });
+      toast({
+        title: t("admin.dashboard.requestUpdated"),
+        description: t("admin.dashboard.requestUpdatedDesc"),
+      });
+    },
+    onError: (err: Error) => {
+      toast({
+        title: t("admin.dashboard.error"),
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="animate-spin w-8 h-8" />
+      </div>
+    );
+  }
+
+  const pendingRequests = requests?.filter(r => r.status === "pending") || [];
+  const processedRequests = requests?.filter(r => r.status !== "pending") || [];
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-display font-bold mb-2">{t("admin.dashboard.vendorRequests")}</h2>
+        <p className="text-muted-foreground">{t("admin.dashboard.vendorRequestsDesc")}</p>
+      </div>
+
+      {/* Pending Requests */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("admin.dashboard.pendingRequests")} ({pendingRequests.length})</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {pendingRequests.length === 0 ? (
+            <p className="text-center text-muted-foreground py-12">
+              {t("admin.dashboard.noPendingRequests")}
+            </p>
+          ) : (
+            <div className="divide-y">
+              {pendingRequests.map((request) => (
+                <div
+                  key={request.id}
+                  className="p-4 space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg mb-2">{request.companyName}</h3>
+                      <div className="space-y-1 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{t("admin.dashboard.phone")}:</span>
+                          <span>{request.phone}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{t("admin.dashboard.email")}:</span>
+                          <span>{request.email}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{t("admin.dashboard.requestedOn")}:</span>
+                          <span>{new Date(request.createdAt).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <Badge variant="secondary">{t("admin.dashboard.pending")}</Badge>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => updateRequestMutation.mutate({ id: request.id, status: "approved" })}
+                      disabled={updateRequestMutation.isPending}
+                      className="flex-1"
+                    >
+                      <CheckCircle className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+                      {t("admin.dashboard.approve")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => updateRequestMutation.mutate({ id: request.id, status: "rejected" })}
+                      disabled={updateRequestMutation.isPending}
+                      className="flex-1"
+                    >
+                      <X className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+                      {t("admin.dashboard.reject")}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Processed Requests */}
+      {processedRequests.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("admin.dashboard.processedRequests")} ({processedRequests.length})</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y">
+              {processedRequests.map((request) => (
+                <div
+                  key={request.id}
+                  className="p-4"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <h3 className="font-semibold mb-2">{request.companyName}</h3>
+                      <div className="space-y-1 text-sm text-muted-foreground">
+                        <div>{request.phone}</div>
+                        <div>{request.email}</div>
+                        <div className="text-xs">
+                          {t("admin.dashboard.requestedOn")}: {new Date(request.createdAt).toLocaleDateString()}
+                          {request.processedAt && (
+                            <> • {t("admin.dashboard.processedOn")}: {new Date(request.processedAt).toLocaleDateString()}</>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <Badge variant={request.status === "approved" ? "default" : "destructive"}>
+                      {request.status === "approved" ? t("admin.dashboard.approved") : t("admin.dashboard.rejected")}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
