@@ -127,7 +127,7 @@ export default function Home() {
               <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">{t("section.categories")}</h2>
               <p className="text-muted-foreground text-sm md:text-base">{t("section.categories.subtitle")}</p>
             </div>
-            <Link href="/products" className={`text-primary text-sm font-medium flex items-center gap-1 group ${isRTL ? 'justify-center md:justify-start order-first md:order-none' : 'justify-center md:justify-start'}`}>
+            <Link href="/products" className={`text-primary text-sm font-medium flex items-center gap-1 group ${isRTL ? 'justify-center md:justify-end order-first md:order-last' : 'justify-center md:justify-start'}`}>
               {t("common.viewAll")} <ChevronRight className={`w-4 h-4 transition-transform ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
             </Link>
           </div>
@@ -170,7 +170,7 @@ export default function Home() {
               <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">{t("section.newArrivals")}</h2>
               <p className="text-muted-foreground text-sm md:text-base">{t("section.newArrivals.subtitle")}</p>
             </div>
-            <Link href="/products" className={`text-primary text-sm font-medium flex items-center gap-1 group ${isRTL ? 'justify-center md:justify-start order-first md:order-none' : 'justify-center md:justify-start'}`}>
+            <Link href="/products" className={`text-primary text-sm font-medium flex items-center gap-1 group ${isRTL ? 'justify-center md:justify-end order-first md:order-last' : 'justify-center md:justify-start'}`}>
               {t("common.viewAll")} <ChevronRight className={`w-4 h-4 transition-transform ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
             </Link>
           </div>
@@ -202,7 +202,7 @@ export default function Home() {
               <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">{t("section.featuredAds")}</h2>
               <p className="text-muted-foreground text-sm md:text-base">{t("section.featuredAds.subtitle")}</p>
             </div>
-            <Link href="/stories" className={`text-primary text-sm font-medium flex items-center gap-1 group ${isRTL ? 'justify-center md:justify-start order-first md:order-none' : 'justify-center md:justify-start'}`}>
+            <Link href="/stories" className={`text-primary text-sm font-medium flex items-center gap-1 group ${isRTL ? 'justify-center md:justify-end order-first md:order-last' : 'justify-center md:justify-start'}`}>
               {t("common.viewAll")} <ChevronRight className={`w-4 h-4 transition-transform ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
             </Link>
           </div>

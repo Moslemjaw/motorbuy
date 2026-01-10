@@ -523,15 +523,15 @@ export default function VendorDashboard() {
       <Navbar />
       <div className="container mx-auto px-4 py-6 lg:py-8">
             {/* Header */}
-            <div className={`mb-8 ${isRTL ? 'text-right' : 'text-left'}`}>
+            <div className="mb-8">
               <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 ${isRTL ? 'md:flex-row-reverse' : ''}`}>
-                <div>
+                <div className={isRTL ? 'text-right md:ml-auto' : 'text-left'}>
                   <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
                     {t("vendor.dashboard.title")}
                   </h1>
                   <p className="text-muted-foreground text-base md:text-lg">{vendorProfile.storeName}</p>
                 </div>
-                <div className="flex gap-2 items-center">
+                <div className={`flex gap-2 items-center ${isRTL ? 'justify-start md:justify-start' : 'justify-center md:justify-end'}`}>
                   <Link href="/vendor/wallet">
                     <Button variant="outline" className="gap-2">
                       <Wallet className="w-4 h-4" />
@@ -546,59 +546,59 @@ export default function VendorDashboard() {
             </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card className="border shadow-sm hover:shadow-md transition-shadow">
+          <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200 dark:border-blue-800">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-2.5 bg-primary/10 rounded-lg">
-                  <Package className="w-5 h-5 text-primary" />
+                <div className="p-2.5 bg-blue-500 rounded-lg">
+                  <Package className="w-5 h-5 text-white" />
                 </div>
               </div>
-              <p className="text-3xl font-bold mb-1" data-testid="text-vendor-products">
+              <p className="text-3xl font-bold mb-1 text-blue-700 dark:text-blue-300" data-testid="text-vendor-products">
                 {analytics?.totalProducts || myProducts.length}
               </p>
-              <p className="text-sm text-muted-foreground">{t("vendor.dashboard.products")}</p>
+              <p className="text-sm text-blue-600 dark:text-blue-400">{t("vendor.dashboard.products")}</p>
             </CardContent>
           </Card>
           
-          <Card className="border shadow-sm hover:shadow-md transition-shadow">
+          <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border-green-200 dark:border-green-800">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-2.5 bg-primary/10 rounded-lg">
-                  <ShoppingCart className="w-5 h-5 text-primary" />
+                <div className="p-2.5 bg-green-500 rounded-lg">
+                  <ShoppingCart className="w-5 h-5 text-white" />
                 </div>
               </div>
-              <p className="text-3xl font-bold mb-1" data-testid="text-vendor-orders">
+              <p className="text-3xl font-bold mb-1 text-green-700 dark:text-green-300" data-testid="text-vendor-orders">
                 {analytics?.totalOrders || 0}
               </p>
-              <p className="text-sm text-muted-foreground">{t("vendor.dashboard.orders")}</p>
+              <p className="text-sm text-green-600 dark:text-green-400">{t("vendor.dashboard.orders")}</p>
             </CardContent>
           </Card>
           
-          <Card className="border shadow-sm hover:shadow-md transition-shadow">
+          <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-200 dark:border-amber-800">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-2.5 bg-primary/10 rounded-lg">
-                  <TrendingUp className="w-5 h-5 text-primary" />
+                <div className="p-2.5 bg-amber-500 rounded-lg">
+                  <TrendingUp className="w-5 h-5 text-white" />
                 </div>
               </div>
-              <p className="text-3xl font-bold mb-1" data-testid="text-vendor-revenue">
+              <p className="text-3xl font-bold mb-1 text-amber-700 dark:text-amber-300" data-testid="text-vendor-revenue">
                 {analytics?.grossSalesKwd || "0"}
               </p>
-              <p className="text-sm text-muted-foreground">{t("vendor.dashboard.revenue")}</p>
+              <p className="text-sm text-amber-600 dark:text-amber-400">{t("vendor.dashboard.revenue")}</p>
             </CardContent>
           </Card>
           
-          <Card className="border shadow-sm hover:shadow-md transition-shadow">
+          <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200 dark:border-purple-800">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-2.5 bg-primary/10 rounded-lg">
-                  <DollarSign className="w-5 h-5 text-primary" />
+                <div className="p-2.5 bg-purple-500 rounded-lg">
+                  <DollarSign className="w-5 h-5 text-white" />
                 </div>
               </div>
-              <p className="text-3xl font-bold mb-1" data-testid="text-vendor-payout">
+              <p className="text-3xl font-bold mb-1 text-purple-700 dark:text-purple-300" data-testid="text-vendor-payout">
                 {analytics?.pendingPayoutKwd || "0"}
               </p>
-              <p className="text-sm text-muted-foreground">{t("vendor.dashboard.pending")}</p>
+              <p className="text-sm text-purple-600 dark:text-purple-400">{t("vendor.dashboard.pending")}</p>
             </CardContent>
           </Card>
         </div>
