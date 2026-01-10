@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useCategories, useStories, useProducts, useVendors } from "@/hooks/use-motorbuy";
 import { useLanguage } from "@/lib/i18n";
 import { ProductCard } from "@/components/ProductCard";
-import { ArrowRight, Shield, ChevronRight, Users, Package, TrendingUp, Cog, Settings, CircleStop, Gauge, Zap, Thermometer, Fuel, Wind, Car, Armchair, Circle, Lightbulb, Droplets, Wrench, Truck, Headphones, CreditCard, Megaphone, type LucideIcon } from "lucide-react";
+import { ArrowRight, Shield, ChevronRight, Users, Package, TrendingUp, Cog, Settings, CircleStop, Gauge, Zap, Thermometer, Fuel, Wind, Car, Armchair, Circle, Lightbulb, Droplets, Wrench, Truck, Headphones, CreditCard, Megaphone, ChevronLeft, type LucideIcon } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 
@@ -131,19 +131,30 @@ export default function Home() {
           </div>
 
           {/* Mobile: Horizontal Scrollable Row */}
-          <div className="md:hidden overflow-x-auto -mx-4 px-4 scrollbar-hide">
-            <div className="flex gap-4 min-w-max">
-              {features.map((item, i) => (
+          <div className="md:hidden relative -mx-4 px-4">
+            <div className="overflow-x-auto scrollbar-hide scroll-smooth">
+              <div className="flex gap-4 min-w-max pb-2">
+                {features.map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex-shrink-0 w-[calc(100vw-2rem)] text-center px-4"
+                  >
+                    <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <item.icon className="w-8 h-8 text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Scroll Indicator */}
+            <div className="flex justify-center gap-1.5 mt-4">
+              {features.map((_, i) => (
                 <div
                   key={i}
-                  className="flex-shrink-0 w-[calc(100vw-2rem)] text-center px-4"
-                >
-                  <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <item.icon className="w-8 h-8 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground">{item.desc}</p>
-                </div>
+                  className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30"
+                />
               ))}
             </div>
           </div>
@@ -204,10 +215,20 @@ export default function Home() {
 
           {/* Mobile: Auto-scrolling Carousel (All 10 categories) */}
           {categories && categories.length > 0 ? (
-            <div className="md:hidden overflow-hidden -mx-4 px-4">
-              <div className={`flex gap-3 animate-scroll-categories-auto ${isRTL ? 'animate-scroll-categories-auto-rtl' : ''}`}>
-                {/* Duplicate items for seamless loop */}
-                {[...categories.slice(0, 10), ...categories.slice(0, 10), ...categories.slice(0, 10)].map((cat, index) => {
+            <div className="md:hidden relative -mx-4 px-4">
+              <div 
+                className={`flex gap-3 animate-scroll-categories-auto ${isRTL ? 'animate-scroll-categories-auto-rtl' : ''} hover-pause`}
+                onMouseEnter={(e) => e.currentTarget.style.animationPlayState = 'paused'}
+                onMouseLeave={(e) => e.currentTarget.style.animationPlayState = 'running'}
+                onTouchStart={(e) => e.currentTarget.style.animationPlayState = 'paused'}
+                onTouchEnd={(e) => {
+                  setTimeout(() => {
+                    e.currentTarget.style.animationPlayState = 'running';
+                  }, 1000);
+                }}
+              >
+                {/* Duplicate items for seamless infinite loop */}
+                {[...categories.slice(0, 10), ...categories.slice(0, 10), ...categories.slice(0, 10), ...categories.slice(0, 10)].map((cat, index) => {
                   const IconComponent = cat.icon ? iconMap[cat.icon] : Wrench;
                   const translatedName = t(`cat.${cat.slug}`) !== `cat.${cat.slug}` ? t(`cat.${cat.slug}`) : cat.name;
                   return (
@@ -226,6 +247,19 @@ export default function Home() {
                     </div>
                   );
                 })}
+              </div>
+              {/* Scroll Indicator */}
+              <div className="flex items-center justify-center gap-2 mt-4">
+                <ChevronLeft className={`w-4 h-4 text-muted-foreground ${isRTL ? 'rotate-180' : ''}`} />
+                <div className="flex gap-1.5">
+                  {categories.slice(0, 10).map((_, i) => (
+                    <div
+                      key={i}
+                      className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30 animate-pulse"
+                    />
+                  ))}
+                </div>
+                <ChevronRight className={`w-4 h-4 text-muted-foreground ${isRTL ? 'rotate-180' : ''}`} />
               </div>
             </div>
           ) : (

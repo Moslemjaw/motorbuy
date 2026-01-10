@@ -139,12 +139,16 @@
   }
 
   .animate-scroll-categories-auto {
-    animation: scroll-categories-auto 30s linear infinite;
+    animation: scroll-categories-auto 40s linear infinite;
     will-change: transform;
   }
 
   .animate-scroll-categories-auto-rtl {
-    animation: scroll-categories-auto-rtl 30s linear infinite;
+    animation: scroll-categories-auto-rtl 40s linear infinite;
+  }
+
+  .hover-pause:hover {
+    animation-play-state: paused;
   }
 
   @keyframes scroll-categories-auto {
