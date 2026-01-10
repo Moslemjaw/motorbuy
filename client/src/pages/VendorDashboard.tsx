@@ -151,7 +151,7 @@ export default function VendorDashboard() {
   const [selectedProductId, setSelectedProductId] = useState("");
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [orderItems, setOrderItems] = useState<Array<{ productId: string; productName: string; price: string; quantity: number }>>([]);
-  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [paymentMethod, setPaymentMethod] = useState("pay-in-store");
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
 
   const [storyContent, setStoryContent] = useState("");
@@ -320,7 +320,7 @@ export default function VendorDashboard() {
       setOrderItems([]);
       setSelectedProductId("");
       setSelectedQuantity(1);
-      setPaymentMethod("cash");
+      setPaymentMethod("pay-in-store");
       
       // If payment gateway, show QR code
       if (order.qrCodeUrl) {
@@ -720,6 +720,8 @@ export default function VendorDashboard() {
               <p className="text-muted-foreground text-base md:text-lg">{vendorProfile?.storeName || ""}</p>
             </div>
 
+            {activeTab !== "create-order" && (
+              <>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200 dark:border-blue-800">
             <CardContent className="p-6">
@@ -889,6 +891,8 @@ export default function VendorDashboard() {
             </CardContent>
           </Card>
         </div>
+              </>
+            )}
 
             {/* Mobile Tabs */}
             <div className="lg:hidden mb-6">
@@ -1250,8 +1254,7 @@ export default function VendorDashboard() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="knet">{t("vendor.dashboard.paymentKnet")}</SelectItem>
-                          <SelectItem value="cash">{t("vendor.dashboard.paymentCash")}</SelectItem>
+                          <SelectItem value="pay-in-store">{t("vendor.dashboard.paymentInStore")}</SelectItem>
                           <SelectItem value="gateway">{t("vendor.dashboard.paymentGateway")}</SelectItem>
                         </SelectContent>
                       </Select>

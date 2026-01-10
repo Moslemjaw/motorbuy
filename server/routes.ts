@@ -683,7 +683,7 @@ export async function registerRoutes(
           name: customerName,
           phone: customerPhone,
         },
-        paymentMethod || "cash"
+        paymentMethod || "pay-in-store"
       );
 
       let qrCodeUrl = null;
@@ -1033,7 +1033,7 @@ export async function registerRoutes(
         city: req.body.customerCity,
       };
 
-      const paymentMethod = req.body.paymentMethod || "cod";
+      const paymentMethod = req.body.paymentMethod || "pay-in-store";
 
       const order = await storage.createOrder(
         req.session.userId,

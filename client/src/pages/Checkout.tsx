@@ -39,7 +39,7 @@ export default function Checkout() {
     city: user?.city || "",
   });
 
-  const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [paymentMethod, setPaymentMethod] = useState("pay-in-store");
 
   // Redirect to auth if not authenticated
   if (!isAuthenticated && !isCartLoading) {
@@ -160,7 +160,7 @@ export default function Checkout() {
                 <div className={`flex justify-between border-b pb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
                   <span className="text-muted-foreground">{t("checkout.paymentMethodLabel")}</span>
                   <span className="font-medium capitalize">
-                    {successOrder.paymentMethod === 'cod' ? t("checkout.cashOnDelivery") : t("checkout.onlinePayment")}
+                    {successOrder.paymentMethod === 'pay-in-store' ? t("checkout.payInStore") : t("checkout.onlinePayment")}
                   </span>
                 </div>
                 <div className="space-y-1">
@@ -328,25 +328,24 @@ export default function Checkout() {
               <CardContent>
                 <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <RadioGroupItem value="cod" id="cod" className="peer sr-only" />
+                    <RadioGroupItem value="pay-in-store" id="pay-in-store" className="peer sr-only" />
                     <Label
-                      htmlFor="cod"
+                      htmlFor="pay-in-store"
                       className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full"
                     >
                       <Banknote className="mb-3 h-6 w-6" />
-                      <span className="font-semibold">{t("checkout.cashOnDelivery")}</span>
+                      <span className="font-semibold">{t("checkout.payInStore")}</span>
                       <span className="text-xs text-muted-foreground mt-1">{t("checkout.payWhenReceive")}</span>
                     </Label>
                   </div>
                   <div>
-                    <RadioGroupItem value="online" id="online" className="peer sr-only" disabled />
+                    <RadioGroupItem value="gateway" id="gateway" className="peer sr-only" />
                     <Label
-                      htmlFor="online"
-                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-not-allowed opacity-60 h-full"
+                      htmlFor="gateway"
+                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full"
                     >
                       <CreditCard className="mb-3 h-6 w-6" />
                       <span className="font-semibold">{t("checkout.onlinePayment")}</span>
-                      <span className="text-xs text-muted-foreground mt-1">{t("checkout.comingSoon")}</span>
                     </Label>
                   </div>
                 </RadioGroup>
