@@ -1082,8 +1082,8 @@ export default function VendorDashboard() {
           </div>
         </main>
       </div>
-    </div>
 
+      {/* Dialogs */}
       {/* Edit Product Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
