@@ -27,6 +27,7 @@ import TermsOfService from "@/pages/TermsOfService";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import ContactUs from "@/pages/ContactUs";
 import FAQ from "@/pages/FAQ";
+import BecomeVendor from "@/pages/BecomeVendor";
 
 function Router() {
   return (
@@ -53,6 +54,7 @@ function Router() {
       {/* Customer routes */}
       <Route path="/account" component={CustomerAccount} />
       <Route path="/orders" component={OrderHistory} />
+      <Route path="/become-vendor" component={BecomeVendor} />
       
       {/* Vendor routes - specific routes must come before /vendor/:id */}
       <Route path="/vendor/account" component={VendorAccount} />

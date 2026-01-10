@@ -644,6 +644,47 @@ export async function registerRoutes(
     }
   });
 
+  // Vendor Registration Request
+  app.post("/api/vendor/request", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "customer") {
+        return res
+          .status(403)
+          .json({ message: "Only customers can request to become vendors" });
+      }
+
+      // Check if user already has a pending request
+      const existingRequests = await storage.getVendorRequests();
+      const userRequest = existingRequests.find(
+        (r) => r.userId === req.session.userId && r.status === "pending"
+      );
+      if (userRequest) {
+        return res
+          .status(400)
+          .json({ message: "You already have a pending vendor request" });
+      }
+
+      const { companyName, phone, email } = req.body;
+      if (!companyName || !phone || !email) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      const request = await storage.createVendorRequest(
+        req.session.userId,
+        companyName,
+        phone,
+        email
+      );
+      res.status(201).json(request);
+    } catch (e: any) {
+      console.error("Error creating vendor request:", e);
+      res
+        .status(500)
+        .json({ message: e.message || "Failed to create vendor request" });
+    }
+  });
+
   app.post("/api/vendor/orders", isAuthenticated, async (req: any, res) => {
     try {
       const role = await storage.getUserRole(req.session.userId);

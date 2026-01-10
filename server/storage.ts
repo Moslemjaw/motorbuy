@@ -1,5 +1,5 @@
 import { 
-  User, Vendor, Category, Product, Order, OrderItem, VendorStory, CartItem, PaymentRequest 
+  User, Vendor, Category, Product, Order, OrderItem, VendorStory, CartItem, PaymentRequest, VendorRequest 
 } from "./mongodb";
 import mongoose from "mongoose";
 
@@ -41,6 +41,8 @@ export interface IStorage {
   getPaymentRequests(vendorId: string): Promise<any[]>;
   createPaymentRequest(vendorId: string, amount: string): Promise<any>;
   getVendorOrders(vendorId: string): Promise<any[]>;
+  createVendorRequest(userId: string, companyName: string, phone: string, email: string): Promise<any>;
+  getVendorRequests(): Promise<any[]>;
 }
 
 function toPlainObject(doc: any): any {
@@ -723,6 +725,23 @@ export class MongoStorage implements IStorage {
     }));
     
     return ordersWithItems;
+  }
+
+  async createVendorRequest(userId: string, companyName: string, phone: string, email: string): Promise<any> {
+    const request = new VendorRequest({
+      userId,
+      companyName,
+      phone,
+      email,
+      status: "pending",
+    });
+    await request.save();
+    return toPlainObject(request);
+  }
+
+  async getVendorRequests(): Promise<any[]> {
+    const requests = await VendorRequest.find({}).sort({ createdAt: -1 });
+    return requests.map(toPlainObject);
   }
 }
 

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-motorbuy";
 import { useLanguage } from "@/lib/i18n";
-import { User, Loader2, Settings, Phone, MapPin, Mail, Camera, FileText, Package } from "lucide-react";
+import { User, Loader2, Settings, Phone, MapPin, Mail, Camera, FileText, Package, Store } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef, useEffect } from "react";
@@ -153,10 +153,15 @@ export default function CustomerAccount() {
               </div>
             </div>
 
-            <div className="flex gap-2">
-              <Link href="/orders" className="flex-1">
+            <div className="flex flex-col gap-2">
+              <Link href="/orders" className="w-full">
                 <Button variant="outline" className="w-full" data-testid="button-view-orders">
                   <Package className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} /> {t("account.orderHistory")}
+                </Button>
+              </Link>
+              <Link href="/become-vendor" className="w-full">
+                <Button className="w-full" data-testid="button-become-vendor">
+                  <Store className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} /> {t("account.becomeVendor")}
                 </Button>
               </Link>
             </div>

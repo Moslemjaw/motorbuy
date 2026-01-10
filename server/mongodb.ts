@@ -114,6 +114,18 @@ const paymentRequestSchema = new mongoose.Schema({
   processedAt: Date,
 });
 
+const vendorRequestSchema = new mongoose.Schema({
+  userId: { type: String, required: true },
+  companyName: { type: String, required: true },
+  phone: { type: String, required: true },
+  email: { type: String, required: true },
+  status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+  notes: String,
+  processedBy: String,
+  createdAt: { type: Date, default: Date.now },
+  processedAt: Date,
+});
+
 const sessionSchema = new mongoose.Schema({
   sid: { type: String, required: true, unique: true },
   sess: { type: Object, required: true },
@@ -129,4 +141,5 @@ export const OrderItem = mongoose.models.OrderItem || mongoose.model("OrderItem"
 export const VendorStory = mongoose.models.VendorStory || mongoose.model("VendorStory", vendorStorySchema);
 export const CartItem = mongoose.models.CartItem || mongoose.model("CartItem", cartItemSchema);
 export const PaymentRequest = mongoose.models.PaymentRequest || mongoose.model("PaymentRequest", paymentRequestSchema);
+export const VendorRequest = mongoose.models.VendorRequest || mongoose.model("VendorRequest", vendorRequestSchema);
 export const Session = mongoose.models.Session || mongoose.model("Session", sessionSchema);
