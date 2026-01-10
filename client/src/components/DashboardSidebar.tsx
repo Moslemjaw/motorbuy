@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { 
   LayoutDashboard, Package, ShoppingCart, BookOpen, Store, 
   Wallet, Users, FolderOpen, BarChart3, DollarSign, LogOut,
-  Menu, X, Settings
+  Menu, X, Settings, Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -23,10 +23,14 @@ interface DashboardSidebarProps {
 }
 
 export function DashboardSidebar({ type }: DashboardSidebarProps) {
-  const { t, isRTL, language } = useLanguage();
+  const { t, isRTL, language, setLanguage } = useLanguage();
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  const toggleLanguage = () => {
+    setLanguage(language === "en" ? "ar" : "en");
+  };
 
   const vendorItems: SidebarItem[] = [
     { icon: LayoutDashboard, label: t("vendor.dashboard.title"), href: "/vendor/dashboard", translationKey: "vendor.dashboard.title" },
@@ -66,10 +70,10 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo/Brand */}
-      <div className="p-6 border-b">
+      <div className="p-6 border-b bg-gradient-to-r from-primary/5 to-transparent">
         <Link href="/">
-          <div className="flex items-center gap-3 cursor-pointer">
-            <img src={carLogo} alt="MotorBuy" className="w-10 h-10 object-contain" />
+          <div className="flex items-center gap-3 cursor-pointer group">
+            <img src={carLogo} alt="MotorBuy" className="w-10 h-10 object-contain transition-transform group-hover:scale-110" />
             <div className="flex flex-col">
               <span className="font-display font-bold text-lg">
                 {language === "ar" ? (
@@ -100,10 +104,11 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
           return (
             <div
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors cursor-pointer",
+                "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer",
                 active
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-[1.02]"
+                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground",
+                !active && (isRTL ? "hover:-translate-x-1" : "hover:translate-x-1")
               )}
               onClick={() => {
                 setIsMobileOpen(false);
@@ -143,6 +148,13 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
           </div>
         </div>
         <div className="space-y-1">
+          <div
+            className="flex items-center gap-3 px-4 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+            onClick={toggleLanguage}
+          >
+            <Globe className="w-4 h-4" />
+            <span className="text-sm">{language === "en" ? "العربية" : "English"}</span>
+          </div>
           <Link href={type === "vendor" ? "/vendor/account" : "/account"}>
             <div
               className="flex items-center gap-3 px-4 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
@@ -209,7 +221,7 @@ export function DashboardSidebar({ type }: DashboardSidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed top-0 h-screen bg-card border-r shadow-lg z-50 transition-transform duration-300 w-64",
+          "fixed top-0 h-screen bg-card/95 backdrop-blur-sm border-r shadow-xl z-50 transition-transform duration-300 w-64",
           isRTL ? "right-0 border-l border-r-0" : "left-0",
           isMobileOpen ? "translate-x-0" : isRTL ? "translate-x-full" : "-translate-x-full",
           "lg:translate-x-0"
