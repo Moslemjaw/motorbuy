@@ -256,7 +256,7 @@ export default function AuthPage() {
                           size="lg"
                           data-testid="button-go-dashboard"
                         >
-                          {t("auth.goToVendorDashboard")
+                          {t("auth.goToVendorDashboard")}
                         </Button>
                       </Link>
                     ) : (
