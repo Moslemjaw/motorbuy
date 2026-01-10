@@ -146,7 +146,8 @@ export default function Home() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+          {/* Desktop: Grid Layout */}
+          <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
             {categories?.slice(0, 10).map((cat, index) => {
               const IconComponent = cat.icon ? iconMap[cat.icon] : Wrench;
               const translatedName = t(`cat.${cat.slug}`) !== `cat.${cat.slug}` ? t(`cat.${cat.slug}`) : cat.name;
@@ -169,8 +170,41 @@ export default function Home() {
               );
             })}
           </div>
+
+          {/* Mobile: Horizontal Scrolling Carousel (3 per row) */}
+          {categories && categories.length > 0 ? (
+            <div className="md:hidden overflow-hidden -mx-4 px-4">
+              <div className={`flex gap-3 animate-scroll-categories ${isRTL ? 'animate-scroll-categories-rtl' : ''}`}>
+                {/* Duplicate items for seamless loop */}
+                {[...categories.slice(0, 10), ...categories.slice(0, 10), ...categories.slice(0, 10)].map((cat, index) => {
+                  const IconComponent = cat.icon ? iconMap[cat.icon] : Wrench;
+                  const translatedName = t(`cat.${cat.slug}`) !== `cat.${cat.slug}` ? t(`cat.${cat.slug}`) : cat.name;
+                  return (
+                    <div
+                      key={`${cat.id}-${index}`}
+                      className="flex-shrink-0 w-[calc((100vw-2rem-0.75rem*2)/3)]"
+                    >
+                      <Link href={`/products?categoryId=${cat.id}`}>
+                        <div className="group cursor-pointer bg-card rounded-xl p-4 border hover:border-primary/30 hover:shadow-md transition-all text-center mx-1">
+                          <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-3 mx-auto group-hover:bg-primary/20 transition-colors">
+                            {IconComponent && <IconComponent className="w-6 h-6 text-primary" />}
+                          </div>
+                          <h3 className="font-medium text-xs group-hover:text-primary transition-colors line-clamp-2">{translatedName}</h3>
+                        </div>
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="md:hidden text-center py-12 text-muted-foreground">
+              {t("common.noResults")}
+            </div>
+          )}
+          
           {(!categories || categories.length === 0) && (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="hidden md:block text-center py-12 text-muted-foreground">
               {t("common.noResults")}
             </div>
           )}
@@ -302,12 +336,10 @@ export default function Home() {
             <h2 className="text-2xl md:text-3xl font-display font-bold mb-2">{t("section.whyUs")}</h2>
             <p className="text-muted-foreground">{t("section.whyUs.subtitle")}</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {[
-              { icon: Shield, title: t("feature.quality"), desc: t("feature.quality.desc") },
-              { icon: Truck, title: t("feature.delivery"), desc: t("feature.delivery.desc") },
-              { icon: Headphones, title: t("feature.support"), desc: t("feature.support.desc") },
-            ].map((item, i) => (
+          
+          {/* Desktop: Grid Layout */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+            {features.map((item, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 15 }}
@@ -322,6 +354,25 @@ export default function Home() {
                 <p className="text-sm text-muted-foreground">{item.desc}</p>
               </motion.div>
             ))}
+          </div>
+
+          {/* Mobile: Horizontal Scrolling Carousel */}
+          <div className="md:hidden overflow-hidden -mx-4 px-4">
+            <div className={`flex gap-4 animate-scroll ${isRTL ? 'animate-scroll-rtl' : ''}`}>
+              {/* Duplicate items for seamless loop */}
+              {[...features, ...features, ...features].map((item, i) => (
+                <div
+                  key={i}
+                  className="flex-shrink-0 w-[280px] text-center px-4"
+                >
+                  <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <item.icon className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground">{item.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
