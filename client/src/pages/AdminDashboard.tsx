@@ -92,7 +92,7 @@ export default function AdminDashboard() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { data: roleData, isLoading: isRoleLoading } = useRole();
   const [, setLocation] = useLocation();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
 
   // Get active tab from URL hash or default to "analytics"
   const getActiveTab = () => {
