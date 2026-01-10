@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole, useVendors } from "@/hooks/use-motorbuy";
+import { useLanguage } from "@/lib/i18n";
 import { User, Loader2, Settings, Phone, MapPin, Mail, Camera, FileText, Store, LayoutDashboard, Wallet } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +22,7 @@ export default function VendorAccount() {
   const { data: vendors } = useVendors();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [phone, setPhone] = useState("");
@@ -114,8 +116,8 @@ export default function VendorAccount() {
       
       <div className="bg-primary/10 py-12 mb-8 border-b border-primary/20">
         <div className="container mx-auto px-4">
-          <h1 className="text-3xl font-display font-bold mb-2">My Account</h1>
-          <p className="text-muted-foreground">Manage your personal profile and settings.</p>
+          <h1 className="text-3xl font-display font-bold mb-2">{t("account.title")}</h1>
+          <p className="text-muted-foreground">{t("account.subtitle")}</p>
         </div>
       </div>
 

@@ -187,7 +187,7 @@ export default function AdminDashboard() {
             isRTL ? "border-l border-r-0" : ""
           }`}
         >
-          <div className="p-4 space-y-1">
+          <div className="p-4">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.value;

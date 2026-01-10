@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useOrders, useRole } from "@/hooks/use-motorbuy";
+import { useLanguage } from "@/lib/i18n";
 import { User, Package, ShoppingBag, Store, Loader2, Settings, Phone, MapPin, Mail, Camera, FileText } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +23,7 @@ export default function Account() {
   const { data: orders, isLoading: isOrdersLoading } = useOrders();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [phone, setPhone] = useState(user?.phone || "");
@@ -97,8 +99,8 @@ export default function Account() {
       
       <div className="bg-primary/10 py-12 mb-8 border-b border-primary/20">
         <div className="container mx-auto px-4">
-          <h1 className="text-3xl font-display font-bold mb-2">My Account</h1>
-          <p className="text-muted-foreground">Manage your profile, orders, and settings.</p>
+          <h1 className="text-3xl font-display font-bold mb-2">{t("account.title")}</h1>
+          <p className="text-muted-foreground">{t("account.subtitle")}</p>
         </div>
       </div>
 
