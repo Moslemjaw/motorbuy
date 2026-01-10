@@ -187,15 +187,6 @@ export default function AuthPage() {
   }
 
   // Show loading page if authenticated but role data is not available (retry button would appear)
-  // Auto-retry fetching role in the background
-  useEffect(() => {
-    if (isAuthenticated && user && !isRoleLoading && !roleData) {
-      const timer = setTimeout(() => {
-        refetchRole();
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [isAuthenticated, user, isRoleLoading, roleData, refetchRole]);
 
   if (isAuthenticated && user && !isRoleLoading && !roleData) {
     return <LoadingPage message="Loading your role..." />;

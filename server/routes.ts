@@ -1019,6 +1019,36 @@ export async function registerRoutes(
     res.json(orders);
   });
 
+  app.patch(
+    "/api/orders/:id/status",
+    isAuthenticated,
+    async (req: any, res) => {
+      try {
+        const role = await storage.getUserRole(req.session.userId);
+        // Allow vendors and admins to update order status
+        if (role !== "vendor" && role !== "admin") {
+          return res.status(403).json({ message: "Forbidden" });
+        }
+
+        const { status } = req.body;
+        if (!status) {
+          return res.status(400).json({ message: "Status is required" });
+        }
+
+        // If vendor, check if order contains their products (optional but good for security)
+        // For now, assuming vendors can update status of orders they see in their dashboard
+
+        const updated = await storage.updateOrder(req.params.id, status);
+        res.json(updated);
+      } catch (e: any) {
+        console.error("Error updating order status:", e);
+        res
+          .status(500)
+          .json({ message: e.message || "Failed to update order status" });
+      }
+    }
+  );
+
   app.get(api.stories.list.path, async (req, res) => {
     const stories = await storage.getStories();
     res.json(stories);

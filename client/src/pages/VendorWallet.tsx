@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
-import { useRole, useVendors } from "@/hooks/use-motorbuy";
+import { useRole } from "@/hooks/use-motorbuy";
 import { Wallet, Loader2, ArrowLeft, DollarSign, Clock, CheckCircle, XCircle } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -16,33 +16,31 @@ import { useEffect } from "react";
 export default function VendorWallet() {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { data: roleData, isLoading: isRoleLoading } = useRole();
-  const { data: vendors } = useVendors();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const myVendor = vendors?.find(v => v.userId === user?.id);
-
   const { data: walletData, isLoading: isWalletLoading } = useQuery<{
-    balance: string;
-    pendingPayouts: string;
-    totalEarnings: string;
-    commissionRate: string;
+    grossSalesKwd: string;
+    pendingPayoutKwd: string;
+    lifetimePayoutsKwd: string;
+    commissionType: "percentage" | "fixed";
+    commissionValue: string;
     paymentRequests: PaymentRequest[];
   }>({
-    queryKey: ["/api/vendor/wallet", myVendor?.id],
-    enabled: !!myVendor?.id,
+    queryKey: ["/api/vendor/wallet"],
+    enabled: !!user && roleData?.role === "vendor",
   });
 
   const requestPaymentMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("POST", "/api/vendor/wallet/request", { vendorId: myVendor?.id });
+      return apiRequest("POST", "/api/vendor/wallet/request", {});
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vendor/wallet", myVendor?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vendor/wallet"] });
       toast({ title: "Payment Requested", description: "Your payment request has been submitted for review." });
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to request payment.", variant: "destructive" });
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
 
@@ -71,9 +69,9 @@ export default function VendorWallet() {
     );
   }
 
-  const balance = walletData?.balance || myVendor?.pendingPayoutKwd || "0";
-  const commissionValue = walletData?.commissionRate || myVendor?.commissionValue || "10";
-  const commissionPercent = myVendor?.commissionType === "percentage" ? commissionValue : "fixed";
+  const balance = walletData?.pendingPayoutKwd || "0";
+  const commissionType = walletData?.commissionType || "percentage";
+  const commissionValue = walletData?.commissionValue || "5";
   const canRequestPayment = parseFloat(balance) > 0;
 
   const getStatusIcon = (status: string) => {
@@ -112,7 +110,9 @@ export default function VendorWallet() {
                 <Wallet className="w-8 h-8 text-primary" />
                 <span className="text-3xl font-bold" data-testid="text-balance">{formatKWD(balance)}</span>
               </div>
-              <p className="text-sm text-muted-foreground mt-2">After {commissionPercent}% platform fee</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Platform fee: {commissionType === "percentage" ? `${commissionValue}%` : `${formatKWD(commissionValue)}`} per order
+              </p>
             </CardContent>
           </Card>
 

@@ -28,8 +28,9 @@ export interface IStorage {
   updateCartItemQuantity(id: string, quantity: number): Promise<any>;
   removeFromCart(id: string): Promise<void>;
   clearCart(userId: string): Promise<void>;
-  createOrder(userId: string, total: string, items: { productId: string; quantity: number; price: string }[]): Promise<any>;
-  createGuestOrder(guestEmail: string, guestName: string, guestPhone: string, total: string, items: { productId: string; quantity: number; price: string }[]): Promise<any>;
+  createOrder(userId: string, total: string, items: { productId: string; quantity: number; price: string }[], customerInfo?: { name?: string; email?: string; phone?: string; address?: string; city?: string }, paymentMethod?: string): Promise<any>;
+  createGuestOrder(guestEmail: string, guestName: string, guestPhone: string, total: string, items: { productId: string; quantity: number; price: string }[], paymentMethod?: string): Promise<any>;
+  updateOrder(id: string, status: string): Promise<any>;
   getOrders(userId: string): Promise<any[]>;
   getStories(): Promise<any[]>;
   getStory(id: string): Promise<any | undefined>;
@@ -433,7 +434,7 @@ export class MongoStorage implements IStorage {
     const orderData: any = {
       userId,
       total,
-      status: "paid", // For COD, maybe "pending_payment"? But simplified to "paid" for now or "pending"
+      status: "pending", 
       paymentMethod
     };
     
@@ -504,7 +505,7 @@ export class MongoStorage implements IStorage {
       guestName,
       guestPhone,
       total,
-      status: "paid",
+      status: "pending",
       paymentMethod
     });
 
@@ -555,6 +556,14 @@ export class MongoStorage implements IStorage {
     }
 
     return toPlainObject(order);
+  }
+
+  async updateOrder(id: string, status: string): Promise<any> {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error("Invalid order ID");
+    }
+    const updated = await Order.findByIdAndUpdate(id, { status }, { new: true });
+    return toPlainObject(updated);
   }
 
   async getOrders(userId: string): Promise<any[]> {

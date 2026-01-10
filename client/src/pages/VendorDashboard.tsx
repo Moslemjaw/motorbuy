@@ -44,6 +44,27 @@ export default function VendorDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ orderId, status }: { orderId: string, status: string }) => {
+      const res = await apiRequest("PATCH", `/api/orders/${orderId}/status`, { status });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vendor/orders"] });
+      toast({
+        title: "Order status updated",
+        description: "The order status has been updated successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Update failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const { data: vendorProfile, isLoading: isProfileLoading } = useQuery<Vendor | null>({
     queryKey: ["/api/vendor/profile"],
     queryFn: async () => {
@@ -831,11 +852,23 @@ export default function VendorDashboard() {
                                 {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
                               </div>
                             </div>
-                            <div className="text-right">
+                            <div className="text-right flex flex-col items-end gap-1">
                               <div className="font-bold text-lg">{formatKWD(order.vendorTotal || order.total)}</div>
-                              <Badge variant={order.status === "delivered" ? "default" : "secondary"} className="capitalize mt-1">
-                                {order.status}
-                              </Badge>
+                              <Select
+                                defaultValue={order.status}
+                                onValueChange={(value) => updateStatusMutation.mutate({ orderId: order.id, status: value })}
+                              >
+                                <SelectTrigger className="w-[130px] h-8 capitalize">
+                                  <SelectValue placeholder="Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pending">Pending</SelectItem>
+                                  <SelectItem value="processing">Processing</SelectItem>
+                                  <SelectItem value="shipped">Shipped</SelectItem>
+                                  <SelectItem value="delivered">Delivered</SelectItem>
+                                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </div>
                           </div>
                           
