@@ -158,6 +158,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+      </div>
 
        {/* Mobile Bottom Navigation */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 px-6 py-2 pb-safe">
