@@ -72,14 +72,6 @@ export default function AuthPage() {
     }
   }, [isAuthenticated, user, isRoleLoading, roleData, refetchRole]);
 
-  // Auto-redirect customers to home page immediately (highest priority)
-  useEffect(() => {
-    if (isAuthenticated && user && roleData?.role === "customer") {
-      // Redirect immediately without delay
-      setLocation("/");
-    }
-  }, [isAuthenticated, user, roleData?.role, setLocation]);
-
   // Debug: Log role data and button visibility
   useEffect(() => {
     console.log("AuthPage - isAuthenticated:", isAuthenticated);
@@ -98,6 +90,14 @@ export default function AuthPage() {
       );
     }
   }, [isAuthenticated, user, isRoleLoading, roleData]);
+
+  // Auto-redirect customers to home page immediately (highest priority)
+  useEffect(() => {
+    if (isAuthenticated && user && roleData?.role === "customer") {
+      // Redirect immediately without delay
+      setLocation("/");
+    }
+  }, [isAuthenticated, user, roleData?.role, setLocation]);
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [showPassword, setShowPassword] = useState(false);

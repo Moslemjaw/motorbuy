@@ -1,11 +1,12 @@
 import { Navbar } from "@/components/Navbar";
+import { LoadingPage } from "@/components/LoadingPage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useOrders } from "@/hooks/use-motorbuy";
 import { useLanguage } from "@/lib/i18n";
-import { Package, ShoppingBag, ArrowLeft, ArrowRight } from "lucide-react";
+import { Package, ShoppingBag, ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { formatKWD } from "@/lib/currency";
 import { useEffect } from "react";
