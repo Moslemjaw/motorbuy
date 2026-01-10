@@ -1,9 +1,9 @@
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useProduct, useAddToCart } from "@/hooks/use-motorbuy";
+import { useProduct, useAddToCart, useVendor } from "@/hooks/use-motorbuy";
 import { useRoute, useLocation } from "wouter";
-import { ShoppingCart, Truck, ShieldCheck, ArrowLeft, Store, Package, Loader2, CheckCircle, Percent } from "lucide-react";
+import { ShoppingCart, ShieldCheck, ArrowLeft, Store, Package, Loader2, CheckCircle, Percent } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,6 +15,7 @@ export default function ProductDetail() {
   const id = params?.id || "";
   
   const { data: product, isLoading } = useProduct(id);
+  const { data: vendor } = useVendor(product?.vendorId || "");
   const addToCartMutation = useAddToCart();
   const { toast } = useToast();
   const { isAuthenticated, user, isLoading: isAuthLoading } = useAuth();
@@ -187,7 +188,7 @@ export default function ProductDetail() {
                     <div className="flex-1">
                       <div className="text-sm text-muted-foreground">Sold by</div>
                       <div className="font-bold text-lg group-hover:text-primary transition-colors">
-                        Vendor #{product.vendorId}
+                        {vendor?.storeName || `Vendor #${product.vendorId.slice(-8)}`}
                       </div>
                     </div>
                     <Button variant="ghost" size="sm" className="shrink-0">
@@ -197,20 +198,11 @@ export default function ProductDetail() {
                 </Link>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl">
-                  <ShieldCheck className="w-6 h-6 text-primary shrink-0" />
-                  <div>
-                    <div className="font-medium text-sm">Secure Payment</div>
-                    <div className="text-xs text-muted-foreground">Protected checkout</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl">
-                  <Truck className="w-6 h-6 text-primary shrink-0" />
-                  <div>
-                    <div className="font-medium text-sm">Fast Shipping</div>
-                    <div className="text-xs text-muted-foreground">Kuwait delivery</div>
-                  </div>
+              <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-xl">
+                <ShieldCheck className="w-6 h-6 text-primary shrink-0" />
+                <div>
+                  <div className="font-medium text-sm">Secure Payment</div>
+                  <div className="text-xs text-muted-foreground">Protected checkout</div>
                 </div>
               </div>
 

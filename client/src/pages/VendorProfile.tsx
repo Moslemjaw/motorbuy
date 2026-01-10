@@ -18,11 +18,11 @@ export default function VendorProfile() {
   
   const { data: vendor, isLoading: isVendorLoading } = useVendor(vendorId);
   const { data: allProducts, isLoading: isProductsLoading } = useProducts({ vendorId });
-  const { data: allStories } = useStories();
-  const [selectedStory, setSelectedStory] = useState<VendorStory | null>(null);
+  const { data: allAds } = useStories();
+  const [selectedAd, setSelectedAd] = useState<VendorStory | null>(null);
 
   const vendorProducts = allProducts?.filter(p => p.vendorId === vendorId) || [];
-  const vendorStories = allStories?.filter(s => s.vendorId === vendorId) || [];
+  const vendorAds = allAds?.filter(ad => ad.vendorId === vendorId) || [];
 
   if (isVendorLoading || isProductsLoading) {
     return <LoadingPage message="Loading vendor profile..." />;
@@ -71,8 +71,8 @@ export default function VendorProfile() {
                   <div className="text-white/60 text-sm">Products</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-bold text-xl">{vendorStories.length}</div>
-                  <div className="text-white/60 text-sm">Stories</div>
+                  <div className="font-bold text-xl">{vendorAds.length}</div>
+                  <div className="text-white/60 text-sm">Ads</div>
                 </div>
               </div>
               
@@ -90,26 +90,26 @@ export default function VendorProfile() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 pb-12">
-        {vendorStories.length > 0 && (
+        {vendorAds.length > 0 && (
           <div className="mb-10">
             <h2 className="text-lg font-display font-bold mb-4 flex items-center gap-2">
-              <ImageIcon className="w-5 h-5" /> Latest Stories
+              <ImageIcon className="w-5 h-5" /> Latest Ads
             </h2>
             <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-              {vendorStories.map((story, index) => (
+              {vendorAds.map((ad, index) => (
                 <motion.div
-                  key={story.id}
+                  key={ad.id}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.05 }}
                   className="shrink-0 cursor-pointer group"
-                  onClick={() => setSelectedStory(story)}
-                  data-testid={`story-thumb-${story.id}`}
+                  onClick={() => setSelectedAd(ad)}
+                  data-testid={`ad-thumb-${ad.id}`}
                 >
                   <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-primary to-accent p-0.5 group-hover:scale-105 transition-transform">
                     <div className="w-full h-full rounded-full overflow-hidden bg-card">
-                      {story.imageUrl ? (
-                        <img src={story.imageUrl} alt="" className="w-full h-full object-cover" />
+                      {ad.imageUrl ? (
+                        <img src={ad.imageUrl} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-muted">
                           <ImageIcon className="w-6 h-6 text-muted-foreground" />
@@ -118,7 +118,7 @@ export default function VendorProfile() {
                     </div>
                   </div>
                   <p className="text-xs text-center text-muted-foreground mt-2 max-w-20 md:max-w-24 line-clamp-1">
-                    {story.createdAt ? new Date(story.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : "Story"}
+                    {ad.createdAt ? new Date(ad.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : "Ad"}
                   </p>
                 </motion.div>
               ))}
@@ -153,13 +153,13 @@ export default function VendorProfile() {
         </div>
       </div>
 
-      <Dialog open={!!selectedStory} onOpenChange={() => setSelectedStory(null)}>
+      <Dialog open={!!selectedAd} onOpenChange={() => setSelectedAd(null)}>
         <DialogContent className="max-w-lg p-0 overflow-hidden">
-          {selectedStory && (
+          {selectedAd && (
             <div>
-              {selectedStory.imageUrl && (
+              {selectedAd.imageUrl && (
                 <div className="aspect-square bg-muted">
-                  <img src={selectedStory.imageUrl} alt="" className="w-full h-full object-cover" />
+                  <img src={selectedAd.imageUrl} alt="" className="w-full h-full object-cover" />
                 </div>
               )}
               <div className="p-6">
@@ -174,13 +174,13 @@ export default function VendorProfile() {
                   <div>
                     <div className="font-semibold text-sm">{vendor.storeName}</div>
                     <div className="text-xs text-muted-foreground">
-                      {selectedStory.createdAt ? new Date(selectedStory.createdAt).toLocaleDateString('en-US', { 
+                      {selectedAd.createdAt ? new Date(selectedAd.createdAt).toLocaleDateString('en-US', { 
                         year: 'numeric', month: 'long', day: 'numeric' 
                       }) : ""}
                     </div>
                   </div>
                 </div>
-                <p className="text-foreground leading-relaxed">{selectedStory.content}</p>
+                <p className="text-foreground leading-relaxed">{selectedAd.content}</p>
               </div>
             </div>
           )}

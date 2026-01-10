@@ -47,7 +47,7 @@ export default function Home() {
   const { data: categories } = useCategories();
   const { data: vendors } = useVendors();
   const { data: products } = useProducts();
-  const { data: stories } = useStories();
+  const { data: ads } = useStories();
 
   // Categories carousel pause/resume logic with manual scroll support
   const categoriesCarouselRef = useRef<HTMLDivElement>(null);
@@ -194,9 +194,7 @@ export default function Home() {
   const vendorsWithAds = useMemo(() => {
     // Show all vendors (not just approved) for now
     const allVendors = vendors || [];
-    const vendorIdsWithAds = new Set(
-      stories?.map((story) => story.vendorId) || []
-    );
+    const vendorIdsWithAds = new Set(ads?.map((ad) => ad.vendorId) || []);
 
     return allVendors
       .map((vendor) => ({
@@ -204,7 +202,7 @@ export default function Home() {
         hasAd: vendorIdsWithAds.has(vendor.id),
       }))
       .slice(0, 8); // Show up to 8 vendors
-  }, [vendors, stories]);
+  }, [vendors, ads]);
 
   const features = [
     {

@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
+import { useRole, useProducts, useCategories, useVendors } from "@/hooks/use-motorbuy";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Users,
@@ -17,7 +18,9 @@ import {
   Plus,
   FileText,
   Clock,
-  LogOut
+  LogOut,
+  Package,
+  Image
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,8 +35,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { apiRequest } from "@/lib/queryClient";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Select,
   SelectContent,
@@ -41,6 +46,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useUpload } from "@/hooks/use-upload";
+import { buildApiUrl } from "@/lib/api-config";
+import { formatKWD } from "@/lib/currency";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/lib/i18n";
 import { formatKWD } from "@/lib/currency";
@@ -51,12 +61,26 @@ function buildApiUrl(path: string) {
 }
 
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading: isAuthLoading } = useAuth();
+  const { data: roleData, isLoading: isRoleLoading } = useRole();
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("analytics");
   const { t, isRTL, language } = useLanguage();
 
-  if (!user || user.role !== "admin") {
+  // Show loading state while checking authentication and role
+  if (isAuthLoading || isRoleLoading) {
+    return (
+      <div className="min-h-screen bg-muted/30 font-body flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Check role from both user object and roleData
+  const isAdmin = user?.role === "admin" || roleData?.role === "admin";
+
+  // Redirect if not authenticated or not admin
+  if (!user || !isAdmin) {
     setLocation("/");
     return null;
   }
@@ -70,10 +94,11 @@ export default function AdminDashboard() {
     { value: "analytics", label: t("admin.dashboard.tabAnalytics"), icon: TrendingUp },
     { value: "users", label: t("admin.dashboard.tabUsers"), icon: Users },
     { value: "vendors", label: t("admin.dashboard.tabVendors"), icon: Store },
+    { value: "products", label: t("admin.dashboard.tabProducts") || "Products", icon: Package },
     { value: "vendor-requests", label: t("admin.dashboard.tabVendorRequests"), icon: FileText },
     { value: "orders", label: t("admin.dashboard.tabOrders"), icon: ShoppingBag },
     { value: "categories", label: t("admin.dashboard.tabCategories"), icon: FolderOpen },
-    { value: "ads", label: t("admin.dashboard.tabAds"), icon: FileText }, // Assuming Ads is also FileText or similar
+    { value: "ads", label: t("admin.dashboard.tabAds"), icon: FileText },
     { value: "payouts", label: t("admin.dashboard.tabPayouts"), icon: DollarSign },
   ];
 
@@ -124,12 +149,12 @@ export default function AdminDashboard() {
             {/* Header */}
             <div className={`mb-4 ${isRTL ? "text-right" : "text-left"}`}>
               <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <div>
-                  <h1 className="text-2xl md:text-3xl font-display font-bold mb-1">
+                <div className={isRTL ? "text-right" : "text-left"}>
+                  <h1 className={`text-2xl md:text-3xl font-display font-bold mb-1 ${isRTL ? "text-right" : "text-left"}`}>
                     {activeTab === "analytics" ? t("admin.dashboard.title") : getActiveTabLabel()}
                   </h1>
                   {activeTab === "analytics" && (
-                    <p className="text-muted-foreground text-sm md:text-base">{t("admin.dashboard.welcomeBack")}</p>
+                    <p className={`text-muted-foreground text-sm md:text-base ${isRTL ? "text-right" : "text-left"}`}>{t("admin.dashboard.welcomeBack")}</p>
                   )}
                 </div>
               </div>
@@ -144,6 +169,7 @@ export default function AdminDashboard() {
               )}
               {activeTab === "users" && <UsersSection />}
               {activeTab === "vendors" && <VendorsSection />}
+              {activeTab === "products" && <ProductsSection />}
               {activeTab === "vendor-requests" && <VendorRequestsSection />}
               {activeTab === "orders" && <OrdersSection />}
               {activeTab === "categories" && <CategoriesSection />}
@@ -971,7 +997,7 @@ function AdsSection() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: stories, isLoading: isStoriesLoading } = useQuery<any[]>({
+  const { data: ads, isLoading: isAdsLoading } = useQuery<any[]>({
     queryKey: ["/api/stories"],
     queryFn: async () => {
       const res = await fetch(buildApiUrl("/api/stories"), {
@@ -990,9 +1016,9 @@ function AdsSection() {
     }
   });
 
-  const deleteStoryMutation = useMutation({
-    mutationFn: async (storyId: string) => {
-      const res = await apiRequest("DELETE", `/api/stories/${storyId}`);
+  const deleteAdMutation = useMutation({
+    mutationFn: async (adId: string) => {
+      const res = await apiRequest("DELETE", `/api/stories/${adId}`);
       if (!res.ok) throw new Error("Failed to delete ad");
     },
     onSuccess: () => {
@@ -1013,7 +1039,7 @@ function AdsSection() {
     return vendor?.storeName || "Unknown Vendor";
   };
 
-  if (isStoriesLoading) {
+  if (isAdsLoading) {
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="animate-spin w-8 h-8" />
@@ -1029,23 +1055,23 @@ function AdsSection() {
 
       <Card>
         <CardContent className="p-0">
-          {!stories || stories.length === 0 ? (
+          {!ads || ads.length === 0 ? (
             <p className="text-center text-muted-foreground py-12">
               {t("admin.dashboard.noAds") || "No ads found"}
             </p>
           ) : (
             <div className="divide-y">
-              {stories.map((story) => (
+              {ads.map((ad) => (
                 <div
-                  key={story.id}
+                  key={ad.id}
                   className="p-4 md:p-6"
-                  data-testid={`ad-row-${story.id}`}
+                  data-testid={`ad-row-${ad.id}`}
                 >
                   <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-                    {story.imageUrl && (
+                    {ad.imageUrl && (
                       <div className="w-full lg:w-48 h-32 lg:h-32 rounded-lg overflow-hidden bg-muted flex-shrink-0">
                         <img
-                          src={story.imageUrl}
+                          src={ad.imageUrl}
                           alt=""
                           className="w-full h-full object-cover"
                         />
@@ -1056,15 +1082,15 @@ function AdsSection() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
                             <Badge variant="secondary">
-                              {getVendorName(story.vendorId)}
+                              {getVendorName(ad.vendorId)}
                             </Badge>
                             <span className="text-xs text-muted-foreground">
-                              {new Date(story.createdAt).toLocaleDateString()}
+                              {new Date(ad.createdAt).toLocaleDateString()}
                             </span>
                           </div>
-                          {story.content && (
+                          {ad.content && (
                             <p className="text-sm text-muted-foreground line-clamp-3">
-                              {story.content}
+                              {ad.content}
                             </p>
                           )}
                         </div>
@@ -1072,9 +1098,9 @@ function AdsSection() {
                           size="icon"
                           variant="ghost"
                           className="text-destructive hover:bg-destructive/10 flex-shrink-0"
-                          onClick={() => deleteStoryMutation.mutate(story.id)}
-                          disabled={deleteStoryMutation.isPending}
-                          data-testid={`button-delete-ad-${story.id}`}
+                          onClick={() => deleteAdMutation.mutate(ad.id)}
+                          disabled={deleteAdMutation.isPending}
+                          data-testid={`button-delete-ad-${ad.id}`}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -1139,4 +1165,482 @@ function PayoutsSection() {
             </CardContent>
         </Card>
     );
+}
+
+function ProductsSection() {
+  const { t, isRTL } = useLanguage();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { data: products, isLoading: isProductsLoading } = useProducts();
+  const { data: categories } = useCategories();
+  const { data: vendors } = useVendors();
+  
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [deletingProduct, setDeletingProduct] = useState<any | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  
+  const [productName, setProductName] = useState("");
+  const [productDesc, setProductDesc] = useState("");
+  const [productPrice, setProductPrice] = useState("");
+  const [productComparePrice, setProductComparePrice] = useState("");
+  const [productStock, setProductStock] = useState("");
+  const [productBrand, setProductBrand] = useState("");
+  const [productCategory, setProductCategory] = useState("");
+  const [productVendor, setProductVendor] = useState("");
+  const [productImages, setProductImages] = useState<string[]>([]);
+  const [productWarranty, setProductWarranty] = useState("");
+  
+  const productImageRef = useRef<HTMLInputElement>(null);
+  
+  const { uploadFile: uploadProductImage, isUploading: isUploadingProduct } = useUpload({
+    onSuccess: (response) => {
+      setProductImages([...productImages, response.objectPath]);
+      toast({ title: "Image Added" });
+    },
+    onError: (error) => toast({ title: "Upload Failed", description: error.message, variant: "destructive" }),
+  });
+
+  const createProductMutation = useMutation({
+    mutationFn: async (data: any) => apiRequest("POST", "/api/products", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: "Product Added", description: "Product has been created successfully." });
+      setIsCreateDialogOpen(false);
+      resetForm();
+    },
+    onError: () => toast({ title: "Error", description: "Failed to add product.", variant: "destructive" }),
+  });
+
+  const updateProductMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => apiRequest("PATCH", `/api/products/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: "Product Updated", description: "Product has been updated successfully." });
+      setIsEditDialogOpen(false);
+      setEditingProduct(null);
+      resetForm();
+    },
+    onError: () => toast({ title: "Error", description: "Failed to update product.", variant: "destructive" }),
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: async (id: string) => apiRequest("DELETE", `/api/products/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: "Product Deleted", description: "Product has been deleted successfully." });
+      setIsDeleteDialogOpen(false);
+      setDeletingProduct(null);
+    },
+    onError: () => toast({ title: "Error", description: "Failed to delete product.", variant: "destructive" }),
+  });
+
+  const resetForm = () => {
+    setProductName("");
+    setProductDesc("");
+    setProductPrice("");
+    setProductComparePrice("");
+    setProductStock("");
+    setProductBrand("");
+    setProductCategory("");
+    setProductVendor("");
+    setProductImages([]);
+    setProductWarranty("");
+  };
+
+  const handleCreateProduct = () => {
+    if (!productName || !productDesc || !productPrice || !productCategory || !productVendor) {
+      toast({ title: "Missing Fields", description: "Please fill all required fields.", variant: "destructive" });
+      return;
+    }
+    createProductMutation.mutate({
+      vendorId: productVendor,
+      categoryId: productCategory,
+      name: productName,
+      description: productDesc,
+      price: productPrice,
+      compareAtPrice: productComparePrice || null,
+      stock: parseInt(productStock) || 0,
+      brand: productBrand,
+      images: productImages.length > 0 ? productImages : ["https://placehold.co/400x300?text=Product"],
+      warrantyInfo: productWarranty || null,
+    });
+  };
+
+  const handleEditProduct = (product: any) => {
+    setEditingProduct(product);
+    setProductName(product.name || "");
+    setProductDesc(product.description || "");
+    setProductPrice(product.price || "");
+    setProductComparePrice(product.compareAtPrice || "");
+    setProductStock(product.stock?.toString() || "");
+    setProductBrand(product.brand || "");
+    setProductCategory(product.categoryId || "");
+    setProductVendor(product.vendorId || "");
+    setProductImages(product.images || []);
+    setProductWarranty(product.warrantyInfo || "");
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateProduct = () => {
+    if (!productName || !productDesc || !productPrice || !productCategory || !editingProduct) {
+      toast({ title: "Missing Fields", description: "Please fill all required fields.", variant: "destructive" });
+      return;
+    }
+    updateProductMutation.mutate({
+      id: editingProduct.id,
+      data: {
+        categoryId: productCategory,
+        name: productName,
+        description: productDesc,
+        price: productPrice,
+        compareAtPrice: productComparePrice || null,
+        stock: parseInt(productStock) || 0,
+        brand: productBrand,
+        images: productImages.length > 0 ? productImages : ["https://placehold.co/400x300?text=Product"],
+        warrantyInfo: productWarranty || null,
+      },
+    });
+  };
+
+  const handleDeleteProduct = (product: any) => {
+    setDeletingProduct(product);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const getVendorName = (vendorId: string) => {
+    const vendor = vendors?.find((v) => v.id === vendorId);
+    return vendor?.storeName || "Unknown Vendor";
+  };
+
+  const getCategoryName = (categoryId: string) => {
+    const category = categories?.find((c) => c.id === categoryId);
+    return category?.name || "Unknown Category";
+  };
+
+  if (isProductsLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="animate-spin w-8 h-8" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <h2 className="text-xl font-semibold">{t("admin.dashboard.tabProducts") || "Products"}</h2>
+        <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2">
+          <Plus className="w-4 h-4" />
+          {t("admin.dashboard.addProduct") || "Add Product"}
+        </Button>
+      </div>
+
+      <Card className="border shadow-sm">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="font-medium text-muted-foreground w-20">{t("common.image")}</TableHead>
+                <TableHead className="font-medium text-muted-foreground">{t("common.name")}</TableHead>
+                <TableHead className="font-medium text-muted-foreground">{t("admin.dashboard.tabVendors")}</TableHead>
+                <TableHead className="font-medium text-muted-foreground">{t("admin.dashboard.tabCategories")}</TableHead>
+                <TableHead className="font-medium text-muted-foreground text-right">{t("common.price")}</TableHead>
+                <TableHead className="font-medium text-muted-foreground">{t("common.status")}</TableHead>
+                <TableHead className="font-medium text-muted-foreground text-right">{t("admin.dashboard.actions") || "Actions"}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {!products || products.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-12">
+                    {t("admin.dashboard.noProducts") || "No products found"}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                products.map((product: any) => (
+                  <TableRow key={product.id} className="hover:bg-muted/50">
+                    <TableCell>
+                      {product.images && product.images.length > 0 ? (
+                        <img src={product.images[0]} alt={product.name} className="w-12 h-12 object-cover rounded" />
+                      ) : (
+                        <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
+                          <Package className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{getVendorName(product.vendorId)}</TableCell>
+                    <TableCell className="text-muted-foreground">{getCategoryName(product.categoryId)}</TableCell>
+                    <TableCell className="text-right font-medium">{formatKWD(product.price)}</TableCell>
+                    <TableCell>
+                      <Badge variant={product.stock > 0 ? "default" : "destructive"}>
+                        {product.stock > 0 ? t("common.inStock") : t("common.outOfStock")}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className={`flex gap-1 justify-end ${isRTL ? 'flex-row-reverse' : ''}`}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleEditProduct(product)}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDeleteProduct(product)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Create Product Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t("admin.dashboard.addProduct") || "Add Product"}</DialogTitle>
+            <DialogDescription>{t("admin.dashboard.addProductDesc") || "Create a new product and assign it to a vendor."}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t("common.name")} *</Label>
+                <Input value={productName} onChange={(e) => setProductName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("admin.dashboard.tabVendors")} *</Label>
+                <Select value={productVendor} onValueChange={setProductVendor}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("admin.dashboard.selectVendor") || "Select Vendor"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vendors?.filter((v) => v.isApproved).map((vendor) => (
+                      <SelectItem key={vendor.id} value={vendor.id}>
+                        {vendor.storeName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{t("admin.dashboard.description") || "Description"} *</Label>
+              <Textarea value={productDesc} onChange={(e) => setProductDesc(e.target.value)} className="min-h-[100px]" />
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>{t("common.price")} (KWD) *</Label>
+                <Input type="number" step="0.001" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("admin.dashboard.comparePrice") || "Compare Price"} (KWD)</Label>
+                <Input type="number" step="0.001" value={productComparePrice} onChange={(e) => setProductComparePrice(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("admin.dashboard.stock") || "Stock"} *</Label>
+                <Input type="number" value={productStock} onChange={(e) => setProductStock(e.target.value)} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t("admin.dashboard.brand") || "Brand"}</Label>
+                <Input value={productBrand} onChange={(e) => setProductBrand(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("admin.dashboard.tabCategories")} *</Label>
+                <Select value={productCategory} onValueChange={setProductCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("admin.dashboard.selectCategory") || "Select Category"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories?.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{t("admin.dashboard.warranty") || "Warranty Info"}</Label>
+              <Input value={productWarranty} onChange={(e) => setProductWarranty(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>{t("common.image")}</Label>
+              <div className="flex gap-2">
+                <input ref={productImageRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadProductImage(f); }} />
+                <Button variant="outline" onClick={() => productImageRef.current?.click()} disabled={isUploadingProduct}>
+                  {isUploadingProduct ? <Loader2 className="w-4 h-4 animate-spin" /> : <Image className="w-4 h-4" />}
+                  {t("admin.dashboard.uploadImage") || "Upload Image"}
+                </Button>
+              </div>
+              {productImages.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {productImages.map((img, idx) => (
+                    <div key={idx} className="relative">
+                      <img src={img} alt="" className="w-20 h-20 object-cover rounded" />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6"
+                        onClick={() => setProductImages(productImages.filter((_, i) => i !== idx))}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setIsCreateDialogOpen(false); resetForm(); }}>
+              {t("common.cancel")}
+            </Button>
+            <Button onClick={handleCreateProduct} disabled={createProductMutation.isPending}>
+              {createProductMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              {t("common.save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Product Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t("admin.dashboard.editProduct") || "Edit Product"}</DialogTitle>
+            <DialogDescription>{t("admin.dashboard.editProductDesc") || "Update product information."}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t("common.name")} *</Label>
+                <Input value={productName} onChange={(e) => setProductName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("admin.dashboard.tabVendors")}</Label>
+                <Input value={getVendorName(productVendor)} disabled />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{t("admin.dashboard.description") || "Description"} *</Label>
+              <Textarea value={productDesc} onChange={(e) => setProductDesc(e.target.value)} className="min-h-[100px]" />
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>{t("common.price")} (KWD) *</Label>
+                <Input type="number" step="0.001" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("admin.dashboard.comparePrice") || "Compare Price"} (KWD)</Label>
+                <Input type="number" step="0.001" value={productComparePrice} onChange={(e) => setProductComparePrice(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("admin.dashboard.stock") || "Stock"} *</Label>
+                <Input type="number" value={productStock} onChange={(e) => setProductStock(e.target.value)} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t("admin.dashboard.brand") || "Brand"}</Label>
+                <Input value={productBrand} onChange={(e) => setProductBrand(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("admin.dashboard.tabCategories")} *</Label>
+                <Select value={productCategory} onValueChange={setProductCategory}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories?.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{t("admin.dashboard.warranty") || "Warranty Info"}</Label>
+              <Input value={productWarranty} onChange={(e) => setProductWarranty(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>{t("common.image")}</Label>
+              <div className="flex gap-2">
+                <input ref={productImageRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadProductImage(f); }} />
+                <Button variant="outline" onClick={() => productImageRef.current?.click()} disabled={isUploadingProduct}>
+                  {isUploadingProduct ? <Loader2 className="w-4 h-4 animate-spin" /> : <Image className="w-4 h-4" />}
+                  {t("admin.dashboard.uploadImage") || "Upload Image"}
+                </Button>
+              </div>
+              {productImages.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {productImages.map((img, idx) => (
+                    <div key={idx} className="relative">
+                      <img src={img} alt="" className="w-20 h-20 object-cover rounded" />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute -top-2 -right-2 h-6 w-6"
+                        onClick={() => setProductImages(productImages.filter((_, i) => i !== idx))}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setIsEditDialogOpen(false); setEditingProduct(null); resetForm(); }}>
+              {t("common.cancel")}
+            </Button>
+            <Button onClick={handleUpdateProduct} disabled={updateProductMutation.isPending}>
+              {updateProductMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              {t("common.save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Product Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin.dashboard.deleteProduct") || "Delete Product"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("admin.dashboard.deleteProductDesc") || `Are you sure you want to delete "${deletingProduct?.name}"? This action cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteProductMutation.mutate(deletingProduct?.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteProductMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              {t("common.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
 }

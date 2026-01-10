@@ -51,7 +51,7 @@ export default function VendorDashboard() {
   // Get active tab from URL hash or default to "overview"
   const getActiveTab = () => {
     const hash = window.location.hash.replace("#", "");
-    if (hash && ["overview", "products", "spotlight", "orders", "create-order"].includes(hash)) {
+    if (hash && ["overview", "products", "ads", "orders", "create-order"].includes(hash)) {
       return hash;
     }
     return "overview";
@@ -116,11 +116,11 @@ export default function VendorDashboard() {
     enabled: !!vendorProfile,
   });
 
-  // Fetch stories for this vendor from backend
-  const STORIES_QUERY_KEY = ["/api/vendor/stories"];
+  // Fetch ads for this vendor from backend
+  const ADS_QUERY_KEY = ["/api/vendor/stories"];
 
-  const { data: myStories = [], isLoading: isStoriesLoading } = useQuery<VendorStory[]>({
-    queryKey: STORIES_QUERY_KEY,
+  const { data: myAds = [], isLoading: isAdsLoading } = useQuery<VendorStory[]>({
+    queryKey: ADS_QUERY_KEY,
     queryFn: async () => {
       const res = await fetch(buildApiUrl("/api/vendor/stories"), {
         credentials: "include",
@@ -156,8 +156,8 @@ export default function VendorDashboard() {
   const [paymentMethod, setPaymentMethod] = useState("pay-in-store");
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
 
-  const [storyContent, setStoryContent] = useState("");
-  const [storyImage, setStoryImage] = useState<string | null>(null);
+  const [adContent, setAdContent] = useState("");
+  const [adImage, setAdImage] = useState<string | null>(null);
 
   const [storeName, setStoreName] = useState("");
   const [storeDescription, setStoreDescription] = useState("");
@@ -167,7 +167,7 @@ export default function VendorDashboard() {
   const [orderStatusFilter, setOrderStatusFilter] = useState("all");
 
   const productImageRef = useRef<HTMLInputElement>(null);
-  const storyImageRef = useRef<HTMLInputElement>(null);
+  const adImageRef = useRef<HTMLInputElement>(null);
   const storeLogoRef = useRef<HTMLInputElement>(null);
   const storeCoverRef = useRef<HTMLInputElement>(null);
 
@@ -179,13 +179,13 @@ export default function VendorDashboard() {
     onError: (error) => toast({ title: "Upload Failed", description: error.message, variant: "destructive" }),
   });
 
-  const { uploadFile: uploadStoryImage, isUploading: isUploadingStory } = useUpload({
+  const { uploadFile: uploadAdImage, isUploading: isUploadingAd } = useUpload({
     onSuccess: (response) => {
       // Convert objectPath to full URL if needed
       const imageUrl = response.objectPath.startsWith('http') 
         ? response.objectPath 
         : buildApiUrl(response.objectPath);
-      setStoryImage(imageUrl);
+      setAdImage(imageUrl);
       toast({ title: "Image Uploaded" });
     },
     onError: (error) => toast({ title: "Upload Failed", description: error.message, variant: "destructive" }),
@@ -245,18 +245,18 @@ export default function VendorDashboard() {
     onError: () => toast({ title: "Error", description: "Failed to update product.", variant: "destructive" }),
   });
 
-  const addStoryMutation = useMutation({
+  const addAdMutation = useMutation({
     mutationFn: async (data: any) => apiRequest("POST", "/api/stories", data),
     onSuccess: async () => {
-      // Invalidate and refetch stories to ensure the new one appears
+      // Invalidate and refetch ads to ensure the new one appears
       await queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
       await queryClient.refetchQueries({ queryKey: ["/api/stories"] });
       toast({ title: "Ad Posted", description: "Your ad has been shared with customers." });
-      setStoryContent("");
-      setStoryImage(null);
+      setAdContent("");
+      setAdImage(null);
       // Clear the file input
-      if (storyImageRef.current) {
-        storyImageRef.current.value = "";
+      if (adImageRef.current) {
+        adImageRef.current.value = "";
       }
     },
     onError: (error: any) => {
@@ -265,30 +265,30 @@ export default function VendorDashboard() {
     },
   });
 
-  const [editingStory, setEditingStory] = useState<any | null>(null);
-  const [isEditStoryDialogOpen, setIsEditStoryDialogOpen] = useState(false);
+  const [editingAd, setEditingAd] = useState<any | null>(null);
+  const [isEditAdDialogOpen, setIsEditAdDialogOpen] = useState(false);
 
-  const updateStoryMutation = useMutation({
+  const updateAdMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => apiRequest("PATCH", `/api/stories/${id}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: STORIES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ADS_QUERY_KEY });
       toast({ title: "Ad Updated", description: "Your ad has been updated." });
-      setIsEditStoryDialogOpen(false);
-      setEditingStory(null);
-      setStoryContent("");
-      setStoryImage(null);
-      if (storyImageRef.current) {
-        storyImageRef.current.value = "";
+      setIsEditAdDialogOpen(false);
+      setEditingAd(null);
+      setAdContent("");
+      setAdImage(null);
+      if (adImageRef.current) {
+        adImageRef.current.value = "";
       }
     },
     onError: () => toast({ title: "Error", description: "Failed to update ad.", variant: "destructive" }),
   });
 
-  const deleteStoryMutation = useMutation({
+  const deleteAdMutation = useMutation({
     mutationFn: async (id: string) => apiRequest("DELETE", `/api/stories/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: STORIES_QUERY_KEY });
-      queryClient.invalidateQueries({ queryKey: STORIES_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ADS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ADS_QUERY_KEY });
       toast({ title: "Ad Deleted", description: "Your ad has been removed." });
       },
     onError: () => toast({ title: "Error", description: "Failed to delete ad.", variant: "destructive" }),
@@ -463,8 +463,8 @@ export default function VendorDashboard() {
     });
   };
 
-  const handlePostStory = () => {
-    if (!storyContent && !storyImage) {
+  const handlePostAd = () => {
+    if (!adContent && !adImage) {
       toast({ title: "Empty Ad", description: "Add content or an image.", variant: "destructive" });
       return;
     }
@@ -472,31 +472,31 @@ export default function VendorDashboard() {
       toast({ title: "Error", description: "Vendor profile not found.", variant: "destructive" });
       return;
     }
-    addStoryMutation.mutate({
+    addAdMutation.mutate({
       vendorId: vendorProfile.id,
-      content: storyContent || undefined,
-      imageUrl: storyImage || null,
+      content: adContent || undefined,
+      imageUrl: adImage || null,
     });
   };
 
-  const handleEditStory = (story: any) => {
-    setEditingStory(story);
-    setStoryContent(story.content || "");
-    setStoryImage(story.imageUrl || null);
-    setIsEditStoryDialogOpen(true);
+  const handleEditAd = (ad: any) => {
+    setEditingAd(ad);
+    setAdContent(ad.content || "");
+    setAdImage(ad.imageUrl || null);
+    setIsEditAdDialogOpen(true);
   };
 
-  const handleUpdateStory = () => {
-    if (!editingStory) return;
-    if (!storyContent && !storyImage) {
+  const handleUpdateAd = () => {
+    if (!editingAd) return;
+    if (!adContent && !adImage) {
       toast({ title: "Empty Ad", description: "Add content or an image.", variant: "destructive" });
       return;
     }
-    updateStoryMutation.mutate({
-      id: editingStory.id,
+    updateAdMutation.mutate({
+      id: editingAd.id,
       data: {
-        content: storyContent || null,
-        imageUrl: storyImage || null,
+        content: adContent || null,
+        imageUrl: adImage || null,
       },
     });
   };
@@ -644,9 +644,9 @@ export default function VendorDashboard() {
       label: t("vendor.dashboard.tabProducts"),
     },
     {
-      value: "spotlight",
+      value: "ads",
       icon: BookOpen,
-      label: t("vendor.dashboard.tabSpotlight"),
+      label: t("vendor.dashboard.tabAds") || t("admin.dashboard.tabAds"),
     },
     {
       value: "orders",
@@ -811,27 +811,27 @@ export default function VendorDashboard() {
               <div className="flex gap-3">
                 <div className="flex-1">
                   <Textarea 
-                    value={storyContent} 
-                    onChange={(e) => setStoryContent(e.target.value)} 
+                    value={adContent} 
+                    onChange={(e) => setAdContent(e.target.value)} 
                     placeholder={t("vendor.dashboard.sharePlaceholder")}
                     className="min-h-[80px] resize-none"
-                    data-testid="input-story-content"
+                    data-testid="input-ad-content"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <input ref={storyImageRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadStoryImage(f); }} />
-                  <Button variant="outline" size="icon" onClick={() => storyImageRef.current?.click()} disabled={isUploadingStory} data-testid="button-add-story-image">
-                    {isUploadingStory ? <Loader2 className="w-4 h-4 animate-spin" /> : <Image className="w-4 h-4" />}
+                  <input ref={adImageRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAdImage(f); }} />
+                  <Button variant="outline" size="icon" onClick={() => adImageRef.current?.click()} disabled={isUploadingAd} data-testid="button-add-ad-image">
+                    {isUploadingAd ? <Loader2 className="w-4 h-4 animate-spin" /> : <Image className="w-4 h-4" />}
                   </Button>
-                  <Button size="icon" onClick={handlePostStory} disabled={addStoryMutation.isPending || (!storyContent && !storyImage)} data-testid="button-post-story">
-                    {addStoryMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  <Button size="icon" onClick={handlePostAd} disabled={addAdMutation.isPending || (!adContent && !adImage)} data-testid="button-post-ad">
+                    {addAdMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   </Button>
                 </div>
               </div>
-              {storyImage && (
+              {adImage && (
                 <div className="mt-3 relative inline-block">
-                  <img src={storyImage} alt="" className="h-20 rounded-lg object-cover" />
-                  <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6" onClick={() => setStoryImage(null)} data-testid="button-remove-story-image">
+                  <img src={adImage} alt="" className="h-20 rounded-lg object-cover" />
+                  <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6" onClick={() => setAdImage(null)} data-testid="button-remove-ad-image">
                     <Trash2 className="w-3 h-3" />
                   </Button>
                 </div>
@@ -843,15 +843,15 @@ export default function VendorDashboard() {
             <CardHeader className="pb-4">
               <CardTitle className="text-xl font-semibold flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-primary" />
-                {t("vendor.dashboard.yourAds")} {myStories.length > 0 && `(${myStories.length})`}
+                {t("vendor.dashboard.yourAds")} {myAds.length > 0 && `(${myAds.length})`}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {isStoriesLoading ? (
+              {isAdsLoading ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                 </div>
-              ) : myStories.length === 0 ? (
+              ) : myAds.length === 0 ? (
                 <div className="text-center py-8">
                   <BookOpen className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
                   <p className="text-sm text-muted-foreground mb-1">{t("vendor.dashboard.noAds")}</p>
@@ -859,19 +859,19 @@ export default function VendorDashboard() {
                 </div>
               ) : (
                 <div className="space-y-3 max-h-[500px] overflow-y-auto">
-                  {myStories.map((story) => (
-                    <div key={story.id} className="text-sm p-4 bg-muted/50 rounded-lg hover:bg-muted/70 transition-colors border border-border/50" data-testid={`story-row-${story.id}`}>
-                      {story.imageUrl && (
+                  {myAds.map((ad) => (
+                    <div key={ad.id} className="text-sm p-4 bg-muted/50 rounded-lg hover:bg-muted/70 transition-colors border border-border/50" data-testid={`ad-row-${ad.id}`}>
+                      {ad.imageUrl && (
                         <div className="mb-3 rounded-lg overflow-hidden">
-                          <img src={story.imageUrl} alt="" className="w-full h-32 object-cover" />
+                          <img src={ad.imageUrl} alt="" className="w-full h-32 object-cover" />
                         </div>
                       )}
-                      {story.content && (
-                        <p className="line-clamp-3 mb-3 text-foreground">{story.content}</p>
+                      {ad.content && (
+                        <p className="line-clamp-3 mb-3 text-foreground">{ad.content}</p>
                       )}
                       <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/30">
                         <p className="text-xs text-muted-foreground">
-                          {story.createdAt ? new Date(story.createdAt).toLocaleDateString('en-US', { 
+                          {ad.createdAt ? new Date(ad.createdAt).toLocaleDateString('en-US', { 
                             month: 'short', 
                             day: 'numeric', 
                             year: 'numeric' 
@@ -882,8 +882,8 @@ export default function VendorDashboard() {
                           variant="ghost" 
                           size="icon" 
                             className="h-8 w-8" 
-                            onClick={() => handleEditStory(story)}
-                            data-testid={`button-edit-story-${story.id}`}
+                            onClick={() => handleEditAd(ad)}
+                            data-testid={`button-edit-ad-${ad.id}`}
                             title="Edit ad"
                           >
                             <Edit className="w-4 h-4" />
@@ -892,12 +892,12 @@ export default function VendorDashboard() {
                             variant="ghost" 
                             size="icon" 
                             className="h-8 w-8 text-destructive hover:bg-destructive/10" 
-                          onClick={() => deleteStoryMutation.mutate(story.id)}
-                            disabled={deleteStoryMutation.isPending}
-                          data-testid={`button-delete-story-${story.id}`}
+                          onClick={() => deleteAdMutation.mutate(ad.id)}
+                            disabled={deleteAdMutation.isPending}
+                          data-testid={`button-delete-ad-${ad.id}`}
                             title="Delete ad"
                           >
-                            {deleteStoryMutation.isPending ? (
+                            {deleteAdMutation.isPending ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
                               <Trash2 className="w-4 h-4" />
@@ -916,12 +916,12 @@ export default function VendorDashboard() {
             )}
 
 
-            {/* Spotlight Section */}
-            {activeTab === "spotlight" && (
+            {/* Ads Section */}
+            {activeTab === "ads" && (
               <div className="space-y-4">
-                {/* Create Spotlight Button */}
+                {/* Create Ad Button */}
                 <div className="flex justify-end">
-                  <Button onClick={() => { setStoryContent(""); setStoryImage(null); }} className="gap-2">
+                  <Button onClick={() => { setAdContent(""); setAdImage(null); }} className="gap-2">
                     <Plus className="w-4 h-4" />
                     {t("vendor.dashboard.createAd")}
                   </Button>
@@ -937,27 +937,27 @@ export default function VendorDashboard() {
                     <div className="flex gap-3">
                       <div className="flex-1">
                         <Textarea 
-                          value={storyContent} 
-                          onChange={(e) => setStoryContent(e.target.value)} 
+                          value={adContent} 
+                          onChange={(e) => setAdContent(e.target.value)} 
                           placeholder={t("vendor.dashboard.sharePlaceholder")}
                           className="min-h-[80px] resize-none"
-                          data-testid="input-story-content"
+                          data-testid="input-ad-content"
                         />
                       </div>
                       <div className="flex flex-col gap-2">
-                        <input ref={storyImageRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadStoryImage(f); }} />
-                        <Button variant="outline" size="icon" onClick={() => storyImageRef.current?.click()} disabled={isUploadingStory} data-testid="button-add-story-image">
-                          {isUploadingStory ? <Loader2 className="w-4 h-4 animate-spin" /> : <Image className="w-4 h-4" />}
+                        <input ref={adImageRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAdImage(f); }} />
+                        <Button variant="outline" size="icon" onClick={() => adImageRef.current?.click()} disabled={isUploadingAd} data-testid="button-add-ad-image">
+                          {isUploadingAd ? <Loader2 className="w-4 h-4 animate-spin" /> : <Image className="w-4 h-4" />}
                         </Button>
-                        <Button size="icon" onClick={handlePostStory} disabled={addStoryMutation.isPending || (!storyContent && !storyImage)} data-testid="button-post-story">
-                          {addStoryMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                        <Button size="icon" onClick={handlePostAd} disabled={addAdMutation.isPending || (!adContent && !adImage)} data-testid="button-post-ad">
+                          {addAdMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                         </Button>
                       </div>
                     </div>
-                    {storyImage && (
+                    {adImage && (
                       <div className="mt-3 relative inline-block">
-                        <img src={storyImage} alt="" className="h-20 rounded-lg object-cover" />
-                        <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6" onClick={() => setStoryImage(null)} data-testid="button-remove-story-image">
+                        <img src={adImage} alt="" className="h-20 rounded-lg object-cover" />
+                        <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6" onClick={() => setAdImage(null)} data-testid="button-remove-ad-image">
                           <Trash2 className="w-3 h-3" />
                         </Button>
                       </div>
@@ -965,17 +965,17 @@ export default function VendorDashboard() {
                   </CardContent>
                 </Card>
 
-                {/* Spotlight Table */}
+                {/* Ads Table */}
                 <Card className="border shadow-sm">
                   <CardHeader>
-                    <CardTitle className="text-xl font-semibold">{t("vendor.dashboard.yourAds")} ({myStories.length})</CardTitle>
+                    <CardTitle className="text-xl font-semibold">{t("vendor.dashboard.yourAds")} ({myAds.length})</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {isStoriesLoading ? (
+                    {isAdsLoading ? (
                       <div className="flex justify-center py-8">
                         <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                     </div>
-                    ) : myStories.length === 0 ? (
+                    ) : myAds.length === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">
                         <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-30" />
                         <p className="font-medium">{t("vendor.dashboard.noAds")}</p>
@@ -993,11 +993,11 @@ export default function VendorDashboard() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {myStories.map((story) => (
-                              <TableRow key={story.id} data-testid={`story-row-${story.id}`}>
+                            {myAds.map((ad) => (
+                              <TableRow key={ad.id} data-testid={`ad-row-${ad.id}`}>
                                 <TableCell>
-                                  {story.imageUrl ? (
-                                    <img src={story.imageUrl} alt="" className="w-16 h-16 object-cover rounded" />
+                                  {ad.imageUrl ? (
+                                    <img src={ad.imageUrl} alt="" className="w-16 h-16 object-cover rounded" />
                                   ) : (
                                     <div className="w-16 h-16 bg-muted rounded flex items-center justify-center">
                                       <Image className="w-6 h-6 text-muted-foreground" />
@@ -1006,11 +1006,11 @@ export default function VendorDashboard() {
                                 </TableCell>
                                 <TableCell>
                                   <div className="max-w-md">
-                                    <p className="line-clamp-2 text-sm">{story.content || "-"}</p>
+                                    <p className="line-clamp-2 text-sm">{ad.content || "-"}</p>
                                   </div>
                                 </TableCell>
                                 <TableCell className="text-muted-foreground text-sm">
-                                  {story.createdAt ? new Date(story.createdAt).toLocaleDateString() : "-"}
+                                  {ad.createdAt ? new Date(ad.createdAt).toLocaleDateString() : "-"}
                                 </TableCell>
                                 <TableCell className="text-right">
                                   <div className="flex justify-end gap-1">
@@ -1018,8 +1018,8 @@ export default function VendorDashboard() {
                                       variant="ghost"
                                       size="icon"
                                       className="h-8 w-8"
-                                      onClick={() => handleEditStory(story)}
-                                      data-testid={`button-edit-story-${story.id}`}
+                                      onClick={() => handleEditAd(ad)}
+                                      data-testid={`button-edit-ad-${ad.id}`}
                                     >
                                       <Edit className="w-4 h-4" />
                                     </Button>
@@ -1027,11 +1027,11 @@ export default function VendorDashboard() {
                                       variant="ghost"
                                       size="icon"
                                       className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                                      onClick={() => deleteStoryMutation.mutate(story.id)}
-                                      disabled={deleteStoryMutation.isPending}
-                                      data-testid={`button-delete-story-${story.id}`}
+                                      onClick={() => deleteAdMutation.mutate(ad.id)}
+                                      disabled={deleteAdMutation.isPending}
+                                      data-testid={`button-delete-ad-${ad.id}`}
                                     >
-                                      {deleteStoryMutation.isPending ? (
+                                      {deleteAdMutation.isPending ? (
                                         <Loader2 className="w-4 h-4 animate-spin" />
                                       ) : (
                                         <Trash2 className="w-4 h-4" />
@@ -1875,8 +1875,8 @@ export default function VendorDashboard() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Edit Story Dialog */}
-      <Dialog open={isEditStoryDialogOpen} onOpenChange={setIsEditStoryDialogOpen}>
+      {/* Edit Ad Dialog */}
+      <Dialog open={isEditAdDialogOpen} onOpenChange={setIsEditAdDialogOpen}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t("vendor.dashboard.editAd")}</DialogTitle>
@@ -1886,11 +1886,11 @@ export default function VendorDashboard() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="editStoryContent">Content</Label>
+              <Label htmlFor="editAdContent">Content</Label>
               <Textarea
-                id="editStoryContent"
-                value={storyContent}
-                onChange={(e) => setStoryContent(e.target.value)}
+                id="editAdContent"
+                value={adContent}
+                onChange={(e) => setAdContent(e.target.value)}
                 placeholder="Share news, promotions, or new arrivals..."
                 className="min-h-[100px] resize-none"
               />
@@ -1898,24 +1898,24 @@ export default function VendorDashboard() {
             <div className="space-y-2">
               <Label>Image</Label>
               <input 
-                ref={storyImageRef} 
+                ref={adImageRef} 
                 type="file" 
                 accept="image/*" 
                 className="hidden" 
                 onChange={(e) => { 
                   const f = e.target.files?.[0]; 
-                  if (f) uploadStoryImage(f); 
+                  if (f) uploadAdImage(f); 
                 }} 
               />
               <div className="flex gap-2 flex-wrap">
-                {storyImage && (
+                {adImage && (
                   <div className="relative">
-                    <img src={storyImage} alt="" className="w-32 h-32 object-cover rounded border" />
+                    <img src={adImage} alt="" className="w-32 h-32 object-cover rounded border" />
                     <Button 
                       variant="destructive" 
                       size="icon" 
                       className="absolute -top-2 -right-2 h-6 w-6" 
-                      onClick={() => setStoryImage(null)}
+                      onClick={() => setAdImage(null)}
                     >
                       <X className="w-3 h-3" />
                     </Button>
@@ -1924,10 +1924,10 @@ export default function VendorDashboard() {
                 <Button 
                   variant="outline" 
                   size="icon" 
-                  onClick={() => storyImageRef.current?.click()} 
-                  disabled={isUploadingStory}
+                  onClick={() => adImageRef.current?.click()} 
+                  disabled={isUploadingAd}
                 >
-                  {isUploadingStory ? (
+                  {isUploadingAd ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <Image className="w-4 h-4" />
@@ -1938,15 +1938,15 @@ export default function VendorDashboard() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => {
-              setIsEditStoryDialogOpen(false);
-              setEditingStory(null);
-              setStoryContent("");
-              setStoryImage(null);
+              setIsEditAdDialogOpen(false);
+              setEditingAd(null);
+              setAdContent("");
+              setAdImage(null);
             }}>
               Cancel
             </Button>
-            <Button onClick={handleUpdateStory} disabled={updateStoryMutation.isPending}>
-              {updateStoryMutation.isPending ? (
+            <Button onClick={handleUpdateAd} disabled={updateAdMutation.isPending}>
+              {updateAdMutation.isPending ? (
                 <>
                   <Loader2 className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"} animate-spin`} />
                   {t("vendor.dashboard.updating")}
