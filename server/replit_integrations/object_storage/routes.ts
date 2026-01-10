@@ -57,8 +57,8 @@ export function registerObjectStorageRoutes(app: Express): void {
       if (isReplit) {
         // Use Replit object storage
         try {
-          const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-          const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
           
           return res.json({
             uploadURL,

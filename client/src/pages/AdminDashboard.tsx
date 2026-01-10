@@ -15,7 +15,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/lib/i18n";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import {
+import { 
   Users,
   Store,
   DollarSign,
@@ -232,14 +232,14 @@ export default function AdminDashboard() {
               <p className="text-muted-foreground text-base md:text-lg">
                 {t("admin.dashboard.manage")}
               </p>
-            </div>
+        </div>
 
             {/* Content Sections */}
             <div className="mt-5 lg:mt-8 space-y-5">
               {activeTab === "analytics" && (
                 <>
-                  <TopSummaryCards />
-                  <AnalyticsSection />
+        <TopSummaryCards />
+            <AnalyticsSection />
                 </>
               )}
               {activeTab === "vendors" && <VendorSection />}
@@ -287,7 +287,7 @@ export default function AdminDashboard() {
               </button>
             );
           })}
-        </div>
+      </div>
       </nav>
     </div>
   );
@@ -536,16 +536,16 @@ function AnalyticsSection() {
                 <Card key={order.id} className="p-4">
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center justify-between">
-                      <div>
+                  <div>
                         <p className="font-medium">
                           Order #{order.id.slice(-8)}
                         </p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(order.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold">{order.total} KWD</p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold">{order.total} KWD</p>
                         <Badge
                           variant={
                             order.status === "paid" ? "default" : "secondary"
@@ -553,7 +553,7 @@ function AnalyticsSection() {
                         >
                           {order.status}
                         </Badge>
-                      </div>
+                  </div>
                     </div>
 
                     {(order.customerName || order.guestName) && (
@@ -591,7 +591,7 @@ function AnalyticsSection() {
                             <div key={idx}>
                               {item.product?.name || "Unknown"} - Qty:{" "}
                               {item.quantity} × {item.price} KWD
-                            </div>
+                </div>
                           ))}
                         </div>
                       </div>
@@ -755,7 +755,7 @@ function VendorSection() {
               data-testid="input-vendor-description"
             />
             <div className="flex gap-2">
-              <Button
+              <Button 
                 onClick={() =>
                   createVendorMutation.mutate({
                     storeName: newStoreName,
@@ -794,8 +794,8 @@ function VendorSection() {
           ) : (
             <div className="divide-y">
               {vendors.map((vendor) => (
-                <div
-                  key={vendor.id}
+                <div 
+                  key={vendor.id} 
                   className="p-4 md:p-6"
                   data-testid={`vendor-row-${vendor.id}`}
                 >
@@ -855,10 +855,10 @@ function VendorSection() {
                               min="0"
                               step="0.01"
                             />
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8"
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              className="h-8 w-8" 
                               onClick={() =>
                                 updateCommissionMutation.mutate({
                                   vendorId: vendor.id,
@@ -1046,8 +1046,8 @@ function UsersSection() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Select
-                      value={user.role}
+                    <Select 
+                      value={user.role} 
                       onValueChange={(role) =>
                         updateRoleMutation.mutate({ userId: user.id, role })
                       }
@@ -1223,7 +1223,7 @@ function CategoriesSection() {
               data-testid="input-category-slug"
             />
             <div className="flex gap-2">
-              <Button
+              <Button 
                 onClick={() =>
                   createCategoryMutation.mutate({
                     name: newName,
@@ -1279,8 +1279,8 @@ function CategoriesSection() {
                         className="w-40"
                         placeholder="Slug"
                       />
-                      <Button
-                        size="icon"
+                      <Button 
+                        size="icon" 
                         variant="ghost"
                         onClick={() =>
                           updateCategoryMutation.mutate({
@@ -1323,9 +1323,9 @@ function CategoriesSection() {
                         >
                           <Pencil className="w-4 h-4" />
                         </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
                           onClick={() =>
                             deleteCategoryMutation.mutate(category.id)
                           }
@@ -1675,8 +1675,8 @@ function PayoutsSection() {
           ) : (
             <div className="divide-y">
               {payoutRequests.map((request) => (
-                <div
-                  key={request.id}
+                <div 
+                  key={request.id} 
                   className="p-4 flex items-center justify-between gap-4 flex-wrap bg-amber-50 dark:bg-amber-950/20"
                   data-testid={`payout-request-${request.id}`}
                 >
@@ -1689,7 +1689,7 @@ function PayoutsSection() {
                       {new Date(request.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <Button
+                  <Button 
                     onClick={() => payVendorMutation.mutate(request.vendorId)}
                     disabled={payVendorMutation.isPending}
                     data-testid={`button-pay-${request.vendorId}`}

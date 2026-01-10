@@ -44,25 +44,25 @@ export function Navbar() {
   const isDashboardPage = location.startsWith("/vendor/dashboard") || location.startsWith("/admin");
 
   const renderLogo = () => (
-    <Link href="/" className="font-display font-bold text-lg md:text-xl flex items-center gap-2">
-      <img src={carLogo} alt="MotorBuy" className="w-10 h-10 md:w-12 md:h-12 object-contain" />
-      {language === "ar" ? (
-        <span>
-          <span className="text-[hsl(var(--logo-accent))]">موتور</span>
-          <span className="text-primary">باي</span>
-        </span>
-      ) : (
-        <span>
-          <span className="text-primary">motor</span>
-          <span className="text-[hsl(var(--logo-accent))]">buy</span>
-        </span>
-      )}
-    </Link>
+          <Link href="/" className="font-display font-bold text-lg md:text-xl flex items-center gap-2">
+            <img src={carLogo} alt="MotorBuy" className="w-10 h-10 md:w-12 md:h-12 object-contain" />
+            {language === "ar" ? (
+              <span>
+                <span className="text-[hsl(var(--logo-accent))]">موتور</span>
+                <span className="text-primary">باي</span>
+              </span>
+            ) : (
+              <span>
+                <span className="text-primary">motor</span>
+                <span className="text-[hsl(var(--logo-accent))]">buy</span>
+              </span>
+            )}
+          </Link>
   );
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className={`${isDashboardPage ? "lg:pl-64" : ""} container mx-auto px-4 h-14 md:h-16 flex items-center justify-between gap-2`}>
+      <div className={`${isDashboardPage ? "w-full px-4 lg:px-6" : "container mx-auto px-4"} h-14 md:h-16 flex items-center justify-between gap-2`}>
         <div className="flex items-center gap-4 md:gap-8">
           {renderLogo()}
           <div className="hidden md:flex gap-6 items-center">
