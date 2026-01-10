@@ -12,6 +12,7 @@ interface UploadResponse {
   uploadURL: string;
   objectPath: string;
   metadata: UploadMetadata;
+  method?: string;
 }
 
 interface UseUploadOptions {

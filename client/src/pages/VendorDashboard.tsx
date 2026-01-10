@@ -601,11 +601,11 @@ export default function VendorDashboard() {
                 <h1 className="text-3xl md:text-4xl font-display font-bold">
                   {t("vendor.dashboard.title")}
                 </h1>
-                {!vendorProfile.isApproved && (
+                {vendorProfile && !vendorProfile.isApproved && (
                   <Badge variant="secondary" className="text-sm px-3 py-1">{t("vendor.dashboard.pendingApproval")}</Badge>
                 )}
               </div>
-              <p className="text-muted-foreground text-base md:text-lg">{vendorProfile.storeName}</p>
+              <p className="text-muted-foreground text-base md:text-lg">{vendorProfile?.storeName || ""}</p>
             </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -1156,6 +1156,7 @@ export default function VendorDashboard() {
             )}
           </div>
         </div>
+      </div>
 
       {/* Dialogs */}
       {/* Edit Product Dialog */}

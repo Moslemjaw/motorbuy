@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Store, Users, ArrowRight, CheckCircle } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
+import { LoadingPage } from "@/components/LoadingPage";
 
 export default function VendorList() {
   const { t, isRTL } = useLanguage();
