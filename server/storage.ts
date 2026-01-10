@@ -41,7 +41,7 @@ export interface IStorage {
   getPaymentRequests(vendorId: string): Promise<any[]>;
   createPaymentRequest(vendorId: string, amount: string): Promise<any>;
   getVendorOrders(vendorId: string): Promise<any[]>;
-  createVendorRequest(userId: string, companyName: string, phone: string, email: string): Promise<any>;
+  createVendorRequest(userId: string | null, companyName: string, phone: string, email: string): Promise<any>;
   getVendorRequests(): Promise<any[]>;
 }
 
@@ -727,9 +727,9 @@ export class MongoStorage implements IStorage {
     return ordersWithItems;
   }
 
-  async createVendorRequest(userId: string, companyName: string, phone: string, email: string): Promise<any> {
+  async createVendorRequest(userId: string | null, companyName: string, phone: string, email: string): Promise<any> {
     const request = new VendorRequest({
-      userId,
+      userId: userId || undefined,
       companyName,
       phone,
       email,

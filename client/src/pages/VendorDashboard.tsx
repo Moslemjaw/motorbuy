@@ -25,6 +25,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { buildApiUrl } from "@/lib/api-config";
 import type { Order, VendorStory, Vendor } from "@shared/schema";
+import carLogo from "@assets/image_2026-01-09_142631252-removebg-preview_1767958016384.png";
 
 interface VendorAnalytics {
   totalProducts: number;
@@ -43,7 +44,7 @@ export default function VendorDashboard() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const [location] = useLocation();
   
   // Get active tab from URL hash or default to "products"
@@ -665,11 +666,29 @@ export default function VendorDashboard() {
       <div className="flex">
         {/* Left Sidebar Navigation */}
         <aside
-          className={`hidden lg:block w-64 bg-card border-r shadow-sm sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto ${
+          className={`hidden lg:block w-64 bg-white border-r border-gray-200 sticky top-0 h-screen overflow-y-auto ${
             isRTL ? "border-l border-r-0" : ""
           }`}
         >
-          <div className="p-4">
+          {/* Logo at top of sidebar */}
+          <div className="p-4 border-b border-gray-200">
+            <Link href="/" className="font-display font-bold text-lg md:text-xl flex items-center gap-2">
+              <img src={carLogo} alt="MotorBuy" className="w-10 h-10 md:w-12 md:h-12 object-contain" />
+              {language === "ar" ? (
+                <span>
+                  <span className="text-[hsl(var(--logo-accent))]">موتور</span>
+                  <span className="text-primary">باي</span>
+                </span>
+              ) : (
+                <span>
+                  <span className="text-primary">motor</span>
+                  <span className="text-[hsl(var(--logo-accent))]">buy</span>
+                </span>
+              )}
+            </Link>
+          </div>
+          
+          <div className="p-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = item.isLink ? false : activeTab === item.value;
@@ -678,7 +697,7 @@ export default function VendorDashboard() {
                   <Link
                     key={item.value}
                     href={item.href}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground`}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900`}
                     data-testid={`nav-${item.value}`}
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
@@ -695,8 +714,8 @@ export default function VendorDashboard() {
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "bg-yellow-100 text-yellow-900 font-semibold"
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                   }`}
                   data-testid={`nav-${item.value}`}
                 >
@@ -709,7 +728,7 @@ export default function VendorDashboard() {
         </aside>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+        <div className="flex-1 overflow-y-auto pb-20 lg:pb-0 lg:pt-16">
           <div className="container mx-auto px-4 py-6 lg:py-8">
             {/* Header */}
             <div className={`mb-8 ${isRTL ? "text-right" : "text-left"}`}>

@@ -191,12 +191,12 @@ export default function AdminDashboard() {
       <div className="flex">
         {/* Left Sidebar Navigation */}
         <aside
-          className={`hidden lg:block w-64 bg-card border-r shadow-sm sticky top-0 h-screen overflow-y-auto ${
+          className={`hidden lg:block w-64 bg-white border-r border-gray-200 sticky top-0 h-screen overflow-y-auto ${
             isRTL ? "border-l border-r-0" : ""
           }`}
         >
           {/* Logo at top of sidebar */}
-          <div className="p-4 border-b">
+          <div className="p-4 border-b border-gray-200">
             <Link href="/" className="font-display font-bold text-lg md:text-xl flex items-center gap-2">
               <img src={carLogo} alt="MotorBuy" className="w-10 h-10 md:w-12 md:h-12 object-contain" />
               {language === "ar" ? (
@@ -213,7 +213,7 @@ export default function AdminDashboard() {
             </Link>
           </div>
           
-          <div className="p-4">
+          <div className="p-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.value;
@@ -226,8 +226,8 @@ export default function AdminDashboard() {
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "bg-yellow-100 text-yellow-900 font-semibold"
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                   }`}
                   data-testid={`nav-${item.value}`}
                 >

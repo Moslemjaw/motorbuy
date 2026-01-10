@@ -27,13 +27,12 @@ export default function BecomeVendor() {
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
-    if (!isAuthLoading && !isAuthenticated) {
-      setLocation("/auth");
-    }
-    if (!isRoleLoading && roleData?.role !== "customer") {
+    // Only redirect if user is already a vendor or admin
+    if (!isRoleLoading && roleData?.role && roleData.role !== "customer") {
       setLocation("/");
     }
-    if (user) {
+    // Pre-fill email and phone if user is logged in
+    if (user && isAuthenticated) {
       setEmail(user.email || "");
       setPhone(user.phone || "");
     }
@@ -82,7 +81,7 @@ export default function BecomeVendor() {
     submitRequestMutation.mutate({ companyName, phone, email });
   };
 
-  if (isAuthLoading || isRoleLoading) {
+  if (isRoleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="animate-spin w-8 h-8" />
@@ -90,7 +89,8 @@ export default function BecomeVendor() {
     );
   }
 
-  if (!isAuthenticated || roleData?.role !== "customer") {
+  // Only block if user is already a vendor or admin
+  if (roleData?.role && roleData.role !== "customer") {
     return null;
   }
 
@@ -109,8 +109,8 @@ export default function BecomeVendor() {
                   <h2 className="text-2xl font-display font-bold mb-2">{t("vendorRequest.success")}</h2>
                   <p className="text-muted-foreground">{t("vendorRequest.contactMessage")}</p>
                 </div>
-                <Button onClick={() => setLocation("/account")} className="w-full sm:w-auto">
-                  {t("vendorRequest.backToAccount")}
+                <Button onClick={() => setLocation(isAuthenticated ? "/account" : "/")} className="w-full sm:w-auto">
+                  {isAuthenticated ? t("vendorRequest.backToAccount") : t("nav.home")}
                 </Button>
               </div>
             </CardContent>

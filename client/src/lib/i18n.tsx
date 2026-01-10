@@ -22,6 +22,7 @@ const en: Translations = {
   "nav.account": "Account",
   "nav.wallet": "Wallet",
   "nav.admin": "Admin",
+  "nav.searchMenu": "Search menu...",
   
   // Hero
   "hero.title": "Find the Perfect Parts for Your",

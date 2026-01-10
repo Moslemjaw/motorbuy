@@ -727,34 +727,50 @@ export async function registerRoutes(
     }
   });
 
-  // Vendor Registration Request
-  app.post("/api/vendor/request", isAuthenticated, async (req: any, res) => {
+  // Vendor Registration Request (allows both authenticated and non-authenticated users)
+  app.post("/api/vendor/request", async (req: any, res) => {
     try {
-      const role = await storage.getUserRole(req.session.userId);
-      if (role !== "customer") {
-        return res
-          .status(403)
-          .json({ message: "Only customers can request to become vendors" });
-      }
-
-      // Check if user already has a pending request
-      const existingRequests = await storage.getVendorRequests();
-      const userRequest = existingRequests.find(
-        (r) => r.userId === req.session.userId && r.status === "pending"
-      );
-      if (userRequest) {
-        return res
-          .status(400)
-          .json({ message: "You already have a pending vendor request" });
-      }
-
       const { companyName, phone, email } = req.body;
       if (!companyName || !phone || !email) {
         return res.status(400).json({ message: "Missing required fields" });
       }
 
+      // If user is authenticated, check role and existing requests
+      let userId: string | null = null;
+      if (req.session?.userId) {
+        userId = req.session.userId;
+        const role = await storage.getUserRole(userId);
+        if (role && role !== "customer") {
+          return res
+            .status(403)
+            .json({ message: "Only customers can request to become vendors" });
+        }
+
+        // Check if user already has a pending request
+        const existingRequests = await storage.getVendorRequests();
+        const userRequest = existingRequests.find(
+          (r) => r.userId === userId && r.status === "pending"
+        );
+        if (userRequest) {
+          return res
+            .status(400)
+            .json({ message: "You already have a pending vendor request" });
+        }
+      } else {
+        // For non-authenticated users, check if email already has a pending request
+        const existingRequests = await storage.getVendorRequests();
+        const emailRequest = existingRequests.find(
+          (r) => r.email === email && r.status === "pending"
+        );
+        if (emailRequest) {
+          return res
+            .status(400)
+            .json({ message: "A pending vendor request already exists for this email" });
+        }
+      }
+
       const request = await storage.createVendorRequest(
-        req.session.userId,
+        userId,
         companyName,
         phone,
         email
@@ -762,6 +778,12 @@ export async function registerRoutes(
       res.status(201).json(request);
     } catch (e: any) {
       console.error("Error creating vendor request:", e);
+      // Handle duplicate email error
+      if (e.code === 11000 || e.message?.includes("duplicate")) {
+        return res
+          .status(400)
+          .json({ message: "A vendor request with this email already exists" });
+      }
       res
         .status(500)
         .json({ message: e.message || "Failed to create vendor request" });
