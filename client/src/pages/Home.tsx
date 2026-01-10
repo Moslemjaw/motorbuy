@@ -104,18 +104,48 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-12 md:py-16 border-b">
+      <section className="py-16 md:py-24 bg-muted/50">
         <div className="container px-4 mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
-            {features.map((feature, i) => (
-              <div key={i} className="text-center px-2">
-                <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 transition-transform hover:scale-110">
-                  <feature.icon className="w-6 h-6 md:w-7 md:h-7 text-primary" />
+          <div className="mb-12 text-center">
+            <h2 className="text-2xl md:text-3xl font-display font-bold mb-2">{t("section.whyUs")}</h2>
+            <p className="text-muted-foreground">{t("section.whyUs.subtitle")}</p>
+          </div>
+          
+          {/* Desktop: Grid Layout */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+            {features.map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="text-center"
+              >
+                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <item.icon className="w-8 h-8 text-primary" />
                 </div>
-                <h3 className="font-semibold text-sm md:text-base mb-2 md:mb-1">{feature.title}</h3>
-                <p className="text-xs md:text-sm text-muted-foreground leading-relaxed px-1">{feature.desc}</p>
-              </div>
+                <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
+                <p className="text-sm text-muted-foreground">{item.desc}</p>
+              </motion.div>
             ))}
+          </div>
+
+          {/* Mobile: Horizontal Scrollable Row */}
+          <div className="md:hidden overflow-x-auto -mx-4 px-4 scrollbar-hide">
+            <div className="flex gap-4 min-w-max">
+              {features.map((item, i) => (
+                <div
+                  key={i}
+                  className="flex-shrink-0 w-[calc(100vw-2rem)] text-center px-4"
+                >
+                  <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <item.icon className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
+                  <p className="text-sm text-muted-foreground">{item.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -157,13 +187,14 @@ export default function Home() {
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.03 }}
+                  className="h-full"
                 >
                   <Link href={`/products?categoryId=${cat.id}`}>
-                    <div className="group cursor-pointer bg-card rounded-xl p-4 md:p-5 border hover:border-primary/30 hover:shadow-md transition-all text-center">
-                      <div className="w-12 h-12 md:w-14 md:h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-3 mx-auto group-hover:bg-primary/20 transition-colors">
+                    <div className="group cursor-pointer bg-card rounded-xl p-4 md:p-5 border hover:border-primary/30 hover:shadow-md transition-all text-center h-full flex flex-col items-center justify-center">
+                      <div className="w-12 h-12 md:w-14 md:h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
                         {IconComponent && <IconComponent className="w-6 h-6 md:w-7 md:h-7 text-primary" />}
                       </div>
-                      <h3 className="font-medium text-xs md:text-sm group-hover:text-primary transition-colors line-clamp-2">{translatedName}</h3>
+                      <h3 className="font-medium text-xs md:text-sm group-hover:text-primary transition-colors line-clamp-2 min-h-[2.5rem] flex items-center justify-center">{translatedName}</h3>
                     </div>
                   </Link>
                 </motion.div>
@@ -171,24 +202,25 @@ export default function Home() {
             })}
           </div>
 
-          {/* Mobile: Horizontal Scrollable Row (All 10 categories) */}
+          {/* Mobile: Auto-scrolling Carousel (All 10 categories) */}
           {categories && categories.length > 0 ? (
-            <div className="md:hidden overflow-x-auto -mx-4 px-4 scrollbar-hide">
-              <div className="flex gap-3 min-w-max">
-                {categories.slice(0, 10).map((cat, index) => {
+            <div className="md:hidden overflow-hidden -mx-4 px-4">
+              <div className={`flex gap-3 animate-scroll-categories-auto ${isRTL ? 'animate-scroll-categories-auto-rtl' : ''}`}>
+                {/* Duplicate items for seamless loop */}
+                {[...categories.slice(0, 10), ...categories.slice(0, 10), ...categories.slice(0, 10)].map((cat, index) => {
                   const IconComponent = cat.icon ? iconMap[cat.icon] : Wrench;
                   const translatedName = t(`cat.${cat.slug}`) !== `cat.${cat.slug}` ? t(`cat.${cat.slug}`) : cat.name;
                   return (
                     <div
-                      key={cat.id}
+                      key={`${cat.id}-${index}`}
                       className="flex-shrink-0 w-[calc((100vw-2rem-0.75rem*2)/3)]"
                     >
                       <Link href={`/products?categoryId=${cat.id}`}>
-                        <div className="group cursor-pointer bg-card rounded-xl p-4 border hover:border-primary/30 hover:shadow-md transition-all text-center mx-1">
-                          <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-3 mx-auto group-hover:bg-primary/20 transition-colors">
+                        <div className="group cursor-pointer bg-card rounded-xl p-4 border hover:border-primary/30 hover:shadow-md transition-all text-center h-full flex flex-col items-center justify-center">
+                          <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
                             {IconComponent && <IconComponent className="w-6 h-6 text-primary" />}
                           </div>
-                          <h3 className="font-medium text-xs group-hover:text-primary transition-colors line-clamp-2">{translatedName}</h3>
+                          <h3 className="font-medium text-xs group-hover:text-primary transition-colors line-clamp-2 min-h-[2.5rem] flex items-center justify-center">{translatedName}</h3>
                         </div>
                       </Link>
                     </div>
@@ -326,52 +358,6 @@ export default function Home() {
               <p className="text-muted-foreground">{t("section.noAds")}</p>
             </div>
           )}
-        </div>
-      </section>
-
-      <section className="py-16 md:py-24 bg-muted/50">
-        <div className="container px-4 mx-auto">
-          <div className="mb-12 text-center">
-            <h2 className="text-2xl md:text-3xl font-display font-bold mb-2">{t("section.whyUs")}</h2>
-            <p className="text-muted-foreground">{t("section.whyUs.subtitle")}</p>
-          </div>
-          
-          {/* Desktop: Grid Layout */}
-          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-            {features.map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className="text-center"
-              >
-                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <item.icon className="w-8 h-8 text-primary" />
-                </div>
-                <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
-                <p className="text-sm text-muted-foreground">{item.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Mobile: Horizontal Scrollable Row */}
-          <div className="md:hidden overflow-x-auto -mx-4 px-4 scrollbar-hide">
-            <div className="flex gap-4 min-w-max">
-              {features.map((item, i) => (
-                <div
-                  key={i}
-                  className="flex-shrink-0 w-[calc(100vw-2rem)] text-center px-4"
-                >
-                  <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <item.icon className="w-8 h-8 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
 

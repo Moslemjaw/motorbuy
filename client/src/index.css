@@ -137,6 +137,40 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  .animate-scroll-categories-auto {
+    animation: scroll-categories-auto 30s linear infinite;
+    will-change: transform;
+  }
+
+  .animate-scroll-categories-auto-rtl {
+    animation: scroll-categories-auto-rtl 30s linear infinite;
+  }
+
+  @keyframes scroll-categories-auto {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(calc((100vw - 2rem - 0.75rem * 2) / 3 * 10 + 0.75rem * 9));
+    }
+  }
+
+  @keyframes scroll-categories-auto-rtl {
+    0% {
+      transform: translateX(calc((100vw - 2rem - 0.75rem * 2) / 3 * 10 + 0.75rem * 9));
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-scroll-categories-auto,
+    .animate-scroll-categories-auto-rtl {
+      animation: none;
+    }
+  }
   
   .image-overlay::after {
     content: '';
