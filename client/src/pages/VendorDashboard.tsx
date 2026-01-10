@@ -717,10 +717,10 @@ export default function VendorDashboard() {
         </aside>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-y-auto pb-20 lg:pb-0 lg:pt-16">
-          <div className="container mx-auto px-4 py-6 lg:py-8">
+        <div className="flex-1 overflow-y-auto pb-16 lg:pb-0 lg:pt-16">
+          <div className="container mx-auto px-4 py-4 lg:py-6">
             {/* Header */}
-            <div className={`mb-8 ${isRTL ? "text-right" : "text-left"}`}>
+            <div className={`mb-6 ${isRTL ? "text-right" : "text-left"}`}>
               <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
                 {t("vendor.dashboard.title")}
               </h1>
@@ -731,7 +731,7 @@ export default function VendorDashboard() {
             {activeTab === "overview" && (
               <>
                 {/* Analytics Cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200 dark:border-blue-800">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -789,7 +789,7 @@ export default function VendorDashboard() {
           </Card>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6 mb-8">
+                <div className="grid lg:grid-cols-3 gap-6 mb-6">
           <Card className="lg:col-span-2 border shadow-sm">
             <CardHeader className="pb-4">
               <CardTitle className="text-xl font-semibold">{t("vendor.dashboard.createAd")}</CardTitle>

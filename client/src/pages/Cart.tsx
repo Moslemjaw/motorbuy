@@ -256,14 +256,6 @@ export default function Cart() {
                 <h3 className="font-display font-bold text-xl mb-6">{t("cart.orderSummary")}</h3>
                 
                 <div className="space-y-3 mb-6">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{t("cart.subtotal")}</span>
-                    <span className="font-medium">{formatKWD(total)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{t("cart.shipping")}</span>
-                    <span className="text-green-600 font-medium">{t("cart.free")}</span>
-                  </div>
                   <div className="border-t pt-4 flex justify-between items-baseline">
                     <span className="font-bold text-lg">{t("cart.total")}</span>
                     <span className="font-bold text-2xl text-primary">{formatKWD(total)}</span>
