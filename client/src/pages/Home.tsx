@@ -284,7 +284,7 @@ export default function Home() {
               } mb-4`}
             >
               <span className="block">{t("hero.title")}</span>
-              <span className="block text-primary relative mt-2">
+              <span className="inline-block text-primary relative mt-2">
                 {t("hero.title.highlight")}
                 {/* Underline decoration */}
                 <svg
