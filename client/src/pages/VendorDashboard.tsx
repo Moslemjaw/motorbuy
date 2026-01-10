@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole, useProducts, useCategories, useDeleteProduct } from "@/hooks/use-motorbuy";
+import { useLanguage } from "@/lib/i18n";
 import { 
   Package, ShoppingCart, Loader2, Plus, Image, Trash2, BookOpen, 
   Store, TrendingUp, DollarSign, Clock, Wallet, Send, Camera, Save, Edit, AlertTriangle, X
@@ -43,6 +44,7 @@ export default function VendorDashboard() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t, isRTL } = useLanguage();
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ orderId, status }: { orderId: string, status: string }) => {
@@ -103,7 +105,7 @@ export default function VendorDashboard() {
         credentials: "include",
       });
       if (res.status === 403) return []; // not a vendor
-      if (!res.ok) throw new Error("Failed to fetch spotlights");
+      if (!res.ok) throw new Error("Failed to fetch ads");
       return res.json();
     },
     enabled: !!user && roleData?.role === "vendor",
@@ -131,6 +133,7 @@ export default function VendorDashboard() {
   const [storeBio, setStoreBio] = useState("");
   const [storeLogoUrl, setStoreLogoUrl] = useState<string | null>(null);
   const [storeCoverImageUrl, setStoreCoverImageUrl] = useState<string | null>(null);
+  const [orderStatusFilter, setOrderStatusFilter] = useState("all");
 
   const productImageRef = useRef<HTMLInputElement>(null);
   const storyImageRef = useRef<HTMLInputElement>(null);
@@ -217,7 +220,7 @@ export default function VendorDashboard() {
       // Invalidate and refetch stories to ensure the new one appears
       await queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
       await queryClient.refetchQueries({ queryKey: ["/api/stories"] });
-      toast({ title: "Spotlight Posted", description: "Your spotlight has been shared with customers." });
+      toast({ title: "Ad Posted", description: "Your ad has been shared with customers." });
       setStoryContent("");
       setStoryImage(null);
       // Clear the file input
@@ -226,7 +229,7 @@ export default function VendorDashboard() {
       }
     },
     onError: (error: any) => {
-      const message = error?.message || "Failed to post spotlight.";
+      const message = error?.message || "Failed to post ad.";
       toast({ title: "Error", description: message, variant: "destructive" });
     },
   });
@@ -238,7 +241,7 @@ export default function VendorDashboard() {
     mutationFn: async ({ id, data }: { id: string; data: any }) => apiRequest("PATCH", `/api/stories/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: STORIES_QUERY_KEY });
-      toast({ title: "Spotlight Updated", description: "Your spotlight has been updated." });
+      toast({ title: "Ad Updated", description: "Your ad has been updated." });
       setIsEditStoryDialogOpen(false);
       setEditingStory(null);
       setStoryContent("");
@@ -247,7 +250,7 @@ export default function VendorDashboard() {
         storyImageRef.current.value = "";
       }
     },
-    onError: () => toast({ title: "Error", description: "Failed to update spotlight.", variant: "destructive" }),
+    onError: () => toast({ title: "Error", description: "Failed to update ad.", variant: "destructive" }),
   });
 
   const deleteStoryMutation = useMutation({
@@ -255,9 +258,9 @@ export default function VendorDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: STORIES_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: STORIES_QUERY_KEY });
-      toast({ title: "Spotlight Deleted", description: "Your spotlight has been removed." });
-    },
-    onError: () => toast({ title: "Error", description: "Failed to delete spotlight.", variant: "destructive" }),
+      toast({ title: "Ad Deleted", description: "Your ad has been removed." });
+      },
+    onError: () => toast({ title: "Error", description: "Failed to delete ad.", variant: "destructive" }),
   });
 
   const updateShopMutation = useMutation({
@@ -287,7 +290,7 @@ export default function VendorDashboard() {
   }, [vendorProfile]);
 
         if (isAuthLoading || isRoleLoading || isProfileLoading) {
-          return <LoadingPage message="Loading dashboard..." />;
+          return <LoadingPage message={t("vendor.dashboard.loading")} />;
         }
 
   if (!isAuthenticated || !user) {
@@ -300,9 +303,9 @@ export default function VendorDashboard() {
         <Navbar />
         <div className="container mx-auto px-4 py-16 text-center">
           <Store className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-          <h1 className="text-2xl font-bold mb-2">Vendor Access Required</h1>
-          <p className="text-muted-foreground mb-6">You need a vendor account to access the dashboard.</p>
-          <Button onClick={() => setLocation("/")} data-testid="button-go-home">Go Home</Button>
+          <h1 className="text-2xl font-bold mb-2">{t("vendor.dashboard.vendorAccess")}</h1>
+          <p className="text-muted-foreground mb-6">{t("vendor.dashboard.needVendor")}</p>
+          <Button onClick={() => setLocation("/")} data-testid="button-go-home">{t("vendor.dashboard.goHome")}</Button>
         </div>
       </div>
     );
@@ -394,7 +397,7 @@ export default function VendorDashboard() {
 
   const handlePostStory = () => {
     if (!storyContent && !storyImage) {
-      toast({ title: "Empty Spotlight", description: "Add content or an image.", variant: "destructive" });
+      toast({ title: "Empty Ad", description: "Add content or an image.", variant: "destructive" });
       return;
     }
     if (!vendorProfile?.id) {
@@ -418,7 +421,7 @@ export default function VendorDashboard() {
   const handleUpdateStory = () => {
     if (!editingStory) return;
     if (!storyContent && !storyImage) {
-      toast({ title: "Empty Spotlight", description: "Add content or an image.", variant: "destructive" });
+      toast({ title: "Empty Ad", description: "Add content or an image.", variant: "destructive" });
       return;
     }
     updateStoryMutation.mutate({
@@ -441,18 +444,18 @@ export default function VendorDashboard() {
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <Store className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-2xl md:text-3xl font-display font-bold mb-2">Welcome to MotorBuy</h1>
-            <p className="text-muted-foreground">Set up your vendor profile to start selling.</p>
+            <h1 className="text-2xl md:text-3xl font-display font-bold mb-2">{t("vendor.dashboard.welcome")}</h1>
+            <p className="text-muted-foreground">{t("vendor.dashboard.setupProfile")}</p>
           </div>
 
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle>Create Your Profile</CardTitle>
-              <CardDescription>Fill in your details to get started</CardDescription>
+              <CardTitle>{t("vendor.dashboard.createProfile")}</CardTitle>
+              <CardDescription>{t("vendor.dashboard.fillDetails")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="storeName">Business Name *</Label>
+                <Label htmlFor="storeName">{t("vendor.dashboard.businessName")} *</Label>
                 <Input 
                   id="storeName"
                   value={storeName} 
@@ -462,7 +465,7 @@ export default function VendorDashboard() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="storeDesc">Description</Label>
+                <Label htmlFor="storeDesc">{t("vendor.dashboard.description")}</Label>
                 <Textarea 
                   id="storeDesc"
                   value={storeDescription} 
@@ -480,11 +483,11 @@ export default function VendorDashboard() {
               >
                 {createProfileMutation.isPending ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Creating...
+                    <Loader2 className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"} animate-spin`} />
+                    {t("vendor.dashboard.creating")}
                   </>
                 ) : (
-                  "Get Started"
+                  t("vendor.dashboard.getStarted")
                 )}
               </Button>
             </CardContent>
@@ -501,17 +504,17 @@ export default function VendorDashboard() {
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl md:text-3xl font-display font-bold">Dashboard</h1>
+            <h1 className="text-2xl md:text-3xl font-display font-bold">{t("vendor.dashboard.title")}</h1>
             <p className="text-muted-foreground">{vendorProfile.storeName}</p>
           </div>
           <div className="flex gap-2">
             {!vendorProfile.isApproved && (
-              <Badge variant="secondary">Pending Approval</Badge>
+              <Badge variant="secondary">{t("vendor.dashboard.pendingApproval")}</Badge>
             )}
             <Link href="/vendor/wallet">
               <Button variant="outline" size="sm" data-testid="button-view-wallet">
-                <Wallet className="w-4 h-4 mr-2" />
-                Wallet
+                <Wallet className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+                {t("vendor.dashboard.wallet")}
               </Button>
             </Link>
           </div>
@@ -528,7 +531,7 @@ export default function VendorDashboard() {
               <p className="text-2xl md:text-3xl font-bold text-blue-700 dark:text-blue-300" data-testid="text-vendor-products">
                 {analytics?.totalProducts || myProducts.length}
               </p>
-              <p className="text-sm text-blue-600 dark:text-blue-400">Products</p>
+              <p className="text-sm text-blue-600 dark:text-blue-400">{t("vendor.dashboard.products")}</p>
             </CardContent>
           </Card>
           
@@ -542,7 +545,7 @@ export default function VendorDashboard() {
               <p className="text-2xl md:text-3xl font-bold text-green-700 dark:text-green-300" data-testid="text-vendor-orders">
                 {analytics?.totalOrders || 0}
               </p>
-              <p className="text-sm text-green-600 dark:text-green-400">Orders</p>
+              <p className="text-sm text-green-600 dark:text-green-400">{t("vendor.dashboard.orders")}</p>
             </CardContent>
           </Card>
           
@@ -556,7 +559,7 @@ export default function VendorDashboard() {
               <p className="text-2xl md:text-3xl font-bold text-amber-700 dark:text-amber-300" data-testid="text-vendor-revenue">
                 {analytics?.grossSalesKwd || "0"}
               </p>
-              <p className="text-sm text-amber-600 dark:text-amber-400">Revenue (KWD)</p>
+              <p className="text-sm text-amber-600 dark:text-amber-400">{t("vendor.dashboard.revenue")}</p>
             </CardContent>
           </Card>
           
@@ -570,7 +573,7 @@ export default function VendorDashboard() {
               <p className="text-2xl md:text-3xl font-bold text-purple-700 dark:text-purple-300" data-testid="text-vendor-payout">
                 {analytics?.pendingPayoutKwd || "0"}
               </p>
-              <p className="text-sm text-purple-600 dark:text-purple-400">Pending (KWD)</p>
+              <p className="text-sm text-purple-600 dark:text-purple-400">{t("vendor.dashboard.pending")}</p>
             </CardContent>
           </Card>
         </div>
@@ -578,8 +581,8 @@ export default function VendorDashboard() {
         <div className="grid lg:grid-cols-3 gap-6 mb-8">
           <Card className="lg:col-span-2">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Create Spotlight</CardTitle>
-              <CardDescription>Share updates with your customers</CardDescription>
+              <CardTitle className="text-lg">{t("vendor.dashboard.createAd")}</CardTitle>
+              <CardDescription>{t("vendor.dashboard.shareUpdates")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex gap-3">
@@ -587,7 +590,7 @@ export default function VendorDashboard() {
                   <Textarea 
                     value={storyContent} 
                     onChange={(e) => setStoryContent(e.target.value)} 
-                    placeholder="Share news, promotions, or new arrivals..."
+                    placeholder={t("vendor.dashboard.sharePlaceholder")}
                     className="min-h-[80px] resize-none"
                     data-testid="input-story-content"
                   />
@@ -617,7 +620,7 @@ export default function VendorDashboard() {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
                 <BookOpen className="w-4 h-4" />
-                Your Spotlights {myStories.length > 0 && `(${myStories.length})`}
+                {t("vendor.dashboard.yourAds")} {myStories.length > 0 && `(${myStories.length})`}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -628,8 +631,8 @@ export default function VendorDashboard() {
               ) : myStories.length === 0 ? (
                 <div className="text-center py-8">
                   <BookOpen className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
-                  <p className="text-sm text-muted-foreground mb-1">No spotlights yet</p>
-                  <p className="text-xs text-muted-foreground">Create your first spotlight above</p>
+                  <p className="text-sm text-muted-foreground mb-1">{t("vendor.dashboard.noAds")}</p>
+                  <p className="text-xs text-muted-foreground">{t("vendor.dashboard.createFirst")}</p>
                 </div>
               ) : (
                 <div className="space-y-3 max-h-[500px] overflow-y-auto">
@@ -658,7 +661,7 @@ export default function VendorDashboard() {
                             className="h-8 w-8" 
                             onClick={() => handleEditStory(story)}
                             data-testid={`button-edit-story-${story.id}`}
-                            title="Edit spotlight"
+                            title="Edit ad"
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -669,7 +672,7 @@ export default function VendorDashboard() {
                             onClick={() => deleteStoryMutation.mutate(story.id)}
                             disabled={deleteStoryMutation.isPending}
                             data-testid={`button-delete-story-${story.id}`}
-                            title="Delete spotlight"
+                            title="Delete ad"
                           >
                             {deleteStoryMutation.isPending ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -690,16 +693,16 @@ export default function VendorDashboard() {
         <Tabs defaultValue="products" className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-6 h-auto">
             <TabsTrigger value="products" className="py-3" data-testid="tab-products">
-              <Package className="w-4 h-4 mr-2" />
-              Products
+              <Package className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+              {t("vendor.dashboard.tabProducts")}
             </TabsTrigger>
             <TabsTrigger value="shop" className="py-3" data-testid="tab-shop">
-              <Store className="w-4 h-4 mr-2" />
-              Shop Profile
+              <Store className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+              {t("vendor.dashboard.tabShop")}
             </TabsTrigger>
             <TabsTrigger value="orders" className="py-3" data-testid="tab-orders">
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Orders
+              <ShoppingCart className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+              {t("vendor.dashboard.tabOrders")}
             </TabsTrigger>
           </TabsList>
 
@@ -708,9 +711,9 @@ export default function VendorDashboard() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Store className="w-5 h-5" /> Shop Branding
+                    <Store className="w-5 h-5" /> {t("vendor.dashboard.shopBranding")}
                   </CardTitle>
-                  <CardDescription>Update your shop logo and cover image</CardDescription>
+                  <CardDescription>{t("vendor.dashboard.updateLogo")}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="relative h-48 bg-muted rounded-lg overflow-hidden">
@@ -729,8 +732,8 @@ export default function VendorDashboard() {
                       onClick={() => storeCoverRef.current?.click()}
                       disabled={isUploadingStoreCover}
                     >
-                      {isUploadingStoreCover ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Camera className="w-4 h-4 mr-2" />}
-                      Change Cover
+                      {isUploadingStoreCover ? <Loader2 className={`w-4 h-4 animate-spin ${isRTL ? "ml-2" : "mr-2"}`} /> : <Camera className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />}
+                      {t("vendor.dashboard.changeCover")}
                     </Button>
                   </div>
 
@@ -753,8 +756,8 @@ export default function VendorDashboard() {
                       </button>
                     </div>
                     <div>
-                      <p className="font-medium">Shop Logo</p>
-                      <p className="text-sm text-muted-foreground">Square image recommended</p>
+                      <p className="font-medium">{t("vendor.dashboard.shopLogo")}</p>
+                      <p className="text-sm text-muted-foreground">{t("vendor.dashboard.squareImage")}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -763,13 +766,13 @@ export default function VendorDashboard() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Store className="w-5 h-5" /> Shop Details
+                    <Store className="w-5 h-5" /> {t("vendor.dashboard.shopDetails")}
                   </CardTitle>
-                  <CardDescription>Update your shop information</CardDescription>
+                  <CardDescription>{t("vendor.dashboard.updateInfo")}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Shop Name *</Label>
+                    <Label>{t("vendor.dashboard.shopName")} *</Label>
                     <Input 
                       value={storeName} 
                       onChange={(e) => setStoreName(e.target.value)} 
@@ -778,7 +781,7 @@ export default function VendorDashboard() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Short Description</Label>
+                    <Label>{t("vendor.dashboard.shortDescription")}</Label>
                     <Input 
                       value={storeDescription} 
                       onChange={(e) => setStoreDescription(e.target.value)} 
@@ -787,11 +790,11 @@ export default function VendorDashboard() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>About Your Shop</Label>
+                    <Label>{t("vendor.dashboard.aboutShop")}</Label>
                     <Textarea 
                       value={storeBio} 
                       onChange={(e) => setStoreBio(e.target.value)} 
-                      placeholder="Tell customers about your shop, what you specialize in..." 
+                      placeholder={t("vendor.dashboard.tellCustomers")}
                       className="min-h-[120px]"
                     />
                   </div>
@@ -811,13 +814,13 @@ export default function VendorDashboard() {
                   >
                     {updateShopMutation.isPending ? (
                       <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Saving...
+                        <Loader2 className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"} animate-spin`} />
+                        {t("vendor.dashboard.saving")}
                       </>
                     ) : (
                       <>
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Shop Details
+                        <Save className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+                        {t("vendor.dashboard.saveShop")}
                       </>
                     )}
                   </Button>
@@ -828,8 +831,23 @@ export default function VendorDashboard() {
 
           <TabsContent value="orders">
             <Card>
-              <CardHeader>
-                <CardTitle>Recent Orders</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>{t("vendor.dashboard.recentOrders")}</CardTitle>
+                <div className="w-[200px]">
+                  <Select value={orderStatusFilter} onValueChange={setOrderStatusFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("admin.dashboard.filterStatus")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("admin.dashboard.allStatuses")}</SelectItem>
+                      <SelectItem value="pending">{t("common.pending")}</SelectItem>
+                      <SelectItem value="processing">{t("common.processing")}</SelectItem>
+                      <SelectItem value="shipped">{t("common.shipped")}</SelectItem>
+                      <SelectItem value="delivered">{t("common.delivered")}</SelectItem>
+                      <SelectItem value="cancelled">{t("common.cancelled")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
                 {isOrdersLoading ? (
@@ -837,17 +855,19 @@ export default function VendorDashboard() {
                 ) : !vendorOrders || vendorOrders.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <ShoppingCart className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p className="font-medium">No orders yet</p>
-                    <p className="text-sm mt-1">Orders will appear here when customers purchase your products.</p>
+                    <p className="font-medium">{t("vendor.dashboard.noOrders")}</p>
+                    <p className="text-sm mt-1">{t("vendor.dashboard.ordersWillAppear")}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {vendorOrders.map((order: any) => (
+                    {vendorOrders
+                      .filter(order => orderStatusFilter === "all" || order.status === orderStatusFilter)
+                      .map((order: any) => (
                       <Card key={order.id} className="p-4" data-testid={`vendor-order-${order.id}`}>
                         <div className="flex flex-col gap-4">
                           <div className="flex items-center justify-between">
                             <div>
-                              <div className="font-mono text-sm text-muted-foreground">Order #{String(order.id).slice(-8)}</div>
+                              <div className="font-mono text-sm text-muted-foreground">{t("vendor.dashboard.order")} #{String(order.id).slice(-8)}</div>
                               <div className="text-xs text-muted-foreground mt-1">
                                 {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
                               </div>
@@ -862,11 +882,11 @@ export default function VendorDashboard() {
                                   <SelectValue placeholder="Status" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="pending">Pending</SelectItem>
-                                  <SelectItem value="processing">Processing</SelectItem>
-                                  <SelectItem value="shipped">Shipped</SelectItem>
-                                  <SelectItem value="delivered">Delivered</SelectItem>
-                                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                                  <SelectItem value="pending">{t("common.pending")}</SelectItem>
+                                  <SelectItem value="processing">{t("common.processing")}</SelectItem>
+                                  <SelectItem value="shipped">{t("common.shipped")}</SelectItem>
+                                  <SelectItem value="delivered">{t("common.delivered")}</SelectItem>
+                                  <SelectItem value="cancelled">{t("common.cancelled")}</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -874,20 +894,20 @@ export default function VendorDashboard() {
                           
                           {(order.customerName || order.guestName) && (
                             <div className="border-t pt-3 space-y-1 text-sm">
-                              <div className="font-medium">Customer Information:</div>
+                              <div className="font-medium">{t("vendor.dashboard.customerInfo")}:</div>
                               <div className="text-muted-foreground">
-                                <div>Name: {order.customerName || order.guestName}</div>
+                                <div>{t("vendor.dashboard.name")}: {order.customerName || order.guestName}</div>
                                 {(order.customerEmail || order.guestEmail) && (
-                                  <div>Email: {order.customerEmail || order.guestEmail}</div>
+                                  <div>{t("vendor.dashboard.email")}: {order.customerEmail || order.guestEmail}</div>
                                 )}
                                 {(order.customerPhone || order.guestPhone) && (
-                                  <div>Phone: {order.customerPhone || order.guestPhone}</div>
+                                  <div>{t("vendor.dashboard.phone")}: {order.customerPhone || order.guestPhone}</div>
                                 )}
                                 {order.customerAddress && (
-                                  <div>Address: {order.customerAddress}</div>
+                                  <div>{t("vendor.dashboard.address")}: {order.customerAddress}</div>
                                 )}
                                 {order.customerCity && (
-                                  <div>City: {order.customerCity}</div>
+                                  <div>{t("vendor.dashboard.city")}: {order.customerCity}</div>
                                 )}
                               </div>
                             </div>
@@ -895,7 +915,7 @@ export default function VendorDashboard() {
                           
                           {order.items && order.items.length > 0 && (
                             <div className="border-t pt-3">
-                              <div className="text-sm font-medium mb-2">Items:</div>
+                              <div className="text-sm font-medium mb-2">{t("vendor.dashboard.items")}:</div>
                               <div className="space-y-1 text-sm text-muted-foreground">
                                 {order.items.map((item: any, idx: number) => (
                                   <div key={idx}>
@@ -919,40 +939,40 @@ export default function VendorDashboard() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Plus className="w-5 h-5" /> Add New Product
+                    <Plus className="w-5 h-5" /> {t("vendor.dashboard.addNewProduct")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Product Name *</Label>
+                    <Label>{t("vendor.dashboard.productName")} *</Label>
                     <Input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g., Performance Brake Pads" data-testid="input-product-name" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Description *</Label>
+                    <Label>{t("vendor.dashboard.description")} *</Label>
                     <Textarea value={productDesc} onChange={(e) => setProductDesc(e.target.value)} placeholder="Product details..." data-testid="input-product-desc" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Sale Price (KWD) *</Label>
+                      <Label>{t("vendor.dashboard.originalPrice")} *</Label>
                       <Input type="number" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} placeholder="0.000" data-testid="input-product-price" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Original Price</Label>
+                      <Label>{t("vendor.dashboard.salePrice")}</Label>
                       <Input type="number" value={productComparePrice} onChange={(e) => setProductComparePrice(e.target.value)} placeholder="For discounts" data-testid="input-compare-price" />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Stock</Label>
+                      <Label>{t("vendor.dashboard.stock")}</Label>
                       <Input type="number" value={productStock} onChange={(e) => setProductStock(e.target.value)} placeholder="0" data-testid="input-product-stock" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Brand</Label>
+                      <Label>{t("vendor.dashboard.brand")}</Label>
                       <Input value={productBrand} onChange={(e) => setProductBrand(e.target.value)} placeholder="Brand name" data-testid="input-product-brand" />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>Category *</Label>
+                    <Label>{t("vendor.dashboard.category")} *</Label>
                     <Select value={productCategory} onValueChange={setProductCategory}>
                       <SelectTrigger data-testid="select-category">
                         <SelectValue placeholder="Select category" />
@@ -965,11 +985,11 @@ export default function VendorDashboard() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Warranty Info</Label>
+                    <Label>{t("vendor.dashboard.warranty")}</Label>
                     <Input value={productWarranty} onChange={(e) => setProductWarranty(e.target.value)} placeholder="e.g., 2 years" data-testid="input-warranty" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Product Images</Label>
+                    <Label>{t("vendor.dashboard.productImages")}</Label>
                     <input ref={productImageRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadProductImage(f); }} />
                     <div className="flex gap-2 flex-wrap">
                       {productImages.map((img, i) => (
@@ -981,21 +1001,21 @@ export default function VendorDashboard() {
                     </div>
                   </div>
                   <Button className="w-full" onClick={handleAddProduct} disabled={addProductMutation.isPending} data-testid="button-add-product">
-                    {addProductMutation.isPending ? "Adding..." : "Add Product"}
+                    {addProductMutation.isPending ? t("common.loading") : t("vendor.dashboard.addProduct")}
                   </Button>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Your Products ({myProducts.length})</CardTitle>
+                  <CardTitle>{t("vendor.dashboard.yourProducts")} ({myProducts.length})</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {myProducts.length === 0 ? (
                     <div className="text-center py-12 text-muted-foreground">
                       <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                      <p className="font-medium">No products yet</p>
-                      <p className="text-sm mt-1">Add your first product using the form.</p>
+                      <p className="font-medium">{t("vendor.dashboard.noProducts")}</p>
+                      <p className="text-sm mt-1">{t("vendor.dashboard.addFirst")}</p>
                     </div>
                   ) : (
                     <div className="space-y-3 max-h-[500px] overflow-y-auto">
@@ -1006,7 +1026,7 @@ export default function VendorDashboard() {
                             <div className="font-medium truncate">{product.name}</div>
                             <div className="text-sm text-muted-foreground">{formatKWD(product.price)}</div>
                           </div>
-                          <Badge variant="outline">{product.stock} in stock</Badge>
+                          <Badge variant="outline">{product.stock} {t("vendor.dashboard.inStock")}</Badge>
                           <div className="flex gap-1">
                             <Button
                               variant="ghost"
@@ -1042,12 +1062,12 @@ export default function VendorDashboard() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Product</DialogTitle>
-            <DialogDescription>Update your product information</DialogDescription>
+            <DialogTitle>{t("vendor.dashboard.editProduct")}</DialogTitle>
+            <DialogDescription>{t("vendor.dashboard.updateProduct")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Product Name *</Label>
+              <Label>{t("vendor.dashboard.productName")} *</Label>
               <Input
                 value={productName}
                 onChange={(e) => setProductName(e.target.value)}
@@ -1056,7 +1076,7 @@ export default function VendorDashboard() {
             </div>
 
             <div className="space-y-2">
-              <Label>Description *</Label>
+              <Label>{t("vendor.dashboard.description")} *</Label>
               <Textarea
                 value={productDesc}
                 onChange={(e) => setProductDesc(e.target.value)}
@@ -1067,7 +1087,7 @@ export default function VendorDashboard() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Price (KWD) *</Label>
+                <Label>{t("vendor.dashboard.originalPrice")} *</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -1077,7 +1097,7 @@ export default function VendorDashboard() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Compare at Price (KWD)</Label>
+                <Label>{t("vendor.dashboard.salePrice")} (KWD)</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -1090,7 +1110,7 @@ export default function VendorDashboard() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Stock *</Label>
+                <Label>{t("vendor.dashboard.stock")} *</Label>
                 <Input
                   type="number"
                   value={productStock}
@@ -1099,7 +1119,7 @@ export default function VendorDashboard() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Brand *</Label>
+                <Label>{t("vendor.dashboard.brand")} *</Label>
                 <Input
                   value={productBrand}
                   onChange={(e) => setProductBrand(e.target.value)}
@@ -1109,7 +1129,7 @@ export default function VendorDashboard() {
             </div>
 
             <div className="space-y-2">
-              <Label>Category *</Label>
+              <Label>{t("vendor.dashboard.category")} *</Label>
               <Select value={productCategory} onValueChange={setProductCategory}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
@@ -1125,7 +1145,7 @@ export default function VendorDashboard() {
             </div>
 
             <div className="space-y-2">
-              <Label>Warranty Information</Label>
+              <Label>{t("vendor.dashboard.warranty")}</Label>
               <Input
                 value={productWarranty}
                 onChange={(e) => setProductWarranty(e.target.value)}
@@ -1134,7 +1154,7 @@ export default function VendorDashboard() {
             </div>
 
             <div className="space-y-2">
-              <Label>Product Images</Label>
+              <Label>{t("vendor.dashboard.productImages")}</Label>
               <div className="flex gap-2 flex-wrap">
                 {productImages.map((img, idx) => (
                   <div key={idx} className="relative">
@@ -1152,23 +1172,23 @@ export default function VendorDashboard() {
               </div>
               <input ref={productImageRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadProductImage(f); }} />
               <Button variant="outline" onClick={() => productImageRef.current?.click()} disabled={isUploadingProduct}>
-                {isUploadingProduct ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
-                Add Image
+                {isUploadingProduct ? <Loader2 className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"} animate-spin`} /> : <Plus className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />}
+                {t("common.add")} {t("common.image")}
               </Button>
             </div>
 
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button onClick={handleUpdateProduct} disabled={updateProductMutation.isPending}>
                 {updateProductMutation.isPending ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Updating...
+                    <Loader2 className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"} animate-spin`} />
+                    {t("vendor.dashboard.updating")}
                   </>
                 ) : (
-                  "Update Product"
+                  t("vendor.dashboard.updateProduct")
                 )}
               </Button>
             </div>
@@ -1217,9 +1237,9 @@ export default function VendorDashboard() {
       <Dialog open={isEditStoryDialogOpen} onOpenChange={setIsEditStoryDialogOpen}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Spotlight</DialogTitle>
+            <DialogTitle>{t("vendor.dashboard.editAd")}</DialogTitle>
             <DialogDescription>
-              Update your spotlight content and image. Click save when you're done.
+              {t("vendor.dashboard.updateAd")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -1286,13 +1306,13 @@ export default function VendorDashboard() {
             <Button onClick={handleUpdateStory} disabled={updateStoryMutation.isPending}>
               {updateStoryMutation.isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  Updating...
+                  <Loader2 className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"} animate-spin`} />
+                  {t("vendor.dashboard.updating")}
                 </>
               ) : (
                 <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Update Spotlight
+                  <Save className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+                  {t("vendor.dashboard.updateAdBtn")}
                 </>
               )}
             </Button>

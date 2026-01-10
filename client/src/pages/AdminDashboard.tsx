@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { useRole, useVendors } from "@/hooks/use-motorbuy";
 import { useAuth } from "@/hooks/use-auth";
+import { useLanguage } from "@/lib/i18n";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -40,6 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import type { Vendor } from "@shared/schema";
 import { buildApiUrl } from "@/lib/api-config";
+import { formatKWD } from "@/lib/currency";
 
 interface VendorFinancials extends Vendor {
   hasPendingRequest: boolean;
@@ -88,6 +90,7 @@ export default function AdminDashboard() {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { data: roleData, isLoading: isRoleLoading } = useRole();
   const [, setLocation] = useLocation();
+  const { t, isRTL } = useLanguage();
 
   useEffect(() => {
     if (!isAuthLoading && !isAuthenticated) {
@@ -125,10 +128,10 @@ export default function AdminDashboard() {
       <div className="container mx-auto px-4 py-6">
         <div className="mb-8">
           <h1 className="text-2xl md:text-3xl font-display font-bold">
-            Dashboard
+            {t("admin.dashboard.title")}
           </h1>
           <p className="text-muted-foreground text-sm md:text-base">
-            Manage your marketplace
+            {t("admin.dashboard.manage")}
           </p>
         </div>
 
@@ -142,7 +145,9 @@ export default function AdminDashboard() {
               data-testid="tab-analytics"
             >
               <BarChart3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Analytics</span>
+              <span className="hidden sm:inline">
+                {t("admin.dashboard.tabAnalytics")}
+              </span>
             </TabsTrigger>
             <TabsTrigger
               value="vendors"
@@ -150,7 +155,9 @@ export default function AdminDashboard() {
               data-testid="tab-vendors"
             >
               <Store className="w-4 h-4" />
-              <span className="hidden sm:inline">Vendors</span>
+              <span className="hidden sm:inline">
+                {t("admin.dashboard.tabVendors")}
+              </span>
             </TabsTrigger>
             <TabsTrigger
               value="users"
@@ -158,7 +165,9 @@ export default function AdminDashboard() {
               data-testid="tab-users"
             >
               <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">Users</span>
+              <span className="hidden sm:inline">
+                {t("admin.dashboard.tabUsers")}
+              </span>
             </TabsTrigger>
             <TabsTrigger
               value="categories"
@@ -166,15 +175,29 @@ export default function AdminDashboard() {
               data-testid="tab-categories"
             >
               <FolderOpen className="w-4 h-4" />
-              <span className="hidden sm:inline">Categories</span>
+              <span className="hidden sm:inline">
+                {t("admin.dashboard.tabCategories")}
+              </span>
             </TabsTrigger>
             <TabsTrigger
-              value="spotlights"
+              value="ads"
               className="gap-2 py-2"
-              data-testid="tab-spotlights"
+              data-testid="tab-ads"
             >
               <BookOpen className="w-4 h-4" />
-              <span className="hidden sm:inline">Spotlights</span>
+              <span className="hidden sm:inline">
+                {t("admin.dashboard.tabAds")}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="orders"
+              className="gap-2 py-2"
+              data-testid="tab-orders"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              <span className="hidden sm:inline">
+                {t("admin.dashboard.tabOrders")}
+              </span>
             </TabsTrigger>
             <TabsTrigger
               value="payouts"
@@ -182,7 +205,9 @@ export default function AdminDashboard() {
               data-testid="tab-payouts"
             >
               <DollarSign className="w-4 h-4" />
-              <span className="hidden sm:inline">Payouts</span>
+              <span className="hidden sm:inline">
+                {t("admin.dashboard.tabPayouts")}
+              </span>
             </TabsTrigger>
           </TabsList>
 
@@ -202,8 +227,12 @@ export default function AdminDashboard() {
             <CategoriesSection />
           </TabsContent>
 
-          <TabsContent value="spotlights">
-            <SpotlightsSection />
+          <TabsContent value="ads">
+            <AdsSection />
+          </TabsContent>
+
+          <TabsContent value="orders">
+            <OrdersSection />
           </TabsContent>
 
           <TabsContent value="payouts">
@@ -216,6 +245,7 @@ export default function AdminDashboard() {
 }
 
 function TopSummaryCards() {
+  const { t } = useLanguage();
   const { data: vendors } = useQuery<VendorFinancials[]>({
     queryKey: ["/api/admin/vendors/financials"],
   });
@@ -252,7 +282,8 @@ function TopSummaryCards() {
             {totalVendors}
           </p>
           <p className="text-sm text-amber-600 dark:text-amber-400">
-            Vendors ({approvedVendors} approved)
+            {t("admin.dashboard.totalVendors")} ({approvedVendors}{" "}
+            {t("admin.dashboard.approved")})
           </p>
         </CardContent>
       </Card>
@@ -271,7 +302,7 @@ function TopSummaryCards() {
             {pendingPayouts}
           </p>
           <p className="text-sm text-red-600 dark:text-red-400">
-            Payout Requests
+            {t("admin.dashboard.payoutRequests")}
           </p>
         </CardContent>
       </Card>
@@ -290,7 +321,7 @@ function TopSummaryCards() {
             {totalPendingAmount.toFixed(3)}
           </p>
           <p className="text-sm text-green-600 dark:text-green-400">
-            Pending (KWD)
+            {t("admin.dashboard.pendingPayout")} (KWD)
           </p>
         </CardContent>
       </Card>
@@ -308,7 +339,9 @@ function TopSummaryCards() {
           >
             {totalUsers}
           </p>
-          <p className="text-sm text-blue-600 dark:text-blue-400">Users</p>
+          <p className="text-sm text-blue-600 dark:text-blue-400">
+            {t("admin.dashboard.totalUsers")}
+          </p>
         </CardContent>
       </Card>
     </div>
@@ -316,6 +349,7 @@ function TopSummaryCards() {
 }
 
 function AnalyticsSection() {
+  const { t } = useLanguage();
   const { data: analytics, isLoading } = useQuery<Analytics>({
     queryKey: ["/api/admin/analytics"],
   });
@@ -346,7 +380,9 @@ function AnalyticsSection() {
                 <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Revenue</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("admin.dashboard.totalRevenue")}
+                </p>
                 <p className="font-bold text-lg">
                   {analytics.totalRevenue} KWD
                 </p>
@@ -362,7 +398,9 @@ function AnalyticsSection() {
                 <ShoppingCart className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Orders</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("admin.dashboard.totalOrders")}
+                </p>
                 <p className="font-bold text-lg">{analytics.totalOrders}</p>
               </div>
             </div>
@@ -376,7 +414,9 @@ function AnalyticsSection() {
                 <Package className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Products</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("admin.dashboard.totalProducts")}
+                </p>
                 <p className="font-bold text-lg">{analytics.totalProducts}</p>
               </div>
             </div>
@@ -390,7 +430,9 @@ function AnalyticsSection() {
                 <Store className="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Vendors</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("admin.dashboard.totalVendors")}
+                </p>
                 <p className="font-bold text-lg">{analytics.totalVendors}</p>
               </div>
             </div>
@@ -404,7 +446,9 @@ function AnalyticsSection() {
                 <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Users</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("admin.dashboard.totalUsers")}
+                </p>
                 <p className="font-bold text-lg">{analytics.totalUsers}</p>
               </div>
             </div>
@@ -418,7 +462,9 @@ function AnalyticsSection() {
                 <FolderOpen className="w-5 h-5 text-pink-600 dark:text-pink-400" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Categories</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("admin.dashboard.totalCategories")}
+                </p>
                 <p className="font-bold text-lg">{analytics.totalCategories}</p>
               </div>
             </div>
@@ -428,12 +474,12 @@ function AnalyticsSection() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Recent Orders</CardTitle>
+          <CardTitle>{t("admin.dashboard.recentOrders")}</CardTitle>
         </CardHeader>
         <CardContent>
           {analytics.recentOrders.length === 0 ? (
             <p className="text-center text-muted-foreground py-4">
-              No orders yet.
+              {t("admin.dashboard.noOrders")}
             </p>
           ) : (
             <div className="space-y-3">
@@ -513,6 +559,7 @@ function AnalyticsSection() {
 }
 
 function VendorSection() {
+  const { t, isRTL } = useLanguage();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -635,25 +682,25 @@ function VendorSection() {
           onClick={() => setShowCreateForm(!showCreateForm)}
           data-testid="button-add-vendor"
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Vendor
+          <Plus className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+          {t("admin.dashboard.addVendor")}
         </Button>
       </div>
 
       {showCreateForm && (
         <Card>
           <CardHeader>
-            <CardTitle>Create New Vendor</CardTitle>
+            <CardTitle>{t("admin.dashboard.createVendor")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <Input
-              placeholder="Store name"
+              placeholder={t("admin.dashboard.storeName")}
               value={newStoreName}
               onChange={(e) => setNewStoreName(e.target.value)}
               data-testid="input-vendor-name"
             />
             <Input
-              placeholder="Description (optional)"
+              placeholder={t("admin.dashboard.description")}
               value={newDescription}
               onChange={(e) => setNewDescription(e.target.value)}
               data-testid="input-vendor-description"
@@ -670,15 +717,19 @@ function VendorSection() {
                 data-testid="button-save-vendor"
               >
                 {createVendorMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  <Loader2
+                    className={`w-4 h-4 ${
+                      isRTL ? "ml-2" : "mr-2"
+                    } animate-spin`}
+                  />
                 ) : null}
-                Create Vendor
+                {t("admin.dashboard.create")}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowCreateForm(false)}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
             </div>
           </CardContent>
@@ -1255,7 +1306,8 @@ interface VendorStory {
   createdAt: string;
 }
 
-function SpotlightsSection() {
+function AdsSection() {
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -1267,7 +1319,7 @@ function SpotlightsSection() {
       const res = await fetch(buildApiUrl("/api/stories"), {
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to fetch spotlights");
+      if (!res.ok) throw new Error("Failed to fetch ads");
       return res.json();
     },
   });
@@ -1277,11 +1329,11 @@ function SpotlightsSection() {
   const deleteStoryMutation = useMutation({
     mutationFn: async (storyId: string) => {
       const res = await apiRequest("DELETE", `/api/stories/${storyId}`);
-      if (!res.ok) throw new Error("Failed to delete spotlight");
+      if (!res.ok) throw new Error("Failed to delete ad");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
-      toast({ title: "Success", description: "Spotlight deleted" });
+      toast({ title: "Success", description: "Ad deleted" });
     },
     onError: (err: Error) => {
       toast({
@@ -1307,13 +1359,15 @@ function SpotlightsSection() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Spotlight Management</h2>
+      <h2 className="text-xl font-semibold">
+        {t("admin.dashboard.adsManagement")}
+      </h2>
 
       <Card>
         <CardContent className="p-0">
           {!stories || stories.length === 0 ? (
             <p className="text-center text-muted-foreground py-12">
-              No spotlights found.
+              {t("admin.dashboard.noAds")}
             </p>
           ) : (
             <div className="divide-y">
@@ -1321,7 +1375,7 @@ function SpotlightsSection() {
                 <div
                   key={story.id}
                   className="p-4 md:p-6"
-                  data-testid={`spotlight-row-${story.id}`}
+                  data-testid={`ad-row-${story.id}`}
                 >
                   <div className="flex flex-col lg:flex-row lg:items-start gap-4">
                     {story.imageUrl && (
@@ -1356,12 +1410,154 @@ function SpotlightsSection() {
                           className="text-destructive hover:bg-destructive/10 flex-shrink-0"
                           onClick={() => deleteStoryMutation.mutate(story.id)}
                           disabled={deleteStoryMutation.isPending}
-                          data-testid={`button-delete-spotlight-${story.id}`}
+                          data-testid={`button-delete-ad-${story.id}`}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function OrdersSection() {
+  const [statusFilter, setStatusFilter] = useState("all");
+  const { data: orders, isLoading } = useQuery<any[]>({
+    queryKey: ["/api/admin/orders"],
+    queryFn: async () => {
+      const res = await fetch(buildApiUrl("/api/admin/orders"), {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch orders");
+      return res.json();
+    },
+  });
+
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({
+      orderId,
+      status,
+    }: {
+      orderId: string;
+      status: string;
+    }) => {
+      const res = await apiRequest("PATCH", `/api/orders/${orderId}/status`, {
+        status,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/analytics"] });
+      toast({
+        title: "Order status updated",
+        description: "The order status has been updated successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Update failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="animate-spin w-8 h-8" />
+      </div>
+    );
+  }
+
+  const filteredOrders = orders?.filter(
+    (order) => statusFilter === "all" || order.status === statusFilter
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Orders Management</h2>
+        <div className="w-[200px]">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="processing">Processing</SelectItem>
+              <SelectItem value="shipped">Shipped</SelectItem>
+              <SelectItem value="delivered">Delivered</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          {!filteredOrders || filteredOrders.length === 0 ? (
+            <p className="text-center text-muted-foreground py-12">
+              No orders found.
+            </p>
+          ) : (
+            <div className="divide-y">
+              {filteredOrders.map((order) => (
+                <div
+                  key={order.id}
+                  className="p-4 flex flex-col md:flex-row justify-between gap-4"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-semibold">
+                        Order #{order.id.slice(-8)}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="text-sm">
+                      <span className="font-medium">Customer:</span>{" "}
+                      {order.customerName || order.guestName || "Guest"}
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {order.items?.length || 0} items • Total:{" "}
+                      {formatKWD(order.total)}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Select
+                      defaultValue={order.status}
+                      onValueChange={(value) =>
+                        updateStatusMutation.mutate({
+                          orderId: order.id,
+                          status: value,
+                        })
+                      }
+                    >
+                      <SelectTrigger className="w-[140px] h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="processing">Processing</SelectItem>
+                        <SelectItem value="shipped">Shipped</SelectItem>
+                        <SelectItem value="delivered">Delivered</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               ))}

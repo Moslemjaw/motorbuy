@@ -66,7 +66,7 @@ export function Footer() {
               <li>
                 <Link href="/stories">
                   <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
-                    {t("section.spotlight")}
+                    {t("section.ads")}
                   </span>
                 </Link>
               </li>
@@ -77,14 +77,18 @@ export function Footer() {
             <h4 className="font-semibold text-sm mb-4">{t("footer.support")}</h4>
             <ul className="space-y-3 text-sm">
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                  {t("footer.contact")}
-                </a>
+                <Link href="/contact">
+                  <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                    {t("footer.contact")}
+                  </span>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                  {t("footer.faq")}
-                </a>
+                <Link href="/faq">
+                  <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                    {t("footer.faq")}
+                  </span>
+                </Link>
               </li>
             </ul>
           </div>
@@ -93,14 +97,18 @@ export function Footer() {
             <h4 className="font-semibold text-sm mb-4">{t("footer.legal")}</h4>
             <ul className="space-y-3 text-sm">
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                  {t("footer.terms")}
-                </a>
+                <Link href="/terms">
+                  <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                    {t("footer.terms")}
+                  </span>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                  {t("footer.privacy")}
-                </a>
+                <Link href="/privacy">
+                  <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                    {t("footer.privacy")}
+                  </span>
+                </Link>
               </li>
             </ul>
           </div>

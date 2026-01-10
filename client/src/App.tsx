@@ -21,6 +21,10 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import Stories from "@/pages/Stories";
 import VendorProfile from "@/pages/VendorProfile";
 import AuthPage from "@/pages/AuthPage";
+import TermsOfService from "@/pages/TermsOfService";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import ContactUs from "@/pages/ContactUs";
+import FAQ from "@/pages/FAQ";
 
 function Router() {
   return (
@@ -32,6 +36,12 @@ function Router() {
       <Route path="/cart" component={Cart} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/stories" component={Stories} />
+      
+      {/* Legal & Support routes */}
+      <Route path="/terms" component={TermsOfService} />
+      <Route path="/privacy" component={PrivacyPolicy} />
+      <Route path="/contact" component={ContactUs} />
+      <Route path="/faq" component={FAQ} />
       
       {/* Auth routes */}
       <Route path="/login" component={AuthPage} />

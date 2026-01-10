@@ -1019,6 +1019,19 @@ export async function registerRoutes(
     res.json(orders);
   });
 
+  app.get("/api/admin/orders", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "admin")
+        return res.status(403).json({ message: "Forbidden" });
+      const orders = await storage.getAllOrders();
+      res.json(orders);
+    } catch (e: any) {
+      console.error("Error fetching admin orders:", e);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
   app.patch(
     "/api/orders/:id/status",
     isAuthenticated,
