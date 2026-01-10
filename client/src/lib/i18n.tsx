@@ -793,6 +793,14 @@ const ar: Translations = {
   "common.cancelled": "ملغي",
   "common.image": "صورة",
   "common.error": "خطأ",
+  "common.logout": "تسجيل الخروج",
+  "common.more": "المزيد",
+  "common.name": "الاسم",
+  "common.email": "البريد الإلكتروني",
+  "common.role": "الدور",
+  "common.total": "الإجمالي",
+  "common.status": "الحالة",
+  "common.date": "التاريخ",
   
   // Product
   "product.off": "خصم {percent}%",
@@ -1154,6 +1162,10 @@ const ar: Translations = {
   "admin.dashboard.error": "خطأ",
   "admin.dashboard.requestStatus": "قيد الانتظار",
   "admin.dashboard.requestedBy": "طلب من",
+  "admin.dashboard.outstanding": "المستحقات",
+  "admin.dashboard.balance": "الرصيد",
+  "admin.dashboard.requestPay": "طلب الدفع",
+  "admin.dashboard.orderId": "رقم الطلب",
   
   // Auth Dashboard Buttons
   "auth.goToVendorDashboard": "الذهاب إلى لوحة تحكم المورد",
