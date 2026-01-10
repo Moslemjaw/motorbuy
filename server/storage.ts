@@ -31,6 +31,8 @@ export interface IStorage {
   createOrder(userId: string, total: string, items: { productId: string; quantity: number; price: string }[], customerInfo?: { name?: string; email?: string; phone?: string; address?: string; city?: string }, paymentMethod?: string, platformFee?: string, netAmount?: string): Promise<any>;
   createGuestOrder(guestEmail: string, guestName: string, guestPhone: string, total: string, items: { productId: string; quantity: number; price: string }[], paymentMethod?: string): Promise<any>;
   updateOrder(id: string, status: string): Promise<any>;
+  updateOrderDetails(id: string, updates: any): Promise<any>;
+  deleteOrder(id: string): Promise<void>;
   getOrders(userId: string): Promise<any[]>;
   getStories(): Promise<any[]>;
   getStory(id: string): Promise<any | undefined>;
@@ -524,6 +526,21 @@ export class MongoStorage implements IStorage {
     }
     const updated = await Order.findByIdAndUpdate(id, { status }, { new: true });
     return toPlainObject(updated);
+  }
+
+  async updateOrderDetails(id: string, updates: any): Promise<any> {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error("Invalid order ID");
+    }
+    const updated = await Order.findByIdAndUpdate(id, updates, { new: true });
+    return toPlainObject(updated);
+  }
+
+  async deleteOrder(id: string): Promise<void> {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error("Invalid order ID");
+    }
+    await Order.findByIdAndDelete(id);
   }
 
   async getOrders(userId: string): Promise<any[]> {

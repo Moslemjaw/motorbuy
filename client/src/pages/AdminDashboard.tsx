@@ -23,7 +23,9 @@ import {
   Image,
   Percent,
   BarChart3,
-  Wallet
+  Wallet,
+  Search,
+  Filter
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,7 +43,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiRequest } from "@/lib/queryClient";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { 
   Select,
   SelectContent,
@@ -393,7 +395,16 @@ function AnalyticsSection() {
 }
 
 function UsersSection() {
-    const { t } = useLanguage();
+    const { t, isRTL } = useLanguage();
+    const queryClient = useQueryClient();
+    const { toast } = useToast();
+    const [editingUser, setEditingUser] = useState<any | null>(null);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [editFirstName, setEditFirstName] = useState("");
+    const [editLastName, setEditLastName] = useState("");
+    const [editEmail, setEditEmail] = useState("");
+    const [editRole, setEditRole] = useState("");
+
     const { data: users, isLoading } = useQuery({
         queryKey: ["/api/admin/users"],
         queryFn: async () => {
@@ -402,33 +413,112 @@ function UsersSection() {
         }
     });
 
+    const updateUserMutation = useMutation({
+        mutationFn: async ({ userId, data }: { userId: string; data: any }) => {
+            // Update user info
+            const userRes = await apiRequest("PATCH", `/api/users/${userId}`, {
+                firstName: data.firstName,
+                lastName: data.lastName,
+                email: data.email,
+            });
+            if (!userRes.ok) throw new Error("Failed to update user");
+            
+            // Update role if changed
+            if (data.role) {
+                const roleRes = await apiRequest("POST", "/api/admin/users/role", {
+                    userId,
+                    role: data.role,
+                });
+                if (!roleRes.ok) throw new Error("Failed to update role");
+            }
+            
+            return { success: true };
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+            toast({ title: "Success", description: "User updated successfully" });
+            setIsEditDialogOpen(false);
+            setEditingUser(null);
+        },
+        onError: (err: Error) => {
+            toast({
+                title: "Error",
+                description: err.message,
+                variant: "destructive",
+            });
+        },
+    });
+
+    const handleEditUser = (user: any) => {
+        setEditingUser(user);
+        setEditFirstName(user.firstName || "");
+        setEditLastName(user.lastName || "");
+        setEditEmail(user.email || "");
+        setEditRole(user.role || "customer");
+        setIsEditDialogOpen(true);
+    };
+
+    const handleUpdateUser = () => {
+        if (!editingUser || !editFirstName || !editLastName || !editEmail) {
+            toast({
+                title: "Missing Fields",
+                description: "Please fill in all required fields",
+                variant: "destructive",
+            });
+            return;
+        }
+        updateUserMutation.mutate({
+            userId: editingUser.id,
+            data: {
+                firstName: editFirstName,
+                lastName: editLastName,
+                email: editEmail,
+                role: editRole,
+            },
+        });
+    };
+
     if (isLoading) return <LoadingPage message="Loading..." fullScreen={false} />;
 
     return (
+        <>
         <Card className="border shadow-sm">
             <CardContent className="p-0">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="font-medium text-muted-foreground">{t("common.name")}</TableHead>
-                            <TableHead className="font-medium text-muted-foreground">{t("common.email")}</TableHead>
-                            <TableHead className="font-medium text-muted-foreground">{t("common.role")}</TableHead>
+                            <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>{t("common.name")}</TableHead>
+                            <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>{t("common.email")}</TableHead>
+                            <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>{t("common.role")}</TableHead>
+                            <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-left" : "text-right"}`}>{t("admin.dashboard.actions")}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {!users || users.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={3} className="text-center text-muted-foreground py-12">
+                                <TableCell colSpan={4} className="text-center text-muted-foreground py-12">
                                     {t("admin.dashboard.noUsers") || "No users found"}
                                 </TableCell>
                             </TableRow>
                         ) : (
                             users.map((u: any) => (
                                 <TableRow key={u.id} className="hover:bg-muted/50">
-                                    <TableCell className="font-medium">{u.firstName} {u.lastName}</TableCell>
-                                    <TableCell className="text-muted-foreground">{u.email}</TableCell>
-                                    <TableCell>
+                                    <TableCell className={`font-medium ${isRTL ? "text-right" : "text-left"}`}>{u.firstName} {u.lastName}</TableCell>
+                                    <TableCell className={`text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>{u.email}</TableCell>
+                                    <TableCell className={isRTL ? "text-right" : "text-left"}>
                                         <Badge variant="outline" className="font-normal capitalize">{u.role}</Badge>
+                                    </TableCell>
+                                    <TableCell className={isRTL ? "text-left" : "text-right"}>
+                                        <div className={`flex gap-1 ${isRTL ? 'justify-start flex-row-reverse' : 'justify-end'}`}>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8"
+                                                onClick={() => handleEditUser(u)}
+                                            >
+                                                <Pencil className="w-4 h-4" />
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -437,6 +527,65 @@ function UsersSection() {
                 </Table>
         </CardContent>
       </Card>
+
+      {/* Edit User Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className={`max-w-md ${isRTL ? "text-right" : "text-left"}`}>
+          <DialogHeader className={isRTL ? "text-right" : "text-left"}>
+            <DialogTitle>{t("admin.dashboard.editUser") || "Edit User"}</DialogTitle>
+            <DialogDescription>{t("admin.dashboard.editUserDesc") || "Update user information and role."}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t("auth.firstName")} *</Label>
+                <Input
+                  value={editFirstName}
+                  onChange={(e) => setEditFirstName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("auth.lastName")} *</Label>
+                <Input
+                  value={editLastName}
+                  onChange={(e) => setEditLastName(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{t("common.email")} *</Label>
+              <Input
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t("common.role")} *</Label>
+              <Select value={editRole} onValueChange={setEditRole}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="customer">{t("account.customer") || "Customer"}</SelectItem>
+                  <SelectItem value="vendor">{t("account.vendor") || "Vendor"}</SelectItem>
+                  <SelectItem value="admin">{t("nav.admin") || "Admin"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter className={isRTL ? "flex-row-reverse" : ""}>
+            <Button variant="outline" onClick={() => { setIsEditDialogOpen(false); setEditingUser(null); }}>
+              {t("common.cancel")}
+            </Button>
+            <Button onClick={handleUpdateUser} disabled={updateUserMutation.isPending}>
+              {updateUserMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              {t("common.save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      </>
   );
 }
 
@@ -445,6 +594,11 @@ function VendorsSection() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [editingVendor, setEditingVendor] = useState<string | null>(null);
+  const [editingVendorDetails, setEditingVendorDetails] = useState<any | null>(null);
+  const [isEditVendorDialogOpen, setIsEditVendorDialogOpen] = useState(false);
+  const [editStoreName, setEditStoreName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editIsApproved, setEditIsApproved] = useState(false);
   const [commissionType, setCommissionType] = useState<"percentage" | "fixed">("percentage");
   const [commissionValue, setCommissionValue] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -536,10 +690,84 @@ function VendorsSection() {
     },
   });
 
+  const updateVendorMutation = useMutation({
+    mutationFn: async ({ vendorId, data }: { vendorId: string; data: any }) => {
+      const res = await apiRequest("PATCH", `/api/vendors/${vendorId}`, data);
+      if (!res.ok) throw new Error("Failed to update vendor");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/vendors/financials"] });
+      toast({ title: "Success", description: "Vendor updated successfully" });
+      setIsEditVendorDialogOpen(false);
+      setEditingVendorDetails(null);
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const approveVendorMutation = useMutation({
+    mutationFn: async ({ vendorId, isApproved }: { vendorId: string; isApproved: boolean }) => {
+      const res = await apiRequest("PATCH", `/api/vendors/${vendorId}`, { isApproved });
+      if (!res.ok) throw new Error("Failed to update vendor approval");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/vendors/financials"] });
+      toast({ title: "Success", description: "Vendor approval status updated" });
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const startEditing = (vendor: any) => {
     setEditingVendor(vendor.id);
     setCommissionType(vendor.commissionType || "percentage");
     setCommissionValue(vendor.commissionValue || "5");
+  };
+
+  const handleEditVendor = (vendor: any) => {
+    setEditingVendorDetails(vendor);
+    setEditStoreName(vendor.storeName || "");
+    setEditDescription(vendor.description || "");
+    setEditIsApproved(vendor.isApproved || false);
+    setIsEditVendorDialogOpen(true);
+  };
+
+  const handleUpdateVendor = () => {
+    if (!editingVendorDetails || !editStoreName) {
+      toast({
+        title: "Missing Fields",
+        description: "Store name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    updateVendorMutation.mutate({
+      vendorId: editingVendorDetails.id,
+      data: {
+        storeName: editStoreName,
+        description: editDescription,
+        isApproved: editIsApproved,
+      },
+    });
+  };
+
+  const handleToggleApproval = (vendor: any) => {
+    approveVendorMutation.mutate({
+      vendorId: vendor.id,
+      isApproved: !vendor.isApproved,
+    });
   };
 
   if (isVendorsLoading) {
@@ -646,6 +874,30 @@ function VendorsSection() {
                           {vendor.hasPendingRequest && (
                             <Badge variant="destructive">{t("admin.dashboard.payoutRequest")}</Badge>
                           )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => handleEditVendor(vendor)}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => handleToggleApproval(vendor)}
+                            disabled={approveVendorMutation.isPending}
+                            title={vendor.isApproved ? "Unapprove Vendor" : "Approve Vendor"}
+                          >
+                            {approveVendorMutation.isPending ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : vendor.isApproved ? (
+                              <XCircle className="w-3.5 h-3.5 text-destructive" />
+                            ) : (
+                              <CheckCircle className="w-3.5 h-3.5 text-green-600" />
+                            )}
+                          </Button>
                         </div>
                         <p className="text-sm text-muted-foreground line-clamp-1">
                           {vendor.description}
@@ -797,6 +1049,54 @@ function VendorsSection() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Vendor Dialog */}
+      <Dialog open={isEditVendorDialogOpen} onOpenChange={setIsEditVendorDialogOpen}>
+        <DialogContent className={`max-w-md ${isRTL ? "text-right" : "text-left"}`}>
+          <DialogHeader className={isRTL ? "text-right" : "text-left"}>
+            <DialogTitle>{t("admin.dashboard.editVendor") || "Edit Vendor"}</DialogTitle>
+            <DialogDescription>{t("admin.dashboard.editVendorDesc") || "Update vendor information and approval status."}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t("admin.dashboard.storeName")} *</Label>
+              <Input
+                value={editStoreName}
+                onChange={(e) => setEditStoreName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t("admin.dashboard.description")}</Label>
+              <Textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="isApproved"
+                checked={editIsApproved}
+                onChange={(e) => setEditIsApproved(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="isApproved" className="cursor-pointer">
+                {t("admin.dashboard.approved")}
+              </Label>
+            </div>
+          </div>
+          <DialogFooter className={isRTL ? "flex-row-reverse" : ""}>
+            <Button variant="outline" onClick={() => { setIsEditVendorDialogOpen(false); setEditingVendorDetails(null); }}>
+              {t("common.cancel")}
+            </Button>
+            <Button onClick={handleUpdateVendor} disabled={updateVendorMutation.isPending}>
+              {updateVendorMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              {t("common.save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -891,7 +1191,22 @@ function VendorRequestsSection() {
 }
 
 function OrdersSection() {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [editingOrder, setEditingOrder] = useState<any | null>(null);
+  const [deletingOrder, setDeletingOrder] = useState<any | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+  const [editingStatus, setEditingStatus] = useState("");
+  const [editCustomerName, setEditCustomerName] = useState("");
+  const [editCustomerEmail, setEditCustomerEmail] = useState("");
+  const [editCustomerPhone, setEditCustomerPhone] = useState("");
+  const [editTotal, setEditTotal] = useState("");
+
   const { data: orders, isLoading } = useQuery({
     queryKey: ["/api/admin/orders"],
     queryFn: async () => {
@@ -900,38 +1215,259 @@ function OrdersSection() {
     }
   });
 
+  const updateOrderMutation = useMutation({
+    mutationFn: async ({ orderId, data }: { orderId: string; data: any }) => {
+      const res = await apiRequest("PATCH", `/api/admin/orders/${orderId}`, data);
+      if (!res.ok) throw new Error("Failed to update order");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      toast({ title: "Success", description: "Order updated successfully" });
+      setIsEditDialogOpen(false);
+      setEditingOrder(null);
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
+      const res = await apiRequest("PATCH", `/api/orders/${orderId}/status`, { status });
+      if (!res.ok) throw new Error("Failed to update status");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      toast({ title: "Success", description: "Order status updated" });
+      setIsStatusDialogOpen(false);
+      setEditingOrder(null);
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteOrderMutation = useMutation({
+    mutationFn: async (orderId: string) => {
+      const res = await apiRequest("DELETE", `/api/admin/orders/${orderId}`);
+      if (!res.ok) throw new Error("Failed to delete order");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      toast({ title: "Success", description: "Order deleted successfully" });
+      setIsDeleteDialogOpen(false);
+      setDeletingOrder(null);
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleEditOrder = (order: any) => {
+    setEditingOrder(order);
+    setEditCustomerName(order.customerName || order.guestName || "");
+    setEditCustomerEmail(order.customerEmail || order.guestEmail || "");
+    setEditCustomerPhone(order.customerPhone || order.guestPhone || "");
+    setEditTotal(order.total || "");
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateOrder = () => {
+    if (!editingOrder || !editCustomerName || !editTotal) {
+      toast({
+        title: "Missing Fields",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    updateOrderMutation.mutate({
+      orderId: editingOrder.id,
+      data: {
+        customerName: editCustomerName,
+        customerEmail: editCustomerEmail,
+        customerPhone: editCustomerPhone,
+        guestName: editCustomerName,
+        guestEmail: editCustomerEmail,
+        guestPhone: editCustomerPhone,
+        total: editTotal,
+      },
+    });
+  };
+
+  const handleChangeStatus = (order: any) => {
+    setEditingOrder(order);
+    setEditingStatus(order.status || "pending");
+    setIsStatusDialogOpen(true);
+  };
+
+  const handleUpdateStatus = () => {
+    if (!editingOrder || !editingStatus) return;
+    updateStatusMutation.mutate({
+      orderId: editingOrder.id,
+      status: editingStatus,
+    });
+  };
+
+  const handleDeleteOrder = (order: any) => {
+    setDeletingOrder(order);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Filter and search orders
+  const filteredOrders = useMemo(() => {
+    if (!orders) return [];
+    let filtered = orders;
+
+    // Filter by status
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((order: any) => order.status === statusFilter);
+    }
+
+    // Search by order ID, customer name, email, or phone
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((order: any) => {
+        const orderId = String(order.id).toLowerCase();
+        const customerName = (order.customerName || order.guestName || "").toLowerCase();
+        const customerEmail = (order.customerEmail || order.guestEmail || "").toLowerCase();
+        const customerPhone = (order.customerPhone || order.guestPhone || "").toLowerCase();
+        return (
+          orderId.includes(query) ||
+          customerName.includes(query) ||
+          customerEmail.includes(query) ||
+          customerPhone.includes(query)
+        );
+      });
+    }
+
+    return filtered;
+  }, [orders, statusFilter, searchQuery]);
+
   if (isLoading) return <LoadingPage message="Loading..." fullScreen={false} />;
 
   return (
-    <Card className="border shadow-sm">
+    <>
+    <div className="space-y-4">
+      {/* Search and Filter Bar */}
+      <Card className="border shadow-sm">
+        <CardContent className="p-4">
+          <div className={`flex flex-col md:flex-row gap-4 ${isRTL ? "md:flex-row-reverse" : ""}`}>
+            <div className="flex-1 relative">
+              <Search className={`absolute top-1/2 transform -translate-y-1/2 ${isRTL ? "right-3" : "left-3"} w-4 h-4 text-muted-foreground`} />
+              <Input
+                placeholder={t("admin.dashboard.searchOrders") || "Search by order ID, customer name, email, or phone..."}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`${isRTL ? "pr-10" : "pl-10"}`}
+              />
+            </div>
+            <div className="w-full md:w-48">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("admin.dashboard.filterStatus") || "Filter by status"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("admin.dashboard.allStatuses") || "All Statuses"}</SelectItem>
+                  <SelectItem value="pending">{t("common.pending")}</SelectItem>
+                  <SelectItem value="processing">{t("common.processing")}</SelectItem>
+                  <SelectItem value="shipped">{t("common.shipped")}</SelectItem>
+                  <SelectItem value="delivered">{t("common.delivered")}</SelectItem>
+                  <SelectItem value="cancelled">{t("common.cancelled")}</SelectItem>
+                  <SelectItem value="paid">{t("admin.dashboard.paid") || "Paid"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border shadow-sm">
         <CardContent className="p-0">
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="font-medium text-muted-foreground">{t("admin.dashboard.orderId")}</TableHead>
-                        <TableHead className="font-medium text-muted-foreground">{t("admin.dashboard.customer")}</TableHead>
-                        <TableHead className="font-medium text-muted-foreground text-right">{t("common.total")}</TableHead>
-                        <TableHead className="font-medium text-muted-foreground">{t("common.status")}</TableHead>
-                        <TableHead className="font-medium text-muted-foreground">{t("common.date")}</TableHead>
+                        <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>{t("admin.dashboard.orderId")}</TableHead>
+                        <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>{t("admin.dashboard.customer")}</TableHead>
+                        <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-left" : "text-right"}`}>{t("common.total")}</TableHead>
+                        <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>{t("common.status")}</TableHead>
+                        <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>{t("common.date")}</TableHead>
+                        <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-left" : "text-right"}`}>{t("admin.dashboard.actions")}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {!orders || orders.length === 0 ? (
+                    {!filteredOrders || filteredOrders.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={5} className="text-center text-muted-foreground py-12">
-                                {t("admin.dashboard.noOrders")}
+                            <TableCell colSpan={6} className={`text-center text-muted-foreground py-12 ${isRTL ? "text-right" : "text-left"}`}>
+                                {searchQuery || statusFilter !== "all" 
+                                  ? (t("common.noResults") || "No orders match your filters")
+                                  : (t("admin.dashboard.noOrders") || "No orders yet.")}
                             </TableCell>
                         </TableRow>
                     ) : (
-                        orders.map((order: any) => (
+                        filteredOrders.map((order: any) => (
                             <TableRow key={order.id} className="hover:bg-muted/50">
-                                <TableCell className="font-mono text-sm">{String(order.id).slice(-8)}</TableCell>
-                                <TableCell className="font-medium">{order.customerName || order.guestName || "N/A"}</TableCell>
-                                <TableCell className="text-right font-medium">{formatKWD(order.total)}</TableCell>
-                                <TableCell>
-                                    <Badge variant="outline" className="font-normal capitalize">{order.status}</Badge>
+                                <TableCell className={`font-mono text-sm ${isRTL ? "text-right" : "text-left"}`}>{String(order.id).slice(-8)}</TableCell>
+                                <TableCell className={`font-medium ${isRTL ? "text-right" : "text-left"}`}>{order.customerName || order.guestName || "N/A"}</TableCell>
+                                <TableCell className={`text-right font-medium ${isRTL ? "text-left" : "text-right"}`}>{formatKWD(order.total)}</TableCell>
+                                <TableCell className={isRTL ? "text-right" : "text-left"}>
+                                    <Badge 
+                                      variant={
+                                        order.status === "delivered" || order.status === "paid" ? "default" :
+                                        order.status === "cancelled" ? "destructive" :
+                                        "outline"
+                                      } 
+                                      className="font-normal capitalize"
+                                    >
+                                      {order.status}
+                                    </Badge>
                                 </TableCell>
-                                <TableCell className="text-muted-foreground">{new Date(order.createdAt).toLocaleDateString()}</TableCell>
+                                <TableCell className={`text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
+                                <TableCell className={isRTL ? "text-left" : "text-right"}>
+                                  <div className={`flex gap-1 ${isRTL ? 'justify-start flex-row-reverse' : 'justify-end'}`}>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => handleEditOrder(order)}
+                                      title={t("common.edit")}
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => handleChangeStatus(order)}
+                                      title={t("admin.dashboard.changeStatus") || "Change Status"}
+                                    >
+                                      <CheckCircle className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                      onClick={() => handleDeleteOrder(order)}
+                                      title={t("common.delete")}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
                             </TableRow>
                         ))
                     )}
@@ -939,6 +1475,119 @@ function OrdersSection() {
             </Table>
         </CardContent>
     </Card>
+    </div>
+
+    {/* Edit Order Dialog */}
+    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <DialogContent className={`max-w-md ${isRTL ? "text-right" : "text-left"}`}>
+        <DialogHeader className={isRTL ? "text-right" : "text-left"}>
+          <DialogTitle>{t("admin.dashboard.editOrder") || "Edit Order"}</DialogTitle>
+          <DialogDescription>{t("admin.dashboard.editOrderDesc") || "Update order information."}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>{t("admin.dashboard.customer")} *</Label>
+            <Input
+              value={editCustomerName}
+              onChange={(e) => setEditCustomerName(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>{t("common.email")}</Label>
+            <Input
+              type="email"
+              value={editCustomerEmail}
+              onChange={(e) => setEditCustomerEmail(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>{t("admin.dashboard.phone") || "Phone"}</Label>
+            <Input
+              value={editCustomerPhone}
+              onChange={(e) => setEditCustomerPhone(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>{t("common.total")} (KWD) *</Label>
+            <Input
+              type="number"
+              step="0.001"
+              value={editTotal}
+              onChange={(e) => setEditTotal(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter className={isRTL ? "flex-row-reverse" : ""}>
+          <Button variant="outline" onClick={() => { setIsEditDialogOpen(false); setEditingOrder(null); }}>
+            {t("common.cancel")}
+          </Button>
+          <Button onClick={handleUpdateOrder} disabled={updateOrderMutation.isPending}>
+            {updateOrderMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+            {t("common.save")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Change Status Dialog */}
+    <Dialog open={isStatusDialogOpen} onOpenChange={setIsStatusDialogOpen}>
+      <DialogContent className={`max-w-md ${isRTL ? "text-right" : "text-left"}`}>
+        <DialogHeader className={isRTL ? "text-right" : "text-left"}>
+          <DialogTitle>{t("admin.dashboard.changeStatus") || "Change Order Status"}</DialogTitle>
+          <DialogDescription>{t("admin.dashboard.changeStatusDesc") || "Update the order status."}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>{t("common.status")} *</Label>
+            <Select value={editingStatus} onValueChange={setEditingStatus}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending">{t("common.pending")}</SelectItem>
+                <SelectItem value="processing">{t("common.processing")}</SelectItem>
+                <SelectItem value="shipped">{t("common.shipped")}</SelectItem>
+                <SelectItem value="delivered">{t("common.delivered")}</SelectItem>
+                <SelectItem value="cancelled">{t("common.cancelled")}</SelectItem>
+                <SelectItem value="paid">{t("admin.dashboard.paid") || "Paid"}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter className={isRTL ? "flex-row-reverse" : ""}>
+          <Button variant="outline" onClick={() => { setIsStatusDialogOpen(false); setEditingOrder(null); }}>
+            {t("common.cancel")}
+          </Button>
+          <Button onClick={handleUpdateStatus} disabled={updateStatusMutation.isPending}>
+            {updateStatusMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+            {t("common.save")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Delete Order Dialog */}
+    <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialogContent className={isRTL ? "text-right" : "text-left"}>
+        <AlertDialogHeader className={isRTL ? "text-right" : "text-left"}>
+          <AlertDialogTitle>{t("admin.dashboard.deleteOrder") || "Delete Order"}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {t("admin.dashboard.deleteOrderDesc") || "Are you sure you want to delete this order? This action cannot be undone."}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className={isRTL ? "flex-row-reverse" : ""}>
+          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => deleteOrderMutation.mutate(deletingOrder?.id)}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {deleteOrderMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+            {t("common.delete")}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 
@@ -1321,14 +1970,27 @@ function ProductsSection() {
   });
 
   const createProductMutation = useMutation({
-    mutationFn: async (data: any) => apiRequest("POST", "/api/products", data),
+    mutationFn: async (data: any) => {
+      const res = await apiRequest("POST", "/api/products", data);
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ message: "Failed to add product" }));
+        throw new Error(error.message || "Failed to add product");
+      }
+      return res.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({ title: "Product Added", description: "Product has been created successfully." });
       setIsCreateDialogOpen(false);
       resetForm();
     },
-    onError: () => toast({ title: "Error", description: "Failed to add product.", variant: "destructive" }),
+    onError: (err: Error) => {
+      toast({ 
+        title: "Error", 
+        description: err.message || "Failed to add product.", 
+        variant: "destructive" 
+      });
+    },
   });
 
   const updateProductMutation = useMutation({

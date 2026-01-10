@@ -137,9 +137,9 @@ export default function Home() {
     <div className="min-h-screen bg-background font-body">
       <Navbar />
 
-      <section className="relative overflow-hidden bg-background pt-16 pb-16 lg:pt-24 lg:pb-24">
+      <section className="relative overflow-hidden bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 pt-16 pb-16 lg:pt-24 lg:pb-24">
         {/* Ambient Background with Blue Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-background to-blue-50/30 dark:from-blue-950/20 dark:to-background -z-20" />
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-slate-900/50 to-blue-800/20 -z-20" />
 
         <div className="container relative z-10 px-4 mx-auto text-center">
           <motion.div
@@ -153,24 +153,24 @@ export default function Home() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="inline-flex items-center gap-2 rounded-full border bg-white/80 dark:bg-background/80 backdrop-blur-sm px-3 py-1 text-sm font-medium text-foreground transition-colors hover:bg-white/90 mb-4 shadow-sm"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/80 backdrop-blur-sm px-3 py-1 text-sm font-medium text-slate-200 transition-colors hover:bg-slate-800/90 mb-4 shadow-sm"
             >
-              <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
+              <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
               {t("hero.badge")}
             </motion.div>
 
             {/* Main Heading - Reduced Size */}
             <h1
-              className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight text-foreground ${
+              className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight text-white ${
                 isRTL ? "leading-tight" : "leading-[1.1]"
               } mb-4`}
             >
               <span className="block">{t("hero.title")}</span>
-              <span className="inline-block text-primary relative mt-2">
+              <span className="inline-block text-blue-400 relative mt-2">
                 {t("hero.title.highlight")}
                 {/* Underline decoration */}
                 <svg
-                  className="absolute w-full h-3 -bottom-1 left-0 text-blue-200 dark:text-blue-900 -z-10"
+                  className="absolute w-full h-3 -bottom-1 left-0 text-blue-500/50 -z-10"
                   viewBox="0 0 100 10"
                   preserveAspectRatio="none"
                 >
@@ -186,7 +186,7 @@ export default function Home() {
 
             {/* Subtitle */}
             <p
-              className={`text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed`}
+              className={`text-lg md:text-xl text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed`}
             >
               {t("hero.subtitle")}
             </p>
@@ -222,8 +222,8 @@ export default function Home() {
             </div>
 
             {/* Trusted By / Stats Bar */}
-            <div className="border-t border-border/50 pt-8">
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-6">
+            <div className="border-t border-slate-700/50 pt-8">
+              <p className="text-xs text-slate-400 font-semibold uppercase tracking-widest mb-6">
                 Trusted by automotive enthusiasts
               </p>
               <div className="flex flex-wrap justify-center gap-x-12 gap-y-6 md:gap-x-20">
@@ -232,12 +232,12 @@ export default function Home() {
                     key={i}
                     className="flex flex-col items-center group cursor-default"
                   >
-                    <stat.icon className="w-5 h-5 text-primary/80 mb-2 group-hover:scale-110 transition-transform" />
+                    <stat.icon className="w-5 h-5 text-blue-400/80 mb-2 group-hover:scale-110 transition-transform" />
                     <div className="text-center">
-                      <div className="text-xl font-bold font-display text-foreground leading-none">
+                      <div className="text-xl font-bold font-display text-white leading-none">
                         {stat.value}+
                       </div>
-                      <div className="text-[10px] text-muted-foreground font-medium mt-1 uppercase tracking-wide">
+                      <div className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-wide">
                         {stat.label}
                       </div>
                     </div>

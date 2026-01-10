@@ -165,12 +165,14 @@ export function Navbar() {
                   )}
                   
                   {role === 'admin' && (
-                    <Link href="/admin">
-                      <DropdownMenuItem>
-                        <ShieldCheck className="mr-2 h-4 w-4" />
-                        <span>{t("nav.admin")}</span>
-                      </DropdownMenuItem>
-                    </Link>
+                    <>
+                      <Link href="/admin">
+                        <DropdownMenuItem>
+                          <ShieldCheck className="mr-2 h-4 w-4" />
+                          <span>{t("nav.dashboard")}</span>
+                        </DropdownMenuItem>
+                      </Link>
+                    </>
                   )}
                   
                   <DropdownMenuSeparator />
@@ -267,7 +269,7 @@ export function Navbar() {
                             <Link href="/admin" onClick={closeSheet}>
                               <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted">
                                 <ShieldCheck className="w-5 h-5" />
-                                <span className="font-medium">{t("nav.admin")}</span>
+                                <span className="font-medium">{t("nav.dashboard")}</span>
                               </div>
                             </Link>
                           )}

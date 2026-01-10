@@ -142,6 +142,36 @@ export async function registerRoutes(
     }
   });
 
+  // Update user by ID (admin only)
+  app.patch("/api/users/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "admin")
+        return res.status(403).json({ message: "Forbidden" });
+
+      const { firstName, lastName, email } = req.body;
+      const userId = req.params.id;
+
+      const updateData: Record<string, any> = { updatedAt: new Date() };
+      if (firstName !== undefined) updateData.firstName = firstName;
+      if (lastName !== undefined) updateData.lastName = lastName;
+      if (email !== undefined) updateData.email = email.toLowerCase();
+
+      const updated = await User.findByIdAndUpdate(userId, updateData, {
+        new: true,
+      });
+
+      if (!updated) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json(updated);
+    } catch (e) {
+      console.error("Error updating user:", e);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
   app.get(api.roles.get.path, isAuthenticated, async (req: any, res) => {
     try {
       if (!req.session || !req.session.userId) {
@@ -1046,25 +1076,26 @@ export async function registerRoutes(
 
   app.post(api.products.create.path, isAuthenticated, async (req: any, res) => {
     const role = await storage.getUserRole(req.session.userId);
-    if (role !== "vendor")
-      return res.status(403).json({ message: "Only vendors can add products" });
+    if (role !== "vendor" && role !== "admin")
+      return res.status(403).json({ message: "Only vendors and admins can add products" });
 
     try {
       const input = api.products.create.input.parse(req.body);
       const product = await storage.createProduct(input);
       res.status(201).json(product);
-    } catch (e) {
-      res.status(400).json({ message: "Validation error" });
+    } catch (e: any) {
+      console.error("Error creating product:", e);
+      res.status(400).json({ message: e.message || "Validation error" });
     }
   });
 
   app.patch("/api/products/:id", isAuthenticated, async (req: any, res) => {
     try {
       const role = await storage.getUserRole(req.session.userId);
-      if (role !== "vendor")
+      if (role !== "vendor" && role !== "admin")
         return res
           .status(403)
-          .json({ message: "Only vendors can update products" });
+          .json({ message: "Only vendors and admins can update products" });
 
       const productId = req.params.id;
       const existingProduct = await storage.getProduct(productId);
@@ -1072,13 +1103,15 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Product not found" });
       }
 
-      // Verify the product belongs to the vendor
-      const vendors = await storage.getVendors();
-      const vendor = vendors.find((v) => v.userId === req.session.userId);
-      if (!vendor || existingProduct.vendorId !== vendor.id) {
-        return res
-          .status(403)
-          .json({ message: "You can only edit your own products" });
+      // Admins can edit any product, vendors can only edit their own
+      if (role !== "admin") {
+        const vendors = await storage.getVendors();
+        const vendor = vendors.find((v) => v.userId === req.session.userId);
+        if (!vendor || existingProduct.vendorId !== vendor.id) {
+          return res
+            .status(403)
+            .json({ message: "You can only edit your own products" });
+        }
       }
 
       const updates = req.body;
@@ -1095,10 +1128,10 @@ export async function registerRoutes(
   app.delete("/api/products/:id", isAuthenticated, async (req: any, res) => {
     try {
       const role = await storage.getUserRole(req.session.userId);
-      if (role !== "vendor")
+      if (role !== "vendor" && role !== "admin")
         return res
           .status(403)
-          .json({ message: "Only vendors can delete products" });
+          .json({ message: "Only vendors and admins can delete products" });
 
       const productId = req.params.id;
       const existingProduct = await storage.getProduct(productId);
@@ -1106,13 +1139,15 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Product not found" });
       }
 
-      // Verify the product belongs to the vendor
-      const vendors = await storage.getVendors();
-      const vendor = vendors.find((v) => v.userId === req.session.userId);
-      if (!vendor || existingProduct.vendorId !== vendor.id) {
-        return res
-          .status(403)
-          .json({ message: "You can only delete your own products" });
+      // Admins can delete any product, vendors can only delete their own
+      if (role !== "admin") {
+        const vendors = await storage.getVendors();
+        const vendor = vendors.find((v) => v.userId === req.session.userId);
+        if (!vendor || existingProduct.vendorId !== vendor.id) {
+          return res
+            .status(403)
+            .json({ message: "You can only delete your own products" });
+        }
       }
 
       await storage.deleteProduct(productId);
@@ -1412,6 +1447,42 @@ export async function registerRoutes(
       }
     }
   );
+
+  // Update order details (admin only)
+  app.patch("/api/admin/orders/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const updates = req.body;
+      const updated = await storage.updateOrderDetails(req.params.id, updates);
+      if (!updated) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      res.json(updated);
+    } catch (e: any) {
+      console.error("Error updating order:", e);
+      res.status(500).json({ message: e.message || "Failed to update order" });
+    }
+  });
+
+  // Delete order (admin only)
+  app.delete("/api/admin/orders/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "admin") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      await storage.deleteOrder(req.params.id);
+      res.status(204).send();
+    } catch (e: any) {
+      console.error("Error deleting order:", e);
+      res.status(500).json({ message: e.message || "Failed to delete order" });
+    }
+  });
 
   app.get(api.stories.list.path, async (req, res) => {
     const stories = await storage.getStories();
