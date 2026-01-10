@@ -115,58 +115,73 @@ export default function Home() {
     <div className="min-h-screen bg-background font-body">
       <Navbar />
 
-      <section className="relative overflow-hidden bg-background pt-16 md:pt-20 pb-16 md:pb-24">
-        {/* Background blobs for visual interest */}
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-50 to-white dark:from-blue-950/20 dark:to-background -z-20" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-blue-200/30 dark:bg-blue-900/20 rounded-[100%] blur-3xl -z-10 opacity-50 pointer-events-none animate-pulse" />
-
+      <section className="relative overflow-hidden bg-background pt-24 pb-20 lg:pt-32 lg:pb-32">
+        {/* Ambient Background similar to Mosey's clean look but with blue */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/40 via-background to-background dark:from-blue-950/20 dark:to-background -z-20" />
+        
         <div className="container relative z-10 px-4 mx-auto text-center">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="max-w-4xl mx-auto"
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="max-w-5xl mx-auto"
           >
-            <div className="inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary/10 text-primary hover:bg-primary/20 mb-6">
-              <span className="flex h-2 w-2 rounded-full bg-primary mr-2"></span>
+            {/* Pill Badge */}
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="inline-flex items-center gap-2 rounded-full border bg-background/50 backdrop-blur-sm px-4 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-background/80 mb-8"
+            >
+              <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
               {t("hero.badge")}
-            </div>
+            </motion.div>
             
-            <h1 className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight text-foreground ${isRTL ? 'leading-tight' : 'leading-tight'} mb-6`}>
-              <span className="block mb-2">{t("hero.title")}</span>
-              <span className="text-primary block">{t("hero.title.highlight")}</span>
+            {/* Main Heading */}
+            <h1 className={`text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-bold tracking-tight text-foreground ${isRTL ? 'leading-tight' : 'leading-[1.1]'} mb-8`}>
+              <span className="block">{t("hero.title")}</span>
+              <span className="block text-primary relative inline-block">
+                {t("hero.title.highlight")}
+                {/* Underline decoration */}
+                <svg className="absolute w-full h-3 -bottom-1 left-0 text-blue-200 dark:text-blue-900 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
+                  <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
+                </svg>
+              </span>
             </h1>
             
-            <p className={`text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed`}>
+            {/* Subtitle */}
+            <p className={`text-xl md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed`}>
               {t("hero.subtitle")}
             </p>
             
-            <div className="flex flex-wrap gap-4 justify-center">
+            {/* Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
               <Link href="/products">
-                <Button size="lg" className="rounded-full px-8 h-12 text-base font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all" data-testid="button-shop-parts">
-                  {t("hero.shopParts")} <ArrowRight className={`w-4 h-4 ${isRTL ? 'mr-2 rotate-180' : 'ml-2'}`} />
+                <Button size="lg" className="w-full sm:w-auto h-14 px-8 text-lg rounded-full shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 bg-primary text-primary-foreground">
+                  {t("hero.shopParts")} <ArrowRight className={`w-5 h-5 ${isRTL ? 'mr-2 rotate-180' : 'ml-2'}`} />
                 </Button>
               </Link>
               <Link href="/vendors">
-                <Button size="lg" variant="outline" className="rounded-full px-8 h-12 text-base font-semibold border-input bg-background hover:bg-accent hover:text-accent-foreground" data-testid="button-browse-vendors">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto h-14 px-8 text-lg rounded-full border-2 hover:bg-secondary/50 transition-all duration-300">
                   {t("hero.browseVendors")}
                 </Button>
               </Link>
             </div>
 
-            {/* Stats Row */}
-            <div className="flex flex-wrap gap-8 md:gap-16 mt-16 justify-center">
-              {stats.map((stat, i) => (
-                <div key={i} className="flex flex-col items-center">
-                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-3">
-                    <stat.icon className="w-8 h-8" />
+            {/* Trusted By / Stats Bar */}
+            <div className="border-t pt-10">
+              <p className="text-sm text-muted-foreground font-medium uppercase tracking-widest mb-8">Trusted by automotive enthusiasts</p>
+              <div className="flex flex-wrap justify-center gap-x-12 gap-y-8 md:gap-x-24 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-500">
+                {stats.map((stat, i) => (
+                  <div key={i} className="flex items-center gap-3 group cursor-default">
+                    <stat.icon className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+                    <div className="text-left">
+                      <div className="text-2xl font-bold font-display text-foreground leading-none">{stat.value}+</div>
+                      <div className="text-xs text-muted-foreground font-medium mt-1">{stat.label}</div>
+                    </div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold font-display text-foreground">{stat.value}+</div>
-                    <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mt-1">{stat.label}</div>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </motion.div>
         </div>
