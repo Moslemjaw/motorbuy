@@ -17,12 +17,7 @@ import {
   Plus,
   FileText,
   Clock,
-  Menu,
-  ChevronRight,
-  LogOut,
-  Settings,
-  Globe,
-  Wallet
+  LogOut
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,8 +44,6 @@ import {
 import { useLocation } from "wouter";
 import { useLanguage } from "@/lib/i18n";
 import { formatKWD } from "@/lib/currency";
-import carLogo from "@assets/image_2026-01-09_142631252-removebg-preview_1767958016384.png";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Navbar } from "@/components/Navbar";
 
 function buildApiUrl(path: string) {
@@ -90,125 +83,75 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/30 font-body">
       <Navbar />
       <div className="flex">
-        {/* Desktop Sidebar */}
-        <aside className={`hidden lg:flex flex-col w-64 bg-white border-r border-gray-200 sticky top-0 h-screen overflow-y-auto`}>
-          <div className="p-6 flex flex-col items-center border-b border-gray-100">
-            <img src={carLogo} alt="MotorBuy" className="h-12 mb-2" />
-            <span className="font-display font-bold text-xl text-primary">{t("admin.dashboard.title")}</span>
-          </div>
-        
-        <nav className="flex-1 p-4 space-y-1">
-          {navItems.map((item) => (
-            <button
-              key={item.value}
-              onClick={() => setActiveTab(item.value)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === item.value
-                  ? "bg-yellow-100 text-yellow-900 font-semibold"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              }`}
-            >
-              <item.icon className={`w-5 h-5 ${activeTab === item.value ? "text-yellow-600" : "text-gray-400"}`} />
-              {item.label}
-            </button>
-          ))}
-        </nav>
-
-        <div className="p-4 border-t border-gray-100">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
-          >
-            <LogOut className="w-5 h-5" />
-            {t("common.logout")}
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <div className="flex-1 overflow-y-auto pb-20 lg:pb-0 lg:pt-16">
-        <div className="container mx-auto px-4 py-4 lg:py-6">
-          {/* Header */}
-          <div className={`mb-4 ${isRTL ? "text-right" : "text-left"}`}>
-             <h1 className="text-2xl md:text-3xl font-display font-bold mb-1">
-              {getActiveTabLabel()}
-             </h1>
-             {activeTab === "analytics" && (
-                <p className="text-muted-foreground text-sm md:text-base">{t("admin.dashboard.welcomeBack")}</p>
-             )}
-          </div>
-
-          <div className="space-y-4">
-            {activeTab === "analytics" && (
-                <>
-                    <TopSummaryCards />
-                    <AnalyticsSection />
-                </>
-            )}
-            {activeTab === "users" && <UsersSection />}
-            {activeTab === "vendors" && <VendorsSection />}
-            {activeTab === "vendor-requests" && <VendorRequestsSection />}
-            {activeTab === "orders" && <OrdersSection />}
-            {activeTab === "categories" && <CategoriesSection />}
-            {activeTab === "ads" && <AdsSection />}
-            {activeTab === "payouts" && <PayoutsSection />}
-          </div>
-        </div>
-      </div>
-      </div>
-
-       {/* Mobile Bottom Navigation */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 px-6 py-2 pb-safe">
-         <div className="flex justify-between items-center">
-            {navItems.slice(0, 5).map((item) => (
-               <button
+        {/* Left Sidebar Navigation */}
+        <aside
+          className={`hidden lg:block w-64 bg-white border-r border-gray-200 sticky top-0 h-screen overflow-y-auto ${
+            isRTL ? "border-l border-r-0" : ""
+          }`}
+        >
+          <div className="p-2 pt-4">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.value;
+              return (
+                <button
                   key={item.value}
-                  onClick={() => setActiveTab(item.value)}
-                  className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
-                     activeTab === item.value ? "text-primary" : "text-gray-400 hover:text-gray-600"
+                  onClick={() => {
+                    setActiveTab(item.value);
+                    window.location.hash = item.value;
+                  }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                    isActive
+                      ? "bg-yellow-100 text-yellow-900 font-semibold"
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                   }`}
-               >
-                  <item.icon className="w-5 h-5" />
-                  <span className="text-[10px] font-medium">{item.label}</span>
-               </button>
-            ))}
-             <Sheet>
-               <SheetTrigger asChild>
-                 <button className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors text-gray-400 hover:text-gray-600`}>
-                   <Menu className="w-5 h-5" />
-                   <span className="text-[10px] font-medium">{t("common.more")}</span>
-                 </button>
-               </SheetTrigger>
-               <SheetContent side="bottom" className="h-[50vh]">
-                 <div className="grid grid-cols-3 gap-4 p-4">
-                   {navItems.slice(5).map((item) => (
-                     <button
-                       key={item.value}
-                       onClick={() => setActiveTab(item.value)}
-                       className={`flex flex-col items-center gap-2 p-4 rounded-lg border transition-colors ${
-                         activeTab === item.value 
-                           ? "bg-primary/5 border-primary text-primary" 
-                           : "bg-gray-50 border-gray-100 text-gray-600"
-                       }`}
-                     >
-                       <item.icon className="w-6 h-6" />
-                       <span className="text-xs font-medium text-center">{item.label}</span>
-                     </button>
-                   ))}
-                   <button
-                     onClick={handleLogout}
-                     className="flex flex-col items-center gap-2 p-4 rounded-lg border border-red-100 bg-red-50 text-red-600"
-                   >
-                     <LogOut className="w-6 h-6" />
-                     <span className="text-xs font-medium text-center">{t("common.logout")}</span>
-                   </button>
-                 </div>
-               </SheetContent>
-             </Sheet>
-         </div>
+                  data-testid={`nav-${item.value}`}
+                >
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  <span className="font-medium text-sm">{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+
+        {/* Main Content */}
+        <div className="flex-1 overflow-y-auto pb-16 lg:pb-0 lg:pt-0">
+          <div className="container mx-auto px-4 py-4 lg:py-6">
+            {/* Header */}
+            <div className={`mb-4 ${isRTL ? "text-right" : "text-left"}`}>
+              <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-display font-bold mb-1">
+                    {activeTab === "analytics" ? t("admin.dashboard.title") : getActiveTabLabel()}
+                  </h1>
+                  {activeTab === "analytics" && (
+                    <p className="text-muted-foreground text-sm md:text-base">{t("admin.dashboard.welcomeBack")}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {activeTab === "analytics" && (
+                <>
+                  <TopSummaryCards />
+                  <AnalyticsSection />
+                </>
+              )}
+              {activeTab === "users" && <UsersSection />}
+              {activeTab === "vendors" && <VendorsSection />}
+              {activeTab === "vendor-requests" && <VendorRequestsSection />}
+              {activeTab === "orders" && <OrdersSection />}
+              {activeTab === "categories" && <CategoriesSection />}
+              {activeTab === "ads" && <AdsSection />}
+              {activeTab === "payouts" && <PayoutsSection />}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -231,59 +174,61 @@ function TopSummaryCards() {
   
     if (!analytics) return null;
 
-    // ... (rendering logic for cards)
     return (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <Card className="bg-blue-50 border-blue-100">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium text-blue-900">
-                        {t("admin.dashboard.totalUsers")}
-                    </CardTitle>
-                    <Users className="h-4 w-4 text-blue-600" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold text-blue-700">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200 dark:border-blue-800">
+                <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="p-2.5 bg-blue-500 rounded-lg">
+                            <Users className="w-5 h-5 text-white" />
+                        </div>
+                    </div>
+                    <p className="text-3xl font-bold mb-1 text-blue-700 dark:text-blue-300">
                         {analytics.totalUsers}
-                    </div>
+                    </p>
+                    <p className="text-sm text-blue-600 dark:text-blue-400">{t("admin.dashboard.totalUsers")}</p>
                 </CardContent>
             </Card>
-            <Card className="bg-green-50 border-green-100">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium text-green-900">
-                        {t("admin.dashboard.activeVendors")}
-                    </CardTitle>
-                    <Store className="h-4 w-4 text-green-600" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold text-green-700">
+            
+            <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border-green-200 dark:border-green-800">
+                <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="p-2.5 bg-green-500 rounded-lg">
+                            <Store className="w-5 h-5 text-white" />
+                        </div>
+                    </div>
+                    <p className="text-3xl font-bold mb-1 text-green-700 dark:text-green-300">
                         {analytics.totalVendors}
-                    </div>
+                    </p>
+                    <p className="text-sm text-green-600 dark:text-green-400">{t("admin.dashboard.activeVendors")}</p>
                 </CardContent>
             </Card>
-            <Card className="bg-amber-50 border-amber-100">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium text-amber-900">
-                        {t("admin.dashboard.totalOrders")}
-                    </CardTitle>
-                    <ShoppingBag className="h-4 w-4 text-amber-600" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold text-amber-700">
+            
+            <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-200 dark:border-amber-800">
+                <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="p-2.5 bg-amber-500 rounded-lg">
+                            <ShoppingBag className="w-5 h-5 text-white" />
+                        </div>
+                    </div>
+                    <p className="text-3xl font-bold mb-1 text-amber-700 dark:text-amber-300">
                         {analytics.totalOrders}
-                    </div>
+                    </p>
+                    <p className="text-sm text-amber-600 dark:text-amber-400">{t("admin.dashboard.totalOrders")}</p>
                 </CardContent>
             </Card>
-            <Card className="bg-purple-50 border-purple-100">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium text-purple-900">
-                        {t("admin.dashboard.totalRevenue")}
-                    </CardTitle>
-                    <DollarSign className="h-4 w-4 text-purple-600" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold text-purple-700">
-                        {formatKWD(analytics.totalRevenue)}
+            
+            <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200 dark:border-purple-800">
+                <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="p-2.5 bg-purple-500 rounded-lg">
+                            <DollarSign className="w-5 h-5 text-white" />
+                        </div>
                     </div>
+                    <p className="text-3xl font-bold mb-1 text-purple-700 dark:text-purple-300">
+                        {formatKWD(analytics.totalRevenue)}
+                    </p>
+                    <p className="text-sm text-purple-600 dark:text-purple-400">{t("admin.dashboard.totalRevenue")}</p>
                 </CardContent>
             </Card>
         </div>
@@ -296,7 +241,6 @@ function AnalyticsSection() {
 }
 
 function UsersSection() {
-    // ... (implementation same as before)
     const { t } = useLanguage();
     const { data: users, isLoading } = useQuery({
         queryKey: ["/api/admin/users"],
@@ -309,26 +253,34 @@ function UsersSection() {
     if (isLoading) return <Loader2 className="animate-spin" />;
 
     return (
-        <Card>
+        <Card className="border shadow-sm">
             <CardContent className="p-0">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>{t("common.name")}</TableHead>
-                            <TableHead>{t("common.email")}</TableHead>
-                            <TableHead>{t("common.role")}</TableHead>
+                            <TableHead className="font-medium text-muted-foreground">{t("common.name")}</TableHead>
+                            <TableHead className="font-medium text-muted-foreground">{t("common.email")}</TableHead>
+                            <TableHead className="font-medium text-muted-foreground">{t("common.role")}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {users?.map((u: any) => (
-                            <TableRow key={u.id}>
-                                <TableCell>{u.firstName} {u.lastName}</TableCell>
-                                <TableCell>{u.email}</TableCell>
-                                <TableCell>
-                                    <Badge variant="outline">{u.role}</Badge>
+                        {!users || users.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={3} className="text-center text-muted-foreground py-12">
+                                    {t("admin.dashboard.noUsers") || "No users found"}
                                 </TableCell>
                             </TableRow>
-                        ))}
+                        ) : (
+                            users.map((u: any) => (
+                                <TableRow key={u.id} className="hover:bg-muted/50">
+                                    <TableCell className="font-medium">{u.firstName} {u.lastName}</TableCell>
+                                    <TableCell className="text-muted-foreground">{u.email}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline" className="font-normal capitalize">{u.role}</Badge>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
                     </TableBody>
                 </Table>
             </CardContent>
@@ -803,33 +755,38 @@ function OrdersSection() {
   if (isLoading) return <Loader2 className="animate-spin" />;
 
   return (
-    <Card>
-        <CardHeader>
-            <CardTitle>{t("admin.dashboard.tabOrders")}</CardTitle>
-        </CardHeader>
-        <CardContent>
+    <Card className="border shadow-sm">
+        <CardContent className="p-0">
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>{t("admin.dashboard.orderId")}</TableHead>
-                        <TableHead>{t("admin.dashboard.customer")}</TableHead>
-                        <TableHead>{t("common.total")}</TableHead>
-                        <TableHead>{t("common.status")}</TableHead>
-                        <TableHead>{t("common.date")}</TableHead>
+                        <TableHead className="font-medium text-muted-foreground">{t("admin.dashboard.orderId")}</TableHead>
+                        <TableHead className="font-medium text-muted-foreground">{t("admin.dashboard.customer")}</TableHead>
+                        <TableHead className="font-medium text-muted-foreground text-right">{t("common.total")}</TableHead>
+                        <TableHead className="font-medium text-muted-foreground">{t("common.status")}</TableHead>
+                        <TableHead className="font-medium text-muted-foreground">{t("common.date")}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {orders?.map((order: any) => (
-                        <TableRow key={order.id}>
-                            <TableCell className="font-mono text-xs">{order.id.slice(0, 8)}</TableCell>
-                            <TableCell>{order.customerName || order.guestName || "N/A"}</TableCell>
-                            <TableCell>{formatKWD(order.total)}</TableCell>
-                            <TableCell>
-                                <Badge variant="outline">{order.status}</Badge>
+                    {!orders || orders.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={5} className="text-center text-muted-foreground py-12">
+                                {t("admin.dashboard.noOrders")}
                             </TableCell>
-                            <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
                         </TableRow>
-                    ))}
+                    ) : (
+                        orders.map((order: any) => (
+                            <TableRow key={order.id} className="hover:bg-muted/50">
+                                <TableCell className="font-mono text-sm">{String(order.id).slice(-8)}</TableCell>
+                                <TableCell className="font-medium">{order.customerName || order.guestName || "N/A"}</TableCell>
+                                <TableCell className="text-right font-medium">{formatKWD(order.total)}</TableCell>
+                                <TableCell>
+                                    <Badge variant="outline" className="font-normal capitalize">{order.status}</Badge>
+                                </TableCell>
+                                <TableCell className="text-muted-foreground">{new Date(order.createdAt).toLocaleDateString()}</TableCell>
+                            </TableRow>
+                        ))
+                    )}
                 </TableBody>
             </Table>
         </CardContent>
@@ -901,41 +858,105 @@ function CategoriesSection() {
 
     return (
         <div className="space-y-6">
-            <Card>
+            <Card className="border shadow-sm">
                 <CardHeader>
-                    <CardTitle>{t("admin.dashboard.createCategory")}</CardTitle>
+                    <CardTitle className="text-lg font-semibold">{t("admin.dashboard.createCategory")}</CardTitle>
                 </CardHeader>
-                <CardContent className="flex gap-4">
-                    <Input placeholder={t("admin.dashboard.categoryName")} value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} />
-                    <Input placeholder={t("admin.dashboard.categorySlug")} value={newCategorySlug} onChange={e => setNewCategorySlug(e.target.value)} />
-                    <Button onClick={() => createCategoryMutation.mutate({ name: newCategoryName, slug: newCategorySlug })}>
-                        <Plus className="w-4 h-4" />
-                    </Button>
+                <CardContent>
+                    <div className="flex gap-3">
+                        <Input 
+                            placeholder={t("admin.dashboard.categoryName")} 
+                            value={newCategoryName} 
+                            onChange={e => setNewCategoryName(e.target.value)}
+                            className="flex-1"
+                        />
+                        <Input 
+                            placeholder={t("admin.dashboard.categorySlug")} 
+                            value={newCategorySlug} 
+                            onChange={e => setNewCategorySlug(e.target.value)}
+                            className="flex-1"
+                        />
+                        <Button 
+                            onClick={() => createCategoryMutation.mutate({ name: newCategoryName, slug: newCategorySlug })}
+                            disabled={!newCategoryName || !newCategorySlug || createCategoryMutation.isPending}
+                            size="icon"
+                            className="h-10 w-10"
+                        >
+                            {createCategoryMutation.isPending ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <Plus className="w-4 h-4" />
+                            )}
+                        </Button>
+                    </div>
                 </CardContent>
             </Card>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {categories?.map((cat: any) => (
-                    <Card key={cat.id}>
-                        <CardContent className="p-4 flex items-center justify-between">
+                    <Card key={cat.id} className="border shadow-sm">
+                        <CardContent className="p-4">
                              {editingCategory?.id === cat.id ? (
-                                 <div className="flex gap-2 w-full">
-                                     <Input value={editName} onChange={e => setEditName(e.target.value)} />
-                                     <Input value={editSlug} onChange={e => setEditSlug(e.target.value)} />
-                                     <Button size="icon" onClick={() => updateCategoryMutation.mutate({ id: cat.id, name: editName, slug: editSlug })}><Save className="w-4 h-4" /></Button>
-                                     <Button size="icon" variant="ghost" onClick={() => setEditingCategory(null)}><X className="w-4 h-4" /></Button>
+                                 <div className="flex gap-2">
+                                     <Input 
+                                         value={editName} 
+                                         onChange={e => setEditName(e.target.value)}
+                                         className="flex-1"
+                                     />
+                                     <Input 
+                                         value={editSlug} 
+                                         onChange={e => setEditSlug(e.target.value)}
+                                         className="flex-1"
+                                     />
+                                     <Button 
+                                         size="icon" 
+                                         onClick={() => updateCategoryMutation.mutate({ id: cat.id, name: editName, slug: editSlug })}
+                                         disabled={updateCategoryMutation.isPending}
+                                     >
+                                         {updateCategoryMutation.isPending ? (
+                                             <Loader2 className="w-4 h-4 animate-spin" />
+                                         ) : (
+                                             <Save className="w-4 h-4" />
+                                         )}
+                                     </Button>
+                                     <Button 
+                                         size="icon" 
+                                         variant="ghost" 
+                                         onClick={() => setEditingCategory(null)}
+                                     >
+                                         <X className="w-4 h-4" />
+                                     </Button>
                                  </div>
                              ) : (
-                                 <>
+                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="font-medium">{cat.name}</p>
-                                        <p className="text-sm text-muted-foreground">{cat.slug}</p>
+                                        <p className="font-semibold text-base">{cat.name}</p>
+                                        <p className="text-sm text-muted-foreground mt-1">{cat.slug}</p>
                                     </div>
                                     <div className="flex gap-1">
-                                        <Button size="icon" variant="ghost" onClick={() => startEditing(cat)}><Pencil className="w-4 h-4" /></Button>
-                                        <Button size="icon" variant="ghost" onClick={() => deleteCategoryMutation.mutate(cat.id)}><Trash2 className="w-4 h-4" /></Button>
+                                        <Button 
+                                            size="icon" 
+                                            variant="ghost" 
+                                            onClick={() => startEditing(cat)}
+                                            className="h-8 w-8"
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </Button>
+                                        <Button 
+                                            size="icon" 
+                                            variant="ghost" 
+                                            onClick={() => deleteCategoryMutation.mutate(cat.id)}
+                                            disabled={deleteCategoryMutation.isPending}
+                                            className="h-8 w-8 text-destructive hover:text-destructive"
+                                        >
+                                            {deleteCategoryMutation.isPending ? (
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <Trash2 className="w-4 h-4" />
+                                            )}
+                                        </Button>
                                     </div>
-                                 </>
+                                 </div>
                              )}
                         </CardContent>
                     </Card>
@@ -1083,29 +1104,36 @@ function PayoutsSection() {
     if (isLoading) return <Loader2 className="animate-spin" />;
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>{t("admin.dashboard.tabPayouts")}</CardTitle>
-            </CardHeader>
-            <CardContent>
+        <Card className="border shadow-sm">
+            <CardContent className="p-0">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>{t("admin.dashboard.tabVendors")}</TableHead>
-                            <TableHead>{t("dashboard.amount")}</TableHead>
-                            <TableHead>{t("common.status")}</TableHead>
-                            <TableHead>{t("common.date")}</TableHead>
+                            <TableHead className="font-medium text-muted-foreground">{t("admin.dashboard.tabVendors")}</TableHead>
+                            <TableHead className="font-medium text-muted-foreground text-right">{t("dashboard.amount") || "Amount"}</TableHead>
+                            <TableHead className="font-medium text-muted-foreground">{t("common.status")}</TableHead>
+                            <TableHead className="font-medium text-muted-foreground">{t("common.date")}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {requests?.map((req: any) => (
-                            <TableRow key={req.id}>
-                                <TableCell>{req.vendorName}</TableCell>
-                                <TableCell>{formatKWD(req.amount)}</TableCell>
-                                <TableCell><Badge variant="outline">{req.status}</Badge></TableCell>
-                                <TableCell>{new Date(req.createdAt).toLocaleDateString()}</TableCell>
+                        {!requests || requests.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={4} className="text-center text-muted-foreground py-12">
+                                    {t("admin.dashboard.noPayoutRequests") || "No payout requests"}
+                                </TableCell>
                             </TableRow>
-                        ))}
+                        ) : (
+                            requests.map((req: any) => (
+                                <TableRow key={req.id} className="hover:bg-muted/50">
+                                    <TableCell className="font-medium">{req.vendorName}</TableCell>
+                                    <TableCell className="text-right font-medium">{formatKWD(req.amount)}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline" className="font-normal capitalize">{req.status}</Badge>
+                                    </TableCell>
+                                    <TableCell className="text-muted-foreground">{new Date(req.createdAt).toLocaleDateString()}</TableCell>
+                                </TableRow>
+                            ))
+                        )}
                     </TableBody>
                 </Table>
             </CardContent>
