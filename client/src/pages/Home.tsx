@@ -118,7 +118,7 @@ export default function Home() {
       <section className="relative overflow-hidden bg-background pt-16 md:pt-20 pb-16 md:pb-24">
         {/* Background blobs for visual interest */}
         <div className="absolute inset-0 bg-gradient-to-b from-blue-50 to-white dark:from-blue-950/20 dark:to-background -z-20" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-blue-200/30 dark:bg-blue-900/20 rounded-[100%] blur-3xl -z-10 opacity-50 pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-blue-200/30 dark:bg-blue-900/20 rounded-[100%] blur-3xl -z-10 opacity-50 pointer-events-none animate-pulse" />
 
         <div className="container relative z-10 px-4 mx-auto text-center">
           <motion.div
@@ -133,7 +133,8 @@ export default function Home() {
             </div>
             
             <h1 className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight text-foreground ${isRTL ? 'leading-tight' : 'leading-tight'} mb-6`}>
-              {t("hero.title")} <span className="text-primary block mt-2">{t("hero.title.highlight")}</span>
+              <span className="block mb-2">{t("hero.title")}</span>
+              <span className="text-primary block">{t("hero.title.highlight")}</span>
             </h1>
             
             <p className={`text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed`}>
