@@ -16,7 +16,7 @@ import {
   Cog,
   AlertTriangle,
   ShieldCheck,
-  Truck,
+  DollarSign,
   Clock,
   CreditCard,
   Settings,
@@ -94,9 +94,9 @@ export default function Home() {
       desc: t("feature.quality.desc"),
     },
     {
-      icon: Truck,
-      title: t("feature.delivery"),
-      desc: t("feature.delivery.desc"),
+      icon: DollarSign,
+      title: t("feature.prices"),
+      desc: t("feature.prices.desc"),
     },
     {
       icon: Clock,
