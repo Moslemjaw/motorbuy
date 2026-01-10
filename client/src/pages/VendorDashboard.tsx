@@ -164,15 +164,6 @@ export default function VendorDashboard() {
   const [storeCoverImageUrl, setStoreCoverImageUrl] = useState<string | null>(null);
   const [orderStatusFilter, setOrderStatusFilter] = useState("all");
 
-  // Create Order state
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
-  const [selectedProductId, setSelectedProductId] = useState("");
-  const [selectedQuantity, setSelectedQuantity] = useState(1);
-  const [orderItems, setOrderItems] = useState<Array<{ productId: string; productName: string; price: string; quantity: number }>>([]);
-  const [paymentMethod, setPaymentMethod] = useState("cash");
-  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
-
   const productImageRef = useRef<HTMLInputElement>(null);
   const storyImageRef = useRef<HTMLInputElement>(null);
   const storeLogoRef = useRef<HTMLInputElement>(null);
