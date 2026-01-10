@@ -1003,15 +1003,27 @@ export async function registerRoutes(
         (sum: number, o: any) => sum + parseFloat(o.total || "0"),
         0
       );
+      const totalSales = parseFloat(vendor.grossSalesKwd || "0");
       const pendingOrders = orders.filter(
         (o: any) => o.status === "pending" || o.status === "processing"
       ).length;
+      const completedOrders = orders.filter(
+        (o: any) => o.status === "delivered"
+      ).length;
+      const averageOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
+      const walletBalance = parseFloat(vendor.walletBalanceKwd || "0");
+      const lifetimePayouts = parseFloat(vendor.lifetimePayoutsKwd || "0");
 
       res.json({
         totalProducts: products.length,
         totalOrders: orders.length,
         totalRevenue: totalRevenue.toFixed(3),
+        totalSales: totalSales.toFixed(3),
         pendingOrders,
+        completedOrders,
+        averageOrderValue: averageOrderValue.toFixed(3),
+        walletBalance: walletBalance.toFixed(3),
+        lifetimePayouts: lifetimePayouts.toFixed(3),
         pendingPayoutKwd: vendor.walletBalanceKwd || vendor.pendingPayoutKwd || "0", // Use new wallet balance
         grossSalesKwd: vendor.grossSalesKwd || "0",
       });

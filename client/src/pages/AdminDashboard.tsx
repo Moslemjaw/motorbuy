@@ -20,7 +20,10 @@ import {
   Clock,
   LogOut,
   Package,
-  Image
+  Image,
+  Percent,
+  BarChart3,
+  Wallet
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,7 +42,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiRequest } from "@/lib/queryClient";
 import { useState, useRef } from "react";
-import {
+import { 
   Select,
   SelectContent,
   SelectItem,
@@ -55,6 +58,7 @@ import { useLocation } from "wouter";
 import { useLanguage } from "@/lib/i18n";
 import { formatKWD } from "@/lib/currency";
 import { Navbar } from "@/components/Navbar";
+import { LoadingPage } from "@/components/LoadingPage";
 
 function buildApiUrl(path: string) {
   return path.startsWith("/") ? path : `/${path}`;
@@ -69,11 +73,7 @@ export default function AdminDashboard() {
 
   // Show loading state while checking authentication and role
   if (isAuthLoading || isRoleLoading) {
-    return (
-      <div className="min-h-screen bg-muted/30 font-body flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <LoadingPage message="Loading dashboard..." />;
   }
 
   // Check role from both user object and roleData
@@ -158,13 +158,13 @@ export default function AdminDashboard() {
                   )}
                 </div>
               </div>
-            </div>
+        </div>
 
             <div className="space-y-4">
               {activeTab === "analytics" && (
                 <>
-                  <TopSummaryCards />
-                  <AnalyticsSection />
+        <TopSummaryCards />
+            <AnalyticsSection />
                 </>
               )}
               {activeTab === "users" && <UsersSection />}
@@ -186,9 +186,9 @@ export default function AdminDashboard() {
 // ... (Other components: TopSummaryCards, AnalyticsSection, UsersSection remain largely the same, I will check them if needed)
 
 function TopSummaryCards() {
-    const { t } = useLanguage();
+    const { t, isRTL } = useLanguage();
     const { data: analytics } = useQuery({
-      queryKey: ["/api/admin/analytics"],
+    queryKey: ["/api/admin/analytics"],
       queryFn: async () => {
         const res = await fetch(buildApiUrl("/api/admin/analytics"), {
           credentials: "include",
@@ -200,63 +200,161 @@ function TopSummaryCards() {
   
     if (!analytics) return null;
 
-    return (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200 dark:border-blue-800">
-                <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-2.5 bg-blue-500 rounded-lg">
-                            <Users className="w-5 h-5 text-white" />
-                        </div>
-                    </div>
-                    <p className="text-3xl font-bold mb-1 text-blue-700 dark:text-blue-300">
-                        {analytics.totalUsers}
-                    </p>
-                    <p className="text-sm text-blue-600 dark:text-blue-400">{t("admin.dashboard.totalUsers")}</p>
-                </CardContent>
-            </Card>
-            
-            <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border-green-200 dark:border-green-800">
-                <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-2.5 bg-green-500 rounded-lg">
-                            <Store className="w-5 h-5 text-white" />
-                        </div>
-                    </div>
-                    <p className="text-3xl font-bold mb-1 text-green-700 dark:text-green-300">
-                        {analytics.totalVendors}
-                    </p>
-                    <p className="text-sm text-green-600 dark:text-green-400">{t("admin.dashboard.activeVendors")}</p>
-                </CardContent>
-            </Card>
-            
-            <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-200 dark:border-amber-800">
-                <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-2.5 bg-amber-500 rounded-lg">
-                            <ShoppingBag className="w-5 h-5 text-white" />
-                        </div>
-                    </div>
-                    <p className="text-3xl font-bold mb-1 text-amber-700 dark:text-amber-300">
-                        {analytics.totalOrders}
-                    </p>
-                    <p className="text-sm text-amber-600 dark:text-amber-400">{t("admin.dashboard.totalOrders")}</p>
-                </CardContent>
-            </Card>
-            
-            <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200 dark:border-purple-800">
-                <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-2.5 bg-purple-500 rounded-lg">
-                            <DollarSign className="w-5 h-5 text-white" />
-                        </div>
-                    </div>
-                    <p className="text-3xl font-bold mb-1 text-purple-700 dark:text-purple-300">
-                        {formatKWD(analytics.totalRevenue)}
-                    </p>
-                    <p className="text-sm text-purple-600 dark:text-purple-400">{t("admin.dashboard.totalRevenue")}</p>
-                </CardContent>
-            </Card>
+    const stats = [
+      {
+        icon: Users,
+        value: analytics.totalUsers || 0,
+        label: t("admin.dashboard.totalUsers"),
+        color: "blue",
+        bgGradient: "from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10",
+        borderColor: "border-blue-200 dark:border-blue-800",
+        iconBg: "bg-blue-500",
+        textColor: "text-blue-700 dark:text-blue-300",
+        labelColor: "text-blue-600 dark:text-blue-400",
+      },
+      {
+        icon: Store,
+        value: analytics.totalVendors || 0,
+        label: t("admin.dashboard.activeVendors"),
+        color: "green",
+        bgGradient: "from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10",
+        borderColor: "border-green-200 dark:border-green-800",
+        iconBg: "bg-green-500",
+        textColor: "text-green-700 dark:text-green-300",
+        labelColor: "text-green-600 dark:text-green-400",
+      },
+      {
+        icon: ShoppingBag,
+        value: analytics.totalOrders || 0,
+        label: t("admin.dashboard.totalOrders"),
+        color: "amber",
+        bgGradient: "from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10",
+        borderColor: "border-amber-200 dark:border-amber-800",
+        iconBg: "bg-amber-500",
+        textColor: "text-amber-700 dark:text-amber-300",
+        labelColor: "text-amber-600 dark:text-amber-400",
+      },
+      {
+        icon: DollarSign,
+        value: formatKWD(analytics.totalRevenue || "0"),
+        label: t("admin.dashboard.totalRevenue"),
+        color: "purple",
+        bgGradient: "from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10",
+        borderColor: "border-purple-200 dark:border-purple-800",
+        iconBg: "bg-purple-500",
+        textColor: "text-purple-700 dark:text-purple-300",
+        labelColor: "text-purple-600 dark:text-purple-400",
+      },
+      {
+        icon: TrendingUp,
+        value: formatKWD(analytics.totalSales || "0"),
+        label: t("admin.dashboard.totalSales"),
+        color: "indigo",
+        bgGradient: "from-indigo-50 to-indigo-100/50 dark:from-indigo-950/20 dark:to-indigo-900/10",
+        borderColor: "border-indigo-200 dark:border-indigo-800",
+        iconBg: "bg-indigo-500",
+        textColor: "text-indigo-700 dark:text-indigo-300",
+        labelColor: "text-indigo-600 dark:text-indigo-400",
+      },
+      {
+        icon: Package,
+        value: analytics.totalProducts || 0,
+        label: t("admin.dashboard.totalProducts"),
+        color: "teal",
+        bgGradient: "from-teal-50 to-teal-100/50 dark:from-teal-950/20 dark:to-teal-900/10",
+        borderColor: "border-teal-200 dark:border-teal-800",
+        iconBg: "bg-teal-500",
+        textColor: "text-teal-700 dark:text-teal-300",
+        labelColor: "text-teal-600 dark:text-teal-400",
+      },
+      {
+        icon: FolderOpen,
+        value: analytics.totalCategories || 0,
+        label: t("admin.dashboard.totalCategories"),
+        color: "pink",
+        bgGradient: "from-pink-50 to-pink-100/50 dark:from-pink-950/20 dark:to-pink-900/10",
+        borderColor: "border-pink-200 dark:border-pink-800",
+        iconBg: "bg-pink-500",
+        textColor: "text-pink-700 dark:text-pink-300",
+        labelColor: "text-pink-600 dark:text-pink-400",
+      },
+      {
+        icon: Clock,
+        value: analytics.pendingOrders || 0,
+        label: t("admin.dashboard.pendingOrders"),
+        color: "orange",
+        bgGradient: "from-orange-50 to-orange-100/50 dark:from-orange-950/20 dark:to-orange-900/10",
+        borderColor: "border-orange-200 dark:border-orange-800",
+        iconBg: "bg-orange-500",
+        textColor: "text-orange-700 dark:text-orange-300",
+        labelColor: "text-orange-600 dark:text-orange-400",
+      },
+      {
+        icon: CheckCircle,
+        value: analytics.completedOrders || 0,
+        label: t("admin.dashboard.completedOrders"),
+        color: "emerald",
+        bgGradient: "from-emerald-50 to-emerald-100/50 dark:from-emerald-950/20 dark:to-emerald-900/10",
+        borderColor: "border-emerald-200 dark:border-emerald-800",
+        iconBg: "bg-emerald-500",
+        textColor: "text-emerald-700 dark:text-emerald-300",
+        labelColor: "text-emerald-600 dark:text-emerald-400",
+      },
+      {
+        icon: Percent,
+        value: formatKWD(analytics.totalCommission || "0"),
+        label: t("admin.dashboard.totalCommission"),
+        color: "cyan",
+        bgGradient: "from-cyan-50 to-cyan-100/50 dark:from-cyan-950/20 dark:to-cyan-900/10",
+        borderColor: "border-cyan-200 dark:border-cyan-800",
+        iconBg: "bg-cyan-500",
+        textColor: "text-cyan-700 dark:text-cyan-300",
+        labelColor: "text-cyan-600 dark:text-cyan-400",
+      },
+      {
+        icon: BarChart3,
+        value: formatKWD(analytics.averageOrderValue || "0"),
+        label: t("admin.dashboard.averageOrderValue"),
+        color: "rose",
+        bgGradient: "from-rose-50 to-rose-100/50 dark:from-rose-950/20 dark:to-rose-900/10",
+        borderColor: "border-rose-200 dark:border-rose-800",
+        iconBg: "bg-rose-500",
+        textColor: "text-rose-700 dark:text-rose-300",
+        labelColor: "text-rose-600 dark:text-rose-400",
+      },
+      {
+        icon: Wallet,
+        value: formatKWD(analytics.totalPendingPayouts || "0"),
+        label: t("admin.dashboard.totalPendingPayouts"),
+        color: "violet",
+        bgGradient: "from-violet-50 to-violet-100/50 dark:from-violet-950/20 dark:to-violet-900/10",
+        borderColor: "border-violet-200 dark:border-violet-800",
+        iconBg: "bg-violet-500",
+        textColor: "text-violet-700 dark:text-violet-300",
+        labelColor: "text-violet-600 dark:text-violet-400",
+      },
+    ];
+
+  return (
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
+            {stats.map((stat, index) => {
+                const Icon = stat.icon;
+                return (
+                    <Card key={index} className={`border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br ${stat.bgGradient} ${stat.borderColor}`}>
+                        <CardContent className="p-6">
+                            <div className={`flex items-center justify-between mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
+                                <div className={`p-2.5 ${stat.iconBg} rounded-lg`}>
+                                    <Icon className="w-5 h-5 text-white" />
+            </div>
+          </div>
+                            <p className={`text-3xl font-bold mb-1 ${stat.textColor}`}>
+                                {stat.value}
+          </p>
+                            <p className={`text-sm ${stat.labelColor}`}>{stat.label}</p>
+        </CardContent>
+      </Card>
+                );
+            })}
         </div>
     )
 }
@@ -276,7 +374,7 @@ function UsersSection() {
         }
     });
 
-    if (isLoading) return <Loader2 className="animate-spin" />;
+    if (isLoading) return <LoadingPage message="Loading..." fullScreen={false} />;
 
     return (
         <Card className="border shadow-sm">
@@ -309,9 +407,9 @@ function UsersSection() {
                         )}
                     </TableBody>
                 </Table>
-            </CardContent>
-        </Card>
-    );
+        </CardContent>
+      </Card>
+  );
 }
 
 function VendorsSection() {
@@ -417,11 +515,7 @@ function VendorsSection() {
   };
 
   if (isVendorsLoading) {
-    return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="animate-spin w-8 h-8" />
-      </div>
-    );
+    return <LoadingPage message="Loading vendors..." fullScreen={false} />;
   }
 
   return (
@@ -636,18 +730,18 @@ function VendorsSection() {
                           }`}
                         >
                           {formatKWD(Math.abs(balance))}
-                        </div>
                       </div>
+                    </div>
 
                       <div className="flex items-center justify-center">
                         {isNegative && Math.abs(balance) > 100 ? (
-                           <Button 
+                      <Button
                              size="sm" 
                              variant="destructive"
                              onClick={() => toast({ title: "Feature coming soon", description: "Payment request to vendor email." })}
                            >
                              {t("admin.dashboard.requestPay")}
-                           </Button>
+                      </Button>
                         ) : balance > 0 ? (
                           <Button
                             size="sm"
@@ -666,9 +760,9 @@ function VendorsSection() {
                         ) : (
                             <span className="text-xs text-muted-foreground">-</span>
                         )}
-                      </div>
                     </div>
                   </div>
+                </div>
                 </div>
               )})}
             </div>
@@ -710,7 +804,7 @@ function VendorRequestsSection() {
     },
   });
 
-  if (isLoading) return <Loader2 className="animate-spin" />;
+  if (isLoading) return <LoadingPage message="Loading..." fullScreen={false} />;
 
   return (
     <div className="space-y-4">
@@ -736,7 +830,7 @@ function VendorRequestsSection() {
                     <p className="text-xs text-muted-foreground">
                       {new Date(request.createdAt).toLocaleDateString()}
                     </p>
-                  </div>
+                    </div>
                   {request.status === "pending" && (
                     <div className="flex gap-2">
                       <Button
@@ -756,7 +850,7 @@ function VendorRequestsSection() {
                         <XCircle className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
                         {t("admin.dashboard.reject")}
                       </Button>
-                    </div>
+                  </div>
                   )}
                 </div>
               ))}
@@ -778,7 +872,7 @@ function OrdersSection() {
     }
   });
 
-  if (isLoading) return <Loader2 className="animate-spin" />;
+  if (isLoading) return <LoadingPage message="Loading..." fullScreen={false} />;
 
   return (
     <Card className="border shadow-sm">
@@ -822,55 +916,55 @@ function OrdersSection() {
 
 function CategoriesSection() {
     const { t } = useLanguage();
-    const queryClient = useQueryClient();
-    const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
     const [editingCategory, setEditingCategory] = useState<any>(null);
-    const [editName, setEditName] = useState("");
-    const [editSlug, setEditSlug] = useState("");
+  const [editName, setEditName] = useState("");
+  const [editSlug, setEditSlug] = useState("");
     const [newCategoryName, setNewCategoryName] = useState("");
     const [newCategorySlug, setNewCategorySlug] = useState("");
 
     const { data: categories, isLoading } = useQuery({
-        queryKey: ["/api/categories"],
+    queryKey: ["/api/categories"],
         queryFn: async () => {
              const res = await fetch(buildApiUrl("/api/categories"));
              return res.json();
         }
-    });
+  });
 
-    const createCategoryMutation = useMutation({
-        mutationFn: async (data: { name: string; slug: string }) => {
-             const res = await apiRequest("POST", "/api/admin/categories", data);
+  const createCategoryMutation = useMutation({
+    mutationFn: async (data: { name: string; slug: string }) => {
+      const res = await apiRequest("POST", "/api/admin/categories", data);
              if (!res.ok) throw new Error("Failed");
-        },
-        onSuccess: () => {
-             queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
              setNewCategoryName("");
              setNewCategorySlug("");
-             toast({ title: "Success", description: "Category created" });
+      toast({ title: "Success", description: "Category created" });
         }
-    });
+  });
 
-    const updateCategoryMutation = useMutation({
+  const updateCategoryMutation = useMutation({
         mutationFn: async (data: { id: string; name: string; slug: string }) => {
             const res = await apiRequest("PATCH", `/api/admin/categories/${data.id}`, { name: data.name, slug: data.slug });
             if (!res.ok) throw new Error("Failed");
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-            setEditingCategory(null);
-            toast({ title: "Success", description: "Category updated" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      setEditingCategory(null);
+      toast({ title: "Success", description: "Category updated" });
         }
-    });
+  });
 
-    const deleteCategoryMutation = useMutation({
-        mutationFn: async (id: string) => {
-            const res = await apiRequest("DELETE", `/api/admin/categories/${id}`);
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("DELETE", `/api/admin/categories/${id}`);
             if (!res.ok) throw new Error("Failed");
-        },
-        onSuccess: () => {
-             queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-             toast({ title: "Success", description: "Category deleted" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      toast({ title: "Success", description: "Category deleted" });
         }
     });
 
@@ -880,29 +974,29 @@ function CategoriesSection() {
         setEditSlug(cat.slug);
     };
 
-    if (isLoading) return <Loader2 className="animate-spin" />;
+    if (isLoading) return <LoadingPage message="Loading..." fullScreen={false} />;
 
-    return (
+  return (
         <div className="space-y-6">
             <Card className="border shadow-sm">
-                <CardHeader>
+          <CardHeader>
                     <CardTitle className="text-lg font-semibold">{t("admin.dashboard.createCategory")}</CardTitle>
-                </CardHeader>
+          </CardHeader>
                 <CardContent>
                     <div className="flex gap-3">
-                        <Input 
+            <Input
                             placeholder={t("admin.dashboard.categoryName")} 
                             value={newCategoryName} 
                             onChange={e => setNewCategoryName(e.target.value)}
                             className="flex-1"
-                        />
-                        <Input 
+            />
+            <Input
                             placeholder={t("admin.dashboard.categorySlug")} 
                             value={newCategorySlug} 
                             onChange={e => setNewCategorySlug(e.target.value)}
                             className="flex-1"
                         />
-                        <Button 
+              <Button 
                             onClick={() => createCategoryMutation.mutate({ name: newCategoryName, slug: newCategorySlug })}
                             disabled={!newCategoryName || !newCategorySlug || createCategoryMutation.isPending}
                             size="icon"
@@ -913,10 +1007,10 @@ function CategoriesSection() {
                             ) : (
                                 <Plus className="w-4 h-4" />
                             )}
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {categories?.map((cat: any) => (
@@ -924,41 +1018,41 @@ function CategoriesSection() {
                         <CardContent className="p-4">
                              {editingCategory?.id === cat.id ? (
                                  <div className="flex gap-2">
-                                     <Input 
-                                         value={editName} 
+                      <Input
+                        value={editName}
                                          onChange={e => setEditName(e.target.value)}
                                          className="flex-1"
-                                     />
-                                     <Input 
-                                         value={editSlug} 
+                      />
+                      <Input
+                        value={editSlug}
                                          onChange={e => setEditSlug(e.target.value)}
                                          className="flex-1"
-                                     />
-                                     <Button 
-                                         size="icon" 
+                      />
+                      <Button 
+                        size="icon" 
                                          onClick={() => updateCategoryMutation.mutate({ id: cat.id, name: editName, slug: editSlug })}
-                                         disabled={updateCategoryMutation.isPending}
-                                     >
+                        disabled={updateCategoryMutation.isPending}
+                      >
                                          {updateCategoryMutation.isPending ? (
                                              <Loader2 className="w-4 h-4 animate-spin" />
                                          ) : (
-                                             <Save className="w-4 h-4" />
+                        <Save className="w-4 h-4" />
                                          )}
-                                     </Button>
+                      </Button>
                                      <Button 
                                          size="icon" 
                                          variant="ghost" 
                                          onClick={() => setEditingCategory(null)}
                                      >
-                                         <X className="w-4 h-4" />
-                                     </Button>
-                                 </div>
-                             ) : (
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
                                  <div className="flex items-center justify-between">
-                                    <div>
+                        <div>
                                         <p className="font-semibold text-base">{cat.name}</p>
                                         <p className="text-sm text-muted-foreground mt-1">{cat.slug}</p>
-                                    </div>
+                        </div>
                                     <div className="flex gap-1">
                                         <Button 
                                             size="icon" 
@@ -966,22 +1060,22 @@ function CategoriesSection() {
                                             onClick={() => startEditing(cat)}
                                             className="h-8 w-8"
                                         >
-                                            <Pencil className="w-4 h-4" />
-                                        </Button>
-                                        <Button 
-                                            size="icon" 
-                                            variant="ghost" 
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
                                             onClick={() => deleteCategoryMutation.mutate(cat.id)}
-                                            disabled={deleteCategoryMutation.isPending}
+                          disabled={deleteCategoryMutation.isPending}
                                             className="h-8 w-8 text-destructive hover:text-destructive"
-                                        >
+                        >
                                             {deleteCategoryMutation.isPending ? (
                                                 <Loader2 className="w-4 h-4 animate-spin" />
                                             ) : (
-                                                <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4" />
                                             )}
-                                        </Button>
-                                    </div>
+                        </Button>
+                      </div>
                                  </div>
                              )}
                         </CardContent>
@@ -1040,11 +1134,7 @@ function AdsSection() {
   };
 
   if (isAdsLoading) {
-    return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="animate-spin w-8 h-8" />
-      </div>
-    );
+    return <LoadingPage message="Loading ads..." fullScreen={false} />;
   }
 
   return (
@@ -1127,7 +1217,7 @@ function PayoutsSection() {
         }
     });
 
-    if (isLoading) return <Loader2 className="animate-spin" />;
+    if (isLoading) return <LoadingPage message="Loading..." fullScreen={false} />;
 
     return (
         <Card className="border shadow-sm">
@@ -1320,11 +1410,7 @@ function ProductsSection() {
   };
 
   if (isProductsLoading) {
-    return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="animate-spin w-8 h-8" />
-      </div>
-    );
+    return <LoadingPage message="Loading products..." fullScreen={false} />;
   }
 
   return (
@@ -1342,20 +1428,20 @@ function ProductsSection() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="font-medium text-muted-foreground w-20">{t("common.image")}</TableHead>
-                <TableHead className="font-medium text-muted-foreground">{t("common.name")}</TableHead>
-                <TableHead className="font-medium text-muted-foreground">{t("admin.dashboard.tabVendors")}</TableHead>
-                <TableHead className="font-medium text-muted-foreground">{t("admin.dashboard.tabCategories")}</TableHead>
-                <TableHead className="font-medium text-muted-foreground text-right">{t("common.price")}</TableHead>
-                <TableHead className="font-medium text-muted-foreground">{t("common.status")}</TableHead>
-                <TableHead className="font-medium text-muted-foreground text-right">{t("admin.dashboard.actions") || "Actions"}</TableHead>
+                <TableHead className={`font-medium text-muted-foreground w-20 ${isRTL ? "text-right" : "text-left"}`}>{t("common.image")}</TableHead>
+                <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>{t("common.name")}</TableHead>
+                <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>{t("admin.dashboard.tabVendors")}</TableHead>
+                <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>{t("admin.dashboard.tabCategories")}</TableHead>
+                <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-left" : "text-right"}`}>{t("common.price")}</TableHead>
+                <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>{t("common.status")}</TableHead>
+                <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-left" : "text-right"}`}>{t("admin.dashboard.actions") || "Actions"}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {!products || products.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-12">
-                    {t("admin.dashboard.noProducts") || "No products found"}
+                  <TableCell colSpan={7} className={`text-muted-foreground py-12 ${isRTL ? "text-right" : "text-center"}`}>
+                    {t("admin.dashboard.noProducts")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -1370,17 +1456,17 @@ function ProductsSection() {
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{getVendorName(product.vendorId)}</TableCell>
-                    <TableCell className="text-muted-foreground">{getCategoryName(product.categoryId)}</TableCell>
-                    <TableCell className="text-right font-medium">{formatKWD(product.price)}</TableCell>
-                    <TableCell>
+                    <TableCell className={`font-medium ${isRTL ? "text-right" : "text-left"}`}>{product.name}</TableCell>
+                    <TableCell className={`text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>{getVendorName(product.vendorId)}</TableCell>
+                    <TableCell className={`text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>{getCategoryName(product.categoryId)}</TableCell>
+                    <TableCell className={`font-medium ${isRTL ? "text-left" : "text-right"}`}>{formatKWD(product.price)}</TableCell>
+                    <TableCell className={isRTL ? "text-right" : "text-left"}>
                       <Badge variant={product.stock > 0 ? "default" : "destructive"}>
                         {product.stock > 0 ? t("common.inStock") : t("common.outOfStock")}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className={`flex gap-1 justify-end ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <TableCell className={isRTL ? "text-left" : "text-right"}>
+                      <div className={`flex gap-1 ${isRTL ? 'justify-start flex-row-reverse' : 'justify-end'}`}>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -1397,7 +1483,7 @@ function ProductsSection() {
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
-                      </div>
+                  </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -1409,10 +1495,10 @@ function ProductsSection() {
 
       {/* Create Product Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{t("admin.dashboard.addProduct") || "Add Product"}</DialogTitle>
-            <DialogDescription>{t("admin.dashboard.addProductDesc") || "Create a new product and assign it to a vendor."}</DialogDescription>
+        <DialogContent className={`max-w-2xl max-h-[90vh] overflow-y-auto ${isRTL ? "text-right" : "text-left"}`}>
+          <DialogHeader className={isRTL ? "text-right" : "text-left"}>
+            <DialogTitle>{t("admin.dashboard.addProduct")}</DialogTitle>
+            <DialogDescription>{t("admin.dashboard.addProductDesc")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -1424,7 +1510,7 @@ function ProductsSection() {
                 <Label>{t("admin.dashboard.tabVendors")} *</Label>
                 <Select value={productVendor} onValueChange={setProductVendor}>
                   <SelectTrigger>
-                    <SelectValue placeholder={t("admin.dashboard.selectVendor") || "Select Vendor"} />
+                    <SelectValue placeholder={t("admin.dashboard.selectVendor")} />
                   </SelectTrigger>
                   <SelectContent>
                     {vendors?.filter((v) => v.isApproved).map((vendor) => (
@@ -1437,7 +1523,7 @@ function ProductsSection() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>{t("admin.dashboard.description") || "Description"} *</Label>
+              <Label>{t("admin.dashboard.description")} *</Label>
               <Textarea value={productDesc} onChange={(e) => setProductDesc(e.target.value)} className="min-h-[100px]" />
             </div>
             <div className="grid grid-cols-3 gap-4">
@@ -1446,24 +1532,24 @@ function ProductsSection() {
                 <Input type="number" step="0.001" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>{t("admin.dashboard.comparePrice") || "Compare Price"} (KWD)</Label>
+                <Label>{t("admin.dashboard.comparePrice")} (KWD)</Label>
                 <Input type="number" step="0.001" value={productComparePrice} onChange={(e) => setProductComparePrice(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>{t("admin.dashboard.stock") || "Stock"} *</Label>
+                <Label>{t("admin.dashboard.stock")} *</Label>
                 <Input type="number" value={productStock} onChange={(e) => setProductStock(e.target.value)} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>{t("admin.dashboard.brand") || "Brand"}</Label>
+                <Label>{t("admin.dashboard.brand")}</Label>
                 <Input value={productBrand} onChange={(e) => setProductBrand(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label>{t("admin.dashboard.tabCategories")} *</Label>
                 <Select value={productCategory} onValueChange={setProductCategory}>
                   <SelectTrigger>
-                    <SelectValue placeholder={t("admin.dashboard.selectCategory") || "Select Category"} />
+                    <SelectValue placeholder={t("admin.dashboard.selectCategory")} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories?.map((category) => (
@@ -1493,21 +1579,21 @@ function ProductsSection() {
                   {productImages.map((img, idx) => (
                     <div key={idx} className="relative">
                       <img src={img} alt="" className="w-20 h-20 object-cover rounded" />
-                      <Button
+                  <Button 
                         variant="destructive"
                         size="icon"
-                        className="absolute -top-2 -right-2 h-6 w-6"
+                        className={`absolute h-6 w-6 ${isRTL ? "-top-2 -left-2" : "-top-2 -right-2"}`}
                         onClick={() => setProductImages(productImages.filter((_, i) => i !== idx))}
                       >
                         <X className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  ))}
+                  </Button>
                 </div>
-              )}
+              ))}
+            </div>
+          )}
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className={isRTL ? "flex-row-reverse" : ""}>
             <Button variant="outline" onClick={() => { setIsCreateDialogOpen(false); resetForm(); }}>
               {t("common.cancel")}
             </Button>
@@ -1521,10 +1607,10 @@ function ProductsSection() {
 
       {/* Edit Product Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{t("admin.dashboard.editProduct") || "Edit Product"}</DialogTitle>
-            <DialogDescription>{t("admin.dashboard.editProductDesc") || "Update product information."}</DialogDescription>
+        <DialogContent className={`max-w-2xl max-h-[90vh] overflow-y-auto ${isRTL ? "text-right" : "text-left"}`}>
+          <DialogHeader className={isRTL ? "text-right" : "text-left"}>
+            <DialogTitle>{t("admin.dashboard.editProduct")}</DialogTitle>
+            <DialogDescription>{t("admin.dashboard.editProductDesc")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -1538,7 +1624,7 @@ function ProductsSection() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>{t("admin.dashboard.description") || "Description"} *</Label>
+              <Label>{t("admin.dashboard.description")} *</Label>
               <Textarea value={productDesc} onChange={(e) => setProductDesc(e.target.value)} className="min-h-[100px]" />
             </div>
             <div className="grid grid-cols-3 gap-4">
@@ -1547,17 +1633,17 @@ function ProductsSection() {
                 <Input type="number" step="0.001" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>{t("admin.dashboard.comparePrice") || "Compare Price"} (KWD)</Label>
+                <Label>{t("admin.dashboard.comparePrice")} (KWD)</Label>
                 <Input type="number" step="0.001" value={productComparePrice} onChange={(e) => setProductComparePrice(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>{t("admin.dashboard.stock") || "Stock"} *</Label>
+                <Label>{t("admin.dashboard.stock")} *</Label>
                 <Input type="number" value={productStock} onChange={(e) => setProductStock(e.target.value)} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>{t("admin.dashboard.brand") || "Brand"}</Label>
+                <Label>{t("admin.dashboard.brand")}</Label>
                 <Input value={productBrand} onChange={(e) => setProductBrand(e.target.value)} />
               </div>
               <div className="space-y-2">
@@ -1577,16 +1663,16 @@ function ProductsSection() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>{t("admin.dashboard.warranty") || "Warranty Info"}</Label>
+              <Label>{t("admin.dashboard.warranty")}</Label>
               <Input value={productWarranty} onChange={(e) => setProductWarranty(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>{t("common.image")}</Label>
-              <div className="flex gap-2">
+              <div className={`flex gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
                 <input ref={productImageRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadProductImage(f); }} />
                 <Button variant="outline" onClick={() => productImageRef.current?.click()} disabled={isUploadingProduct}>
                   {isUploadingProduct ? <Loader2 className="w-4 h-4 animate-spin" /> : <Image className="w-4 h-4" />}
-                  {t("admin.dashboard.uploadImage") || "Upload Image"}
+                  {t("admin.dashboard.uploadImage")}
                 </Button>
               </div>
               {productImages.length > 0 && (
@@ -1597,7 +1683,7 @@ function ProductsSection() {
                       <Button
                         variant="destructive"
                         size="icon"
-                        className="absolute -top-2 -right-2 h-6 w-6"
+                        className={`absolute h-6 w-6 ${isRTL ? "-top-2 -left-2" : "-top-2 -right-2"}`}
                         onClick={() => setProductImages(productImages.filter((_, i) => i !== idx))}
                       >
                         <X className="w-3 h-3" />
@@ -1608,7 +1694,7 @@ function ProductsSection() {
               )}
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className={isRTL ? "flex-row-reverse" : ""}>
             <Button variant="outline" onClick={() => { setIsEditDialogOpen(false); setEditingProduct(null); resetForm(); }}>
               {t("common.cancel")}
             </Button>
@@ -1622,14 +1708,14 @@ function ProductsSection() {
 
       {/* Delete Product Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("admin.dashboard.deleteProduct") || "Delete Product"}</AlertDialogTitle>
+        <AlertDialogContent className={isRTL ? "text-right" : "text-left"}>
+          <AlertDialogHeader className={isRTL ? "text-right" : "text-left"}>
+            <AlertDialogTitle>{t("admin.dashboard.deleteProduct")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("admin.dashboard.deleteProductDesc") || `Are you sure you want to delete "${deletingProduct?.name}"? This action cannot be undone.`}
+              {t("admin.dashboard.deleteProductDesc", { productName: deletingProduct?.name || "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className={isRTL ? "flex-row-reverse" : ""}>
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteProductMutation.mutate(deletingProduct?.id)}

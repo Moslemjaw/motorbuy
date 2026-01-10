@@ -155,11 +155,32 @@ export class MongoStorage implements IStorage {
     const categories = await Category.find({});
 
     const totalRevenue = orders.reduce((sum, o: any) => sum + parseFloat(o.total || "0"), 0);
+    const totalSales = totalRevenue; // Total sales is the same as total revenue
     const totalOrders = orders.length;
     const totalProducts = products.length;
     const totalUsers = users.length;
     const totalVendors = vendors.length;
     const totalCategories = categories.length;
+    
+    // Calculate order statuses
+    const pendingOrders = orders.filter((o: any) => o.status === 'pending' || !o.status).length;
+    const completedOrders = orders.filter((o: any) => o.status === 'delivered').length;
+    const processingOrders = orders.filter((o: any) => o.status === 'processing').length;
+    
+    // Calculate platform commission (sum of all platform fees)
+    const totalCommission = orders.reduce((sum, o: any) => sum + parseFloat(o.platformFee || "0"), 0);
+    
+    // Calculate average order value
+    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    
+    // Calculate total gross sales from vendors
+    const totalGrossSales = vendors.reduce((sum, v: any) => sum + parseFloat(v.grossSalesKwd || "0"), 0);
+    
+    // Calculate total pending payouts
+    const totalPendingPayouts = vendors.reduce((sum, v: any) => {
+      const pending = parseFloat(v.pendingPayoutKwd || "0");
+      return sum + (pending > 0 ? pending : 0);
+    }, 0);
 
     const salesByCategory: Record<string, number> = {};
     const salesByVendor: Record<string, number> = {};
@@ -200,11 +221,19 @@ export class MongoStorage implements IStorage {
 
     return {
       totalRevenue: totalRevenue.toFixed(3),
+      totalSales: totalSales.toFixed(3),
       totalOrders,
       totalProducts,
       totalUsers,
       totalVendors,
       totalCategories,
+      pendingOrders,
+      completedOrders,
+      processingOrders,
+      totalCommission: totalCommission.toFixed(3),
+      averageOrderValue: averageOrderValue.toFixed(3),
+      totalGrossSales: totalGrossSales.toFixed(3),
+      totalPendingPayouts: totalPendingPayouts.toFixed(3),
       salesByCategory,
       salesByVendor,
       recentOrders

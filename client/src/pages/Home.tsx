@@ -49,125 +49,8 @@ export default function Home() {
   const { data: products } = useProducts();
   const { data: ads } = useStories();
 
-  // Categories carousel pause/resume logic with manual scroll support
+  // Categories carousel ref for mobile scrolling
   const categoriesCarouselRef = useRef<HTMLDivElement>(null);
-  const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
-  const isPausedRef = useRef(false);
-  const isUserScrollingRef = useRef(false);
-  const scrollPositionRef = useRef(0);
-
-  const pauseAutoScroll = () => {
-    isPausedRef.current = true;
-    if (pauseTimeoutRef.current) {
-      clearTimeout(pauseTimeoutRef.current);
-    }
-    pauseTimeoutRef.current = setTimeout(() => {
-      isPausedRef.current = false;
-      // Sync scroll position when resuming
-      if (categoriesCarouselRef.current) {
-        scrollPositionRef.current = isRTL
-          ? -categoriesCarouselRef.current.scrollLeft
-          : categoriesCarouselRef.current.scrollLeft;
-      }
-    }, 2000);
-  };
-
-  useEffect(() => {
-    const carousel = categoriesCarouselRef.current;
-    if (!carousel || !categories || categories.length === 0) return;
-
-    const scrollSpeed = isRTL ? -0.3 : 0.3;
-    const maxScroll = carousel.scrollWidth / 3; // Since we tripled items
-
-    const autoScroll = () => {
-      if (isPausedRef.current || isUserScrollingRef.current) {
-        animationFrameRef.current = requestAnimationFrame(autoScroll);
-        return;
-      }
-
-      scrollPositionRef.current += scrollSpeed;
-
-      if (isRTL) {
-        if (Math.abs(scrollPositionRef.current) >= maxScroll) {
-          scrollPositionRef.current = 0;
-        }
-        carousel.scrollLeft = -scrollPositionRef.current;
-      } else {
-        if (scrollPositionRef.current >= maxScroll) {
-          scrollPositionRef.current = 0;
-        }
-        carousel.scrollLeft = scrollPositionRef.current;
-      }
-
-      animationFrameRef.current = requestAnimationFrame(autoScroll);
-    };
-
-    let scrollTimeout: NodeJS.Timeout;
-
-    const handleTouchStart = () => {
-      isUserScrollingRef.current = true;
-      pauseAutoScroll();
-    };
-
-    const handleTouchEnd = () => {
-      scrollTimeout = setTimeout(() => {
-        isUserScrollingRef.current = false;
-        if (carousel) {
-          scrollPositionRef.current = isRTL
-            ? -carousel.scrollLeft
-            : carousel.scrollLeft;
-        }
-      }, 150);
-    };
-
-    const handleClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.closest("a")) {
-        pauseAutoScroll();
-      }
-    };
-
-    const handleScroll = () => {
-      isUserScrollingRef.current = true;
-      pauseAutoScroll();
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        isUserScrollingRef.current = false;
-        if (carousel) {
-          scrollPositionRef.current = isRTL
-            ? -carousel.scrollLeft
-            : carousel.scrollLeft;
-        }
-      }, 150);
-    };
-
-    carousel.addEventListener("touchstart", handleTouchStart, {
-      passive: true,
-    });
-    carousel.addEventListener("touchend", handleTouchEnd, { passive: true });
-    carousel.addEventListener("click", handleClick);
-    carousel.addEventListener("scroll", handleScroll, { passive: true });
-
-    // Start auto-scroll
-    animationFrameRef.current = requestAnimationFrame(autoScroll);
-
-    return () => {
-      carousel.removeEventListener("touchstart", handleTouchStart);
-      carousel.removeEventListener("touchend", handleTouchEnd);
-      carousel.removeEventListener("click", handleClick);
-      carousel.removeEventListener("scroll", handleScroll);
-      if (pauseTimeoutRef.current) {
-        clearTimeout(pauseTimeoutRef.current);
-      }
-      if (scrollTimeout) {
-        clearTimeout(scrollTimeout);
-      }
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [categories, isRTL]);
 
   const stats = useMemo(
     () => [
@@ -442,18 +325,18 @@ export default function Home() {
             })}
           </div>
 
-          {/* Mobile: Auto-scrolling Carousel (All 10 categories) */}
+          {/* Mobile: Scrollable Carousel */}
           {categories && categories.length > 0 ? (
-            <div className="md:hidden relative -mx-4 px-4 overflow-hidden">
+            <div className="md:hidden relative -mx-4 px-4">
               <div
                 ref={categoriesCarouselRef}
-                className="flex gap-3 w-max py-2 overflow-x-auto scrollbar-hide"
+                className="flex gap-3 w-max py-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory"
+                style={{
+                  WebkitOverflowScrolling: "touch",
+                  scrollBehavior: "smooth",
+                }}
               >
-                {[
-                  ...categories.slice(0, 10),
-                  ...categories.slice(0, 10),
-                  ...categories.slice(0, 10),
-                ].map((cat, index) => {
+                {categories.slice(0, 10).map((cat, index) => {
                   const IconComponent = cat.icon ? iconMap[cat.icon] : Wrench;
                   const translatedName =
                     t(`cat.${cat.slug}`) !== `cat.${cat.slug}`
@@ -461,8 +344,8 @@ export default function Home() {
                       : cat.name;
                   return (
                     <div
-                      key={`${cat.id}-${index}`}
-                      className="w-[120px] flex-shrink-0"
+                      key={cat.id}
+                      className="w-[120px] flex-shrink-0 snap-start"
                     >
                       <Link href={`/products?categoryId=${cat.id}`}>
                         <div className="group cursor-pointer bg-card rounded-xl p-3 border hover:border-primary/30 hover:shadow-md transition-all text-center h-full flex flex-col items-center justify-center aspect-square">
@@ -488,7 +371,7 @@ export default function Home() {
                   }`}
                 />
                 <div className="flex gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                   <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
                   <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
                 </div>
@@ -610,42 +493,43 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Mobile Scroll */}
-          <div className="md:hidden relative -mx-4 overflow-x-auto scrollbar-hide pb-4 snap-x snap-mandatory">
-            <div className="flex gap-4 px-4 w-max">
-              {products?.slice(0, 4).map((product) => (
-                <div
-                  key={product.id}
-                  className="w-[85vw] max-w-[280px] flex-shrink-0 snap-center first:pl-0 last:pr-4"
-                >
-                  <Link href={`/products/${product.id}`}>
-                    <div className="bg-card rounded-2xl overflow-hidden border shadow-sm h-full flex flex-col">
-                      <div className="aspect-video bg-muted relative">
-                        <img
-                          src={
-                            product.images?.[0] ||
-                            "https://placehold.co/400x300?text=MotorBuy"
-                          }
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="p-4 flex flex-col flex-1">
-                        <h3 className="font-semibold mb-1 line-clamp-1">
-                          {product.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                          {product.description}
-                        </p>
-                        <div className="mt-auto font-bold text-primary">
-                          {product.price} KWD
-                        </div>
+          {/* Mobile: 2x2 Grid */}
+          <div className="md:hidden grid grid-cols-2 gap-4">
+            {products?.slice(0, 4).map((product, i) => (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <Link href={`/products/${product.id}`}>
+                  <div className="group bg-card rounded-2xl overflow-hidden border hover:border-primary/50 hover:shadow-lg transition-all h-full flex flex-col">
+                    <div className="aspect-[4/3] overflow-hidden bg-muted relative">
+                      <img
+                        src={
+                          product.images?.[0] ||
+                          "https://placehold.co/400x300?text=MotorBuy"
+                        }
+                        alt={product.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    </div>
+                    <div className="p-3 flex flex-col flex-1">
+                      <h3 className="font-semibold mb-1 line-clamp-1 text-sm group-hover:text-primary transition-colors">
+                        {product.name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground mb-2 line-clamp-2 flex-1">
+                        {product.description}
+                      </p>
+                      <div className="mt-auto font-bold text-primary text-sm">
+                        {product.price} KWD
                       </div>
                     </div>
-                  </Link>
-                </div>
-              ))}
-            </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -705,7 +589,7 @@ export default function Home() {
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.1 }}
                   >
-                    <Link href={`/vendors/${vendor.id}`}>
+                    <Link href={`/vendor/${vendor.id}`}>
                       <div className="group relative bg-card border rounded-2xl p-6 hover:border-primary/50 hover:shadow-lg transition-all text-center h-full flex flex-col items-center">
                         {/* Bright ring indicator for vendors with ads */}
                         {vendor.hasAd && (
@@ -766,17 +650,17 @@ export default function Home() {
 
               {/* Mobile: Horizontal Scrollable */}
               <div className="md:hidden relative -mx-4 overflow-x-auto scrollbar-hide pb-4 snap-x snap-mandatory">
-                <div className="flex gap-4 px-4 w-max">
+                <div className="flex gap-4 px-6 w-max">
                   {vendorsWithAds.map((vendor) => (
                     <div
                       key={vendor.id}
                       className="w-[200px] flex-shrink-0 snap-center"
                     >
-                      <Link href={`/vendors/${vendor.id}`}>
-                        <div className="group relative bg-card border rounded-2xl p-5 hover:border-primary/50 hover:shadow-lg transition-all text-center h-full flex flex-col items-center">
+                      <Link href={`/vendor/${vendor.id}`}>
+                        <div className="group relative bg-card border rounded-2xl p-5 pt-6 hover:border-primary/50 hover:shadow-lg transition-all text-center h-full flex flex-col items-center overflow-visible">
                           {/* Bright ring indicator for vendors with ads */}
                           {vendor.hasAd && (
-                            <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center shadow-lg z-10 animate-pulse">
+                            <div className="absolute top-2 right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center shadow-lg z-10 animate-pulse">
                               <Sparkles className="w-3 h-3 text-white" />
                             </div>
                           )}

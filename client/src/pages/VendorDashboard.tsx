@@ -9,7 +9,7 @@ import { useRole, useProducts, useCategories, useDeleteProduct } from "@/hooks/u
 import { useLanguage } from "@/lib/i18n";
 import { 
   Package, ShoppingCart, Loader2, Plus, Image, Trash2, BookOpen, 
-  Store, TrendingUp, DollarSign, Clock, Wallet, Send, Camera, Save, Edit, AlertTriangle, X, QrCode, BarChart3, LayoutDashboard
+  Store, TrendingUp, DollarSign, Clock, Wallet, Send, Camera, Save, Edit, AlertTriangle, X, QrCode, BarChart3, LayoutDashboard, CheckCircle
 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -32,7 +32,12 @@ interface VendorAnalytics {
   totalProducts: number;
   totalOrders: number;
   totalRevenue: string;
+  totalSales: string;
   pendingOrders: number;
+  completedOrders: number;
+  averageOrderValue: string;
+  walletBalance: string;
+  lifetimePayouts: string;
   pendingPayoutKwd: string;
   grossSalesKwd: string;
 }
@@ -801,114 +806,61 @@ export default function VendorDashboard() {
           </Card>
         </div>
 
-                <div className="grid lg:grid-cols-3 gap-4 mb-4">
-          <Card className="lg:col-span-2 border shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-semibold">{t("vendor.dashboard.createAd")}</CardTitle>
-              <CardDescription className="text-sm">{t("vendor.dashboard.shareUpdates")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <Textarea 
-                    value={adContent} 
-                    onChange={(e) => setAdContent(e.target.value)} 
-                    placeholder={t("vendor.dashboard.sharePlaceholder")}
-                    className="min-h-[80px] resize-none"
-                    data-testid="input-ad-content"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <input ref={adImageRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAdImage(f); }} />
-                  <Button variant="outline" size="icon" onClick={() => adImageRef.current?.click()} disabled={isUploadingAd} data-testid="button-add-ad-image">
-                    {isUploadingAd ? <Loader2 className="w-4 h-4 animate-spin" /> : <Image className="w-4 h-4" />}
-                  </Button>
-                  <Button size="icon" onClick={handlePostAd} disabled={addAdMutation.isPending || (!adContent && !adImage)} data-testid="button-post-ad">
-                    {addAdMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  </Button>
+                {/* Additional Statistics Cards */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-indigo-50 to-indigo-100/50 dark:from-indigo-950/20 dark:to-indigo-900/10 border-indigo-200 dark:border-indigo-800">
+            <CardContent className="p-6">
+              <div className={`flex items-center justify-between mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div className="p-2.5 bg-indigo-500 rounded-lg">
+                  <TrendingUp className="w-5 h-5 text-white" />
                 </div>
               </div>
-              {adImage && (
-                <div className="mt-3 relative inline-block">
-                  <img src={adImage} alt="" className="h-20 rounded-lg object-cover" />
-                  <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6" onClick={() => setAdImage(null)} data-testid="button-remove-ad-image">
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
-              )}
+              <p className="text-3xl font-bold mb-1 text-indigo-700 dark:text-indigo-300">
+                {formatKWD(analytics?.totalSales || vendorProfile?.grossSalesKwd || "0")}
+              </p>
+              <p className="text-sm text-indigo-600 dark:text-indigo-400">{t("vendor.dashboard.totalSales")}</p>
             </CardContent>
           </Card>
-
-          <Card className="border shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-primary" />
-                {t("vendor.dashboard.yourAds")} {myAds.length > 0 && `(${myAds.length})`}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isAdsLoading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+          
+          <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/20 dark:to-emerald-900/10 border-emerald-200 dark:border-emerald-800">
+            <CardContent className="p-6">
+              <div className={`flex items-center justify-between mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div className="p-2.5 bg-emerald-500 rounded-lg">
+                  <CheckCircle className="w-5 h-5 text-white" />
                 </div>
-              ) : myAds.length === 0 ? (
-                <div className="text-center py-8">
-                  <BookOpen className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
-                  <p className="text-sm text-muted-foreground mb-1">{t("vendor.dashboard.noAds")}</p>
-                  <p className="text-xs text-muted-foreground">{t("vendor.dashboard.createFirst")}</p>
+              </div>
+              <p className="text-3xl font-bold mb-1 text-emerald-700 dark:text-emerald-300">
+                {analytics?.completedOrders || 0}
+              </p>
+              <p className="text-sm text-emerald-600 dark:text-emerald-400">{t("vendor.dashboard.completedOrders")}</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-cyan-50 to-cyan-100/50 dark:from-cyan-950/20 dark:to-cyan-900/10 border-cyan-200 dark:border-cyan-800">
+            <CardContent className="p-6">
+              <div className={`flex items-center justify-between mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div className="p-2.5 bg-cyan-500 rounded-lg">
+                  <BarChart3 className="w-5 h-5 text-white" />
                 </div>
-              ) : (
-                <div className="space-y-3 max-h-[500px] overflow-y-auto">
-                  {myAds.map((ad) => (
-                    <div key={ad.id} className="text-sm p-4 bg-muted/50 rounded-lg hover:bg-muted/70 transition-colors border border-border/50" data-testid={`ad-row-${ad.id}`}>
-                      {ad.imageUrl && (
-                        <div className="mb-3 rounded-lg overflow-hidden">
-                          <img src={ad.imageUrl} alt="" className="w-full h-32 object-cover" />
-                        </div>
-                      )}
-                      {ad.content && (
-                        <p className="line-clamp-3 mb-3 text-foreground">{ad.content}</p>
-                      )}
-                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/30">
-                        <p className="text-xs text-muted-foreground">
-                          {ad.createdAt ? new Date(ad.createdAt).toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric', 
-                            year: 'numeric' 
-                          }) : "Recently"}
-                        </p>
-                        <div className="flex gap-1">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                            className="h-8 w-8" 
-                            onClick={() => handleEditAd(ad)}
-                            data-testid={`button-edit-ad-${ad.id}`}
-                            title="Edit ad"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-destructive hover:bg-destructive/10" 
-                          onClick={() => deleteAdMutation.mutate(ad.id)}
-                            disabled={deleteAdMutation.isPending}
-                          data-testid={`button-delete-ad-${ad.id}`}
-                            title="Delete ad"
-                          >
-                            {deleteAdMutation.isPending ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="w-4 h-4" />
-                            )}
-                        </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+              </div>
+              <p className="text-3xl font-bold mb-1 text-cyan-700 dark:text-cyan-300">
+                {formatKWD(analytics?.averageOrderValue || "0")}
+              </p>
+              <p className="text-sm text-cyan-600 dark:text-cyan-400">{t("vendor.dashboard.averageOrderValue")}</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-violet-50 to-violet-100/50 dark:from-violet-950/20 dark:to-violet-900/10 border-violet-200 dark:border-violet-800">
+            <CardContent className="p-6">
+              <div className={`flex items-center justify-between mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div className="p-2.5 bg-violet-500 rounded-lg">
+                  <Wallet className="w-5 h-5 text-white" />
                 </div>
-              )}
+              </div>
+              <p className={`text-3xl font-bold mb-1 ${parseFloat(analytics?.walletBalance || vendorProfile?.walletBalanceKwd || "0") < 0 ? "text-red-700 dark:text-red-300" : "text-violet-700 dark:text-violet-300"}`}>
+                {formatKWD(analytics?.walletBalance || vendorProfile?.walletBalanceKwd || "0")}
+              </p>
+              <p className="text-sm text-violet-600 dark:text-violet-400">{t("vendor.dashboard.walletBalance")}</p>
             </CardContent>
           </Card>
         </div>
@@ -972,9 +924,7 @@ export default function VendorDashboard() {
                   </CardHeader>
                   <CardContent>
                     {isAdsLoading ? (
-                      <div className="flex justify-center py-8">
-                        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                    </div>
+                      <LoadingPage message="Loading ads..." fullScreen={false} />
                     ) : myAds.length === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">
                         <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-30" />
@@ -1202,7 +1152,7 @@ export default function VendorDashboard() {
               </CardHeader>
               <CardContent>
                 {isOrdersLoading ? (
-                  <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>
+                  <LoadingPage message="Loading orders..." fullScreen={false} />
                 ) : !vendorOrders || vendorOrders.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <ShoppingCart className="w-12 h-12 mx-auto mb-3 opacity-30" />

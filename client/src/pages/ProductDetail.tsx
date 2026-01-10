@@ -1,4 +1,5 @@
 import { Navbar } from "@/components/Navbar";
+import { LoadingPage } from "@/components/LoadingPage";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useProduct, useAddToCart, useVendor } from "@/hooks/use-motorbuy";
@@ -59,11 +60,7 @@ export default function ProductDetail() {
     });
   };
 
-  if (isLoading) return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <Loader2 className="w-10 h-10 animate-spin text-primary" />
-    </div>
-  );
+  if (isLoading) return <LoadingPage message="Loading product..." />;
   
   if (!product) return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center">

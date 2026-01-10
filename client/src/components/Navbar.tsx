@@ -260,12 +260,6 @@ export function Navbar() {
                                   <span className="font-medium">{t("customer.orders")}</span>
                                 </div>
                               </Link>
-                              <Link href="/become-vendor" onClick={closeSheet}>
-                                <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted">
-                                  <Store className="w-5 h-5" />
-                                  <span className="font-medium">{t("account.becomeVendor")}</span>
-                                </div>
-                              </Link>
                             </>
                           )}
                           

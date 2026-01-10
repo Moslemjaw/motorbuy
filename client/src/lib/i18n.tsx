@@ -288,6 +288,10 @@ const en: Translations = {
   "vendor.dashboard.orders": "Orders",
   "vendor.dashboard.revenue": "Revenue (KWD)",
   "vendor.dashboard.pending": "Pending (KWD)",
+  "vendor.dashboard.totalSales": "Total Sales",
+  "vendor.dashboard.completedOrders": "Completed Orders",
+  "vendor.dashboard.averageOrderValue": "Avg Order Value",
+  "vendor.dashboard.walletBalance": "Wallet Balance",
   "vendor.dashboard.createAd": "Create Ad",
   "vendor.dashboard.shareUpdates": "Share updates with your customers",
   "vendor.dashboard.sharePlaceholder": "Share news, promotions, or new arrivals...",
@@ -407,15 +411,36 @@ const en: Translations = {
   "admin.dashboard.tabOrders": "Orders",
   "admin.dashboard.tabPayouts": "Payouts",
   "admin.dashboard.tabVendorRequests": "Vendor Requests",
+  "admin.dashboard.tabProducts": "Products",
+  "admin.dashboard.addProduct": "Add Product",
+  "admin.dashboard.addProductDesc": "Create a new product and assign it to a vendor.",
+  "admin.dashboard.noProducts": "No products found.",
+  "admin.dashboard.editProduct": "Edit Product",
+  "admin.dashboard.editProductDesc": "Update product information.",
+  "admin.dashboard.deleteProduct": "Delete Product",
+  "admin.dashboard.deleteProductDesc": "Are you sure you want to delete \"{productName}\"? This action cannot be undone.",
+  "admin.dashboard.uploadImage": "Upload Image",
+  "admin.dashboard.selectVendor": "Select Vendor",
+  "admin.dashboard.selectCategory": "Select Category",
+  "admin.dashboard.comparePrice": "Compare Price",
+  "admin.dashboard.stock": "Stock",
+  "admin.dashboard.brand": "Brand",
+  "admin.dashboard.warranty": "Warranty Info",
   "admin.dashboard.recentOrders": "Recent Orders",
   "admin.dashboard.noOrders": "No orders yet.",
   "admin.dashboard.totalRevenue": "Total Revenue",
+  "admin.dashboard.totalSales": "Total Sales",
   "admin.dashboard.totalOrders": "Total Orders",
   "admin.dashboard.totalProducts": "Total Products",
   "admin.dashboard.totalUsers": "Total Users",
   "admin.dashboard.totalVendors": "Total Vendors",
   "admin.dashboard.activeVendors": "Active Vendors",
   "admin.dashboard.totalCategories": "Total Categories",
+  "admin.dashboard.pendingOrders": "Pending Orders",
+  "admin.dashboard.completedOrders": "Completed Orders",
+  "admin.dashboard.totalCommission": "Platform Commission",
+  "admin.dashboard.averageOrderValue": "Avg Order Value",
+  "admin.dashboard.totalPendingPayouts": "Pending Payouts",
   "admin.dashboard.vendorManagement": "Vendor Management",
   "admin.dashboard.outstanding": "Outstanding",
   "admin.dashboard.balance": "Balance",
@@ -990,6 +1015,10 @@ const ar: Translations = {
   "vendor.dashboard.orders": "الطلبات",
   "vendor.dashboard.revenue": "الإيرادات (د.ك)",
   "vendor.dashboard.pending": "المعلقة (د.ك)",
+  "vendor.dashboard.totalSales": "إجمالي المبيعات",
+  "vendor.dashboard.completedOrders": "الطلبات المكتملة",
+  "vendor.dashboard.averageOrderValue": "متوسط قيمة الطلب",
+  "vendor.dashboard.walletBalance": "رصيد المحفظة",
   "vendor.dashboard.createAd": "إنشاء إعلان",
   "vendor.dashboard.shareUpdates": "شارك التحديثات مع عملائك",
   "vendor.dashboard.sharePlaceholder": "شارك الأخبار والعروض الترويجية أو الوافدات الجديدة...",
@@ -1110,12 +1139,18 @@ const ar: Translations = {
   "admin.dashboard.recentOrders": "الطلبات الأخيرة",
   "admin.dashboard.noOrders": "لا توجد طلبات بعد.",
   "admin.dashboard.totalRevenue": "إجمالي الإيرادات",
+  "admin.dashboard.totalSales": "إجمالي المبيعات",
   "admin.dashboard.totalOrders": "إجمالي الطلبات",
   "admin.dashboard.totalProducts": "إجمالي المنتجات",
   "admin.dashboard.totalUsers": "إجمالي المستخدمين",
   "admin.dashboard.totalVendors": "إجمالي البائعين",
   "admin.dashboard.activeVendors": "الموردين النشطين",
   "admin.dashboard.totalCategories": "إجمالي الفئات",
+  "admin.dashboard.pendingOrders": "الطلبات المعلقة",
+  "admin.dashboard.completedOrders": "الطلبات المكتملة",
+  "admin.dashboard.totalCommission": "عمولة المنصة",
+  "admin.dashboard.averageOrderValue": "متوسط قيمة الطلب",
+  "admin.dashboard.totalPendingPayouts": "المدفوعات المعلقة",
   "admin.dashboard.welcomeBack": "مرحباً بعودتك! إليك نظرة عامة على السوق.",
   "admin.dashboard.vendorManagement": "إدارة البائعين",
   "admin.dashboard.addVendor": "إضافة بائع",
@@ -1148,6 +1183,21 @@ const ar: Translations = {
   "admin.dashboard.requested": "مطلوب",
   "admin.dashboard.processPayout": "دفع للبائع",
   "admin.dashboard.tabVendorRequests": "طلبات الموردين",
+  "admin.dashboard.tabProducts": "المنتجات",
+  "admin.dashboard.addProduct": "إضافة منتج",
+  "admin.dashboard.addProductDesc": "إنشاء منتج جديد وتعيينه لمورد.",
+  "admin.dashboard.noProducts": "لم يتم العثور على منتجات.",
+  "admin.dashboard.editProduct": "تعديل المنتج",
+  "admin.dashboard.editProductDesc": "تحديث معلومات المنتج.",
+  "admin.dashboard.deleteProduct": "حذف المنتج",
+  "admin.dashboard.deleteProductDesc": "هل أنت متأكد أنك تريد حذف \"{productName}\"؟ لا يمكن التراجع عن هذا الإجراء.",
+  "admin.dashboard.uploadImage": "رفع صورة",
+  "admin.dashboard.selectVendor": "اختر المورد",
+  "admin.dashboard.selectCategory": "اختر الفئة",
+  "admin.dashboard.comparePrice": "سعر المقارنة",
+  "admin.dashboard.stock": "المخزون",
+  "admin.dashboard.brand": "العلامة التجارية",
+  "admin.dashboard.warranty": "معلومات الضمان",
   "admin.dashboard.vendorRequests": "طلبات تسجيل الموردين",
   "admin.dashboard.vendorRequestsDesc": "مراجعة وإدارة طلبات تسجيل الموردين من العملاء",
   "admin.dashboard.pendingRequests": "الطلبات المعلقة",
@@ -1420,7 +1470,7 @@ const translations: Record<Language, Translations> = { en, ar };
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
   isRTL: boolean;
 }
 
@@ -1437,8 +1487,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("motorbuy-language", lang);
   };
 
-  const t = (key: string): string => {
-    return translations[language][key] || key;
+  const t = (key: string, params?: Record<string, string | number>): string => {
+    let text = translations[language][key] || key;
+    if (params) {
+      Object.keys(params).forEach((paramKey) => {
+        text = text.replace(`{${paramKey}}`, String(params[paramKey]));
+      });
+    }
+    return text;
   };
 
   const isRTL = language === "ar";
