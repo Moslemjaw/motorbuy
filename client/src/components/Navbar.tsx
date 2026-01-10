@@ -40,9 +40,12 @@ export function Navbar() {
     setLanguage(language === "en" ? "ar" : "en");
   };
 
+  // Check if we're on a dashboard page
+  const isDashboardPage = location.startsWith("/vendor/dashboard") || location.startsWith("/admin");
+  
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4 h-14 md:h-16 flex items-center justify-between gap-2">
+      <div className={`${isDashboardPage ? "lg:pl-64 lg:mx-0" : ""} container mx-auto px-4 h-14 md:h-16 flex items-center justify-between gap-2`}>
         <div className="flex items-center gap-4 md:gap-8">
           <Link href="/" className="font-display font-bold text-lg md:text-xl flex items-center gap-2">
             <img src={carLogo} alt="MotorBuy" className="w-10 h-10 md:w-12 md:h-12 object-contain" />
