@@ -1,4 +1,5 @@
 import { LoadingPage } from "@/components/LoadingPage";
+import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -519,6 +520,7 @@ export default function VendorDashboard() {
 
   return (
     <div className="min-h-screen bg-muted/30 font-body">
+      <Navbar />
       <div className="container mx-auto px-4 py-6 lg:py-8">
             {/* Header */}
             <div className={`mb-8 ${isRTL ? 'text-right' : 'text-left'}`}>
@@ -529,7 +531,13 @@ export default function VendorDashboard() {
                   </h1>
                   <p className="text-muted-foreground text-base md:text-lg">{vendorProfile.storeName}</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                  <Link href="/vendor/wallet">
+                    <Button variant="outline" className="gap-2">
+                      <Wallet className="w-4 h-4" />
+                      {t("wallet.title")}
+                    </Button>
+                  </Link>
                   {!vendorProfile.isApproved && (
                     <Badge variant="secondary" className="text-sm px-3 py-1">{t("vendor.dashboard.pendingApproval")}</Badge>
                   )}
