@@ -123,7 +123,7 @@ export default function VendorDashboard() {
     queryFn: async () => {
       const res = await fetch(buildApiUrl("/api/vendor/stories"), {
         credentials: "include",
-      });
+  });
       if (res.status === 403) return []; // not a vendor
       if (!res.ok) throw new Error("Failed to fetch ads");
       return res.json();
@@ -309,9 +309,9 @@ export default function VendorDashboard() {
     }
   }, [vendorProfile]);
 
-        if (isAuthLoading || isRoleLoading || isProfileLoading) {
+  if (isAuthLoading || isRoleLoading || isProfileLoading) {
           return <LoadingPage message={t("vendor.dashboard.loading")} />;
-        }
+  }
 
   if (!isAuthenticated || !user) {
     return null;
@@ -321,8 +321,8 @@ export default function VendorDashboard() {
     return (
       <div className="min-h-screen bg-background font-body">
         <div className="flex items-center justify-center">
-          <div className="container mx-auto px-4 py-16 text-center">
-            <Store className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+        <div className="container mx-auto px-4 py-16 text-center">
+          <Store className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
             <h1 className="text-2xl font-bold mb-2">{t("vendor.dashboard.vendorAccess")}</h1>
             <p className="text-muted-foreground mb-6">{t("vendor.dashboard.needVendor")}</p>
             <Button onClick={() => setLocation("/")} data-testid="button-go-home">{t("vendor.dashboard.goHome")}</Button>
@@ -459,7 +459,7 @@ export default function VendorDashboard() {
     return (
       <div className="min-h-screen bg-muted/30 font-body">
         <div className="flex items-center justify-center">
-          <div className="container mx-auto px-4 py-12 max-w-lg">
+        <div className="container mx-auto px-4 py-12 max-w-lg">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <Store className="w-8 h-8 text-primary" />
@@ -534,9 +534,9 @@ export default function VendorDashboard() {
                           {t("wallet.title")}
                         </Button>
                       </Link>
-                      {!vendorProfile.isApproved && (
+            {!vendorProfile.isApproved && (
                         <Badge variant="secondary" className="text-sm px-3 py-1">{t("vendor.dashboard.pendingApproval")}</Badge>
-                      )}
+            )}
                     </div>
                     <div className="text-right">
                       <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
@@ -554,20 +554,20 @@ export default function VendorDashboard() {
                       <p className="text-muted-foreground text-base md:text-lg">{vendorProfile.storeName}</p>
                     </div>
                     <div className="flex gap-2 items-center justify-center md:justify-end">
-                      <Link href="/vendor/wallet">
+            <Link href="/vendor/wallet">
                         <Button variant="outline" className="gap-2">
                           <Wallet className="w-4 h-4" />
                           {t("wallet.title")}
-                        </Button>
-                      </Link>
+              </Button>
+            </Link>
                       {!vendorProfile.isApproved && (
                         <Badge variant="secondary" className="text-sm px-3 py-1">{t("vendor.dashboard.pendingApproval")}</Badge>
                       )}
                     </div>
                   </>
                 )}
-              </div>
-            </div>
+          </div>
+        </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200 dark:border-blue-800">
@@ -704,9 +704,9 @@ export default function VendorDashboard() {
                           }) : "Recently"}
                         </p>
                         <div className="flex gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
                             className="h-8 w-8" 
                             onClick={() => handleEditStory(story)}
                             data-testid={`button-edit-story-${story.id}`}
@@ -718,9 +718,9 @@ export default function VendorDashboard() {
                             variant="ghost" 
                             size="icon" 
                             className="h-8 w-8 text-destructive hover:bg-destructive/10" 
-                            onClick={() => deleteStoryMutation.mutate(story.id)}
+                          onClick={() => deleteStoryMutation.mutate(story.id)}
                             disabled={deleteStoryMutation.isPending}
-                            data-testid={`button-delete-story-${story.id}`}
+                          data-testid={`button-delete-story-${story.id}`}
                             title="Delete ad"
                           >
                             {deleteStoryMutation.isPending ? (
@@ -728,7 +728,7 @@ export default function VendorDashboard() {
                             ) : (
                               <Trash2 className="w-4 h-4" />
                             )}
-                          </Button>
+                        </Button>
                         </div>
                       </div>
                     </div>
@@ -812,8 +812,8 @@ export default function VendorDashboard() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
+            <Card>
+              <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Store className="w-5 h-5" /> {t("vendor.dashboard.shopDetails")}
                   </CardTitle>
@@ -918,7 +918,7 @@ export default function VendorDashboard() {
                             <div>
                               <div className="font-mono text-sm text-muted-foreground">{t("vendor.dashboard.order")} #{String(order.id).slice(-8)}</div>
                               <div className="text-xs text-muted-foreground mt-1">
-                                {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
+                              {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
                               </div>
                             </div>
                             <div className="text-right flex flex-col items-end gap-1">
