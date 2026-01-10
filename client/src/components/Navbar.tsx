@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole, useCart } from "@/hooks/use-motorbuy";
 import { useLanguage } from "@/lib/i18n";
-import { ShoppingCart, Menu, User, Store, ShieldCheck, LogOut, Home, Package, Users, BookOpen, Globe, Search, Bell } from "lucide-react";
+import { ShoppingCart, Menu, User, Store, ShieldCheck, LogOut, Home, Package, Users, BookOpen, Globe } from "lucide-react";
 import carLogo from "@assets/image_2026-01-09_142631252-removebg-preview_1767958016384.png";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +14,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
 import { useState } from "react";
 
 export function Navbar() {
@@ -89,35 +88,27 @@ export function Navbar() {
           
           {isDashboardPage && (
             <>
-              {/* Search bar in the middle */}
-              <div className="flex-1 max-w-md mx-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder={t("nav.searchMenu")}
-                    className="pl-9 w-full"
-                  />
-                </div>
-              </div>
+              {/* Logo in top nav for dashboard pages */}
+              <Link href="/" className="font-display font-bold text-lg md:text-xl flex items-center gap-2">
+                <img src={carLogo} alt="MotorBuy" className="w-10 h-10 md:w-12 md:h-12 object-contain" />
+                {language === "ar" ? (
+                  <span>
+                    <span className="text-[hsl(var(--logo-accent))]">موتور</span>
+                    <span className="text-primary">باي</span>
+                  </span>
+                ) : (
+                  <span>
+                    <span className="text-primary">motor</span>
+                    <span className="text-[hsl(var(--logo-accent))]">buy</span>
+                  </span>
+                )}
+              </Link>
+              <div className="flex-1" />
             </>
           )}
         </div>
 
         <div className="flex items-center gap-1 md:gap-2">
-          {isDashboardPage && isAuthenticated && (
-            <>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-              </Button>
-              <div className="hidden md:flex items-center gap-2 px-3">
-                <div className="text-right">
-                  <p className="text-sm font-medium leading-none">{user?.firstName} {user?.lastName}</p>
-                  <p className="text-xs leading-none text-muted-foreground">{role === 'admin' ? t("nav.admin") : t("account.vendor")}</p>
-                </div>
-              </div>
-            </>
-          )}
           <Button 
             variant="ghost" 
             size="sm" 

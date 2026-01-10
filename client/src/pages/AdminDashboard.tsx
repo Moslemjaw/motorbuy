@@ -195,25 +195,7 @@ export default function AdminDashboard() {
             isRTL ? "border-l border-r-0" : ""
           }`}
         >
-          {/* Logo at top of sidebar */}
-          <div className="p-4 border-b border-gray-200">
-            <Link href="/" className="font-display font-bold text-lg md:text-xl flex items-center gap-2">
-              <img src={carLogo} alt="MotorBuy" className="w-10 h-10 md:w-12 md:h-12 object-contain" />
-              {language === "ar" ? (
-                <span>
-                  <span className="text-[hsl(var(--logo-accent))]">موتور</span>
-                  <span className="text-primary">باي</span>
-                </span>
-              ) : (
-                <span>
-                  <span className="text-primary">motor</span>
-                  <span className="text-[hsl(var(--logo-accent))]">buy</span>
-                </span>
-              )}
-            </Link>
-          </div>
-          
-          <div className="p-2">
+          <div className="p-2 pt-4">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.value;

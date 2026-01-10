@@ -3,12 +3,13 @@ import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole, useProducts, useCategories, useDeleteProduct } from "@/hooks/use-motorbuy";
 import { useLanguage } from "@/lib/i18n";
 import { 
   Package, ShoppingCart, Loader2, Plus, Image, Trash2, BookOpen, 
-  Store, TrendingUp, DollarSign, Clock, Wallet, Send, Camera, Save, Edit, AlertTriangle, X, QrCode
+  Store, TrendingUp, DollarSign, Clock, Wallet, Send, Camera, Save, Edit, AlertTriangle, X, QrCode, BarChart3, LayoutDashboard
 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -47,13 +48,13 @@ export default function VendorDashboard() {
   const { t, isRTL, language } = useLanguage();
   const [location] = useLocation();
   
-  // Get active tab from URL hash or default to "products"
+  // Get active tab from URL hash or default to "overview"
   const getActiveTab = () => {
     const hash = window.location.hash.replace("#", "");
-    if (hash && ["products", "shop", "orders", "create-order"].includes(hash)) {
+    if (hash && ["overview", "products", "spotlight", "orders", "create-order"].includes(hash)) {
       return hash;
     }
-    return "products";
+    return "overview";
   };
   const [activeTab, setActiveTab] = useState(getActiveTab());
 
@@ -142,6 +143,7 @@ export default function VendorDashboard() {
   const [productWarranty, setProductWarranty] = useState("");
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCreateProductDialogOpen, setIsCreateProductDialogOpen] = useState(false);
   const [deletingProduct, setDeletingProduct] = useState<any | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -632,14 +634,19 @@ export default function VendorDashboard() {
 
   const navItems = [
     {
+      value: "overview",
+      icon: LayoutDashboard,
+      label: t("vendor.dashboard.tabOverview"),
+    },
+    {
       value: "products",
       icon: Package,
       label: t("vendor.dashboard.tabProducts"),
     },
     {
-      value: "shop",
-      icon: Store,
-      label: t("vendor.dashboard.tabShop"),
+      value: "spotlight",
+      icon: BookOpen,
+      label: t("vendor.dashboard.tabSpotlight"),
     },
     {
       value: "orders",
@@ -670,25 +677,7 @@ export default function VendorDashboard() {
             isRTL ? "border-l border-r-0" : ""
           }`}
         >
-          {/* Logo at top of sidebar */}
-          <div className="p-4 border-b border-gray-200">
-            <Link href="/" className="font-display font-bold text-lg md:text-xl flex items-center gap-2">
-              <img src={carLogo} alt="MotorBuy" className="w-10 h-10 md:w-12 md:h-12 object-contain" />
-              {language === "ar" ? (
-                <span>
-                  <span className="text-[hsl(var(--logo-accent))]">موتور</span>
-                  <span className="text-primary">باي</span>
-                </span>
-              ) : (
-                <span>
-                  <span className="text-primary">motor</span>
-                  <span className="text-[hsl(var(--logo-accent))]">buy</span>
-                </span>
-              )}
-            </Link>
-          </div>
-          
-          <div className="p-2">
+          <div className="p-2 pt-4">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = item.isLink ? false : activeTab === item.value;
@@ -738,9 +727,11 @@ export default function VendorDashboard() {
               <p className="text-muted-foreground text-base md:text-lg">{vendorProfile?.storeName || ""}</p>
             </div>
 
-            {activeTab !== "create-order" && (
+            {/* Overview Section */}
+            {activeTab === "overview" && (
               <>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                {/* Analytics Cards */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200 dark:border-blue-800">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -913,8 +904,142 @@ export default function VendorDashboard() {
             )}
 
 
-            {/* Content based on active tab */}
-            {activeTab === "shop" && (
+            {/* Spotlight Section */}
+            {activeTab === "spotlight" && (
+              <div className="space-y-6">
+                {/* Create Spotlight Button */}
+                <div className="flex justify-end">
+                  <Button onClick={() => { setStoryContent(""); setStoryImage(null); }} className="gap-2">
+                    <Plus className="w-4 h-4" />
+                    {t("vendor.dashboard.createAd")}
+                  </Button>
+                </div>
+
+                {/* Create Ad Form */}
+                <Card className="border shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-xl font-semibold">{t("vendor.dashboard.createAd")}</CardTitle>
+                    <CardDescription className="text-sm">{t("vendor.dashboard.shareUpdates")}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex gap-3">
+                      <div className="flex-1">
+                        <Textarea 
+                          value={storyContent} 
+                          onChange={(e) => setStoryContent(e.target.value)} 
+                          placeholder={t("vendor.dashboard.sharePlaceholder")}
+                          className="min-h-[80px] resize-none"
+                          data-testid="input-story-content"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <input ref={storyImageRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadStoryImage(f); }} />
+                        <Button variant="outline" size="icon" onClick={() => storyImageRef.current?.click()} disabled={isUploadingStory} data-testid="button-add-story-image">
+                          {isUploadingStory ? <Loader2 className="w-4 h-4 animate-spin" /> : <Image className="w-4 h-4" />}
+                        </Button>
+                        <Button size="icon" onClick={handlePostStory} disabled={addStoryMutation.isPending || (!storyContent && !storyImage)} data-testid="button-post-story">
+                          {addStoryMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                    {storyImage && (
+                      <div className="mt-3 relative inline-block">
+                        <img src={storyImage} alt="" className="h-20 rounded-lg object-cover" />
+                        <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6" onClick={() => setStoryImage(null)} data-testid="button-remove-story-image">
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Spotlight Table */}
+                <Card className="border shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-xl font-semibold">{t("vendor.dashboard.yourAds")} ({myStories.length})</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isStoriesLoading ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : myStories.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                        <p className="font-medium">{t("vendor.dashboard.noAds")}</p>
+                        <p className="text-sm mt-1">{t("vendor.dashboard.createFirst")}</p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-24">{t("vendor.dashboard.image")}</TableHead>
+                              <TableHead>{t("vendor.dashboard.content")}</TableHead>
+                              <TableHead>{t("vendor.dashboard.date")}</TableHead>
+                              <TableHead className="text-right">{t("vendor.dashboard.actions")}</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {myStories.map((story) => (
+                              <TableRow key={story.id} data-testid={`story-row-${story.id}`}>
+                                <TableCell>
+                                  {story.imageUrl ? (
+                                    <img src={story.imageUrl} alt="" className="w-16 h-16 object-cover rounded" />
+                                  ) : (
+                                    <div className="w-16 h-16 bg-muted rounded flex items-center justify-center">
+                                      <Image className="w-6 h-6 text-muted-foreground" />
+                                    </div>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="max-w-md">
+                                    <p className="line-clamp-2 text-sm">{story.content || "-"}</p>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-muted-foreground text-sm">
+                                  {story.createdAt ? new Date(story.createdAt).toLocaleDateString() : "-"}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex justify-end gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => handleEditStory(story)}
+                                      data-testid={`button-edit-story-${story.id}`}
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                      onClick={() => deleteStoryMutation.mutate(story.id)}
+                                      disabled={deleteStoryMutation.isPending}
+                                      data-testid={`button-delete-story-${story.id}`}
+                                    >
+                                      {deleteStoryMutation.isPending ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="w-4 h-4" />
+                                      )}
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Old Shop Section - Remove */}
+            {false && activeTab === "shop" && (
               <div>
                 <div className="grid lg:grid-cols-2 gap-6">
               <Card className="border shadow-sm">
@@ -1040,13 +1165,11 @@ export default function VendorDashboard() {
             )}
 
             {activeTab === "orders" && (
-              <div>
-                <Card className="border shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-xl font-semibold">{t("vendor.dashboard.recentOrders")}</CardTitle>
-                <div className="w-[200px]">
+              <div className="space-y-6">
+                {/* Filter */}
+                <div className="flex justify-end">
                   <Select value={orderStatusFilter} onValueChange={setOrderStatusFilter}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-[200px]">
                       <SelectValue placeholder={t("admin.dashboard.filterStatus")} />
                     </SelectTrigger>
                     <SelectContent>
@@ -1059,90 +1182,90 @@ export default function VendorDashboard() {
                     </SelectContent>
                   </Select>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {isOrdersLoading ? (
-                  <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>
-                ) : !vendorOrders || vendorOrders.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <ShoppingCart className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p className="font-medium">{t("vendor.dashboard.noOrders")}</p>
-                    <p className="text-sm mt-1">{t("vendor.dashboard.ordersWillAppear")}</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {vendorOrders
-                      .filter(order => orderStatusFilter === "all" || order.status === orderStatusFilter)
-                      .map((order: any) => (
-                      <Card key={order.id} className="p-4 border shadow-sm" data-testid={`vendor-order-${order.id}`}>
-                        <div className="flex flex-col gap-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-mono text-sm text-muted-foreground">{t("vendor.dashboard.order")} #{String(order.id).slice(-8)}</div>
-                              <div className="text-xs text-muted-foreground mt-1">
-                              {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
-                              </div>
-                            </div>
-                            <div className="text-right flex flex-col items-end gap-1">
-                              <div className="font-bold text-lg">{formatKWD(order.vendorTotal || order.total)}</div>
-                              <Select
-                                defaultValue={order.status}
-                                onValueChange={(value) => updateStatusMutation.mutate({ orderId: order.id, status: value })}
-                              >
-                                <SelectTrigger className="w-[130px] h-8 capitalize">
-                                  <SelectValue placeholder="Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="pending">{t("common.pending")}</SelectItem>
-                                  <SelectItem value="processing">{t("common.processing")}</SelectItem>
-                                  <SelectItem value="shipped">{t("common.shipped")}</SelectItem>
-                                  <SelectItem value="delivered">{t("common.delivered")}</SelectItem>
-                                  <SelectItem value="cancelled">{t("common.cancelled")}</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                          
-                          {(order.customerName || order.guestName) && (
-                            <div className="border-t pt-3 space-y-1 text-sm">
-                              <div className="font-medium">{t("vendor.dashboard.customerInfo")}:</div>
-                              <div className="text-muted-foreground">
-                                <div>{t("vendor.dashboard.name")}: {order.customerName || order.guestName}</div>
-                                {(order.customerEmail || order.guestEmail) && (
-                                  <div>{t("vendor.dashboard.email")}: {order.customerEmail || order.guestEmail}</div>
-                                )}
-                                {(order.customerPhone || order.guestPhone) && (
-                                  <div>{t("vendor.dashboard.phone")}: {order.customerPhone || order.guestPhone}</div>
-                                )}
-                                {order.customerAddress && (
-                                  <div>{t("vendor.dashboard.address")}: {order.customerAddress}</div>
-                                )}
-                                {order.customerCity && (
-                                  <div>{t("vendor.dashboard.city")}: {order.customerCity}</div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                          
-                          {order.items && order.items.length > 0 && (
-                            <div className="border-t pt-3">
-                              <div className="text-sm font-medium mb-2">{t("vendor.dashboard.items")}:</div>
-                              <div className="space-y-1 text-sm text-muted-foreground">
-                                {order.items.map((item: any, idx: number) => (
-                                  <div key={idx}>
-                                    {item.product?.name || "Unknown"} - Qty: {item.quantity} × {formatKWD(item.price)}
+
+                {/* Orders Table */}
+                <Card className="border shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-xl font-semibold">{t("vendor.dashboard.recentOrders")}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isOrdersLoading ? (
+                      <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>
+                    ) : !vendorOrders || vendorOrders.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <ShoppingCart className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                        <p className="font-medium">{t("vendor.dashboard.noOrders")}</p>
+                        <p className="text-sm mt-1">{t("vendor.dashboard.ordersWillAppear")}</p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>{t("vendor.dashboard.order")}</TableHead>
+                              <TableHead>{t("vendor.dashboard.customerInfo")}</TableHead>
+                              <TableHead>{t("vendor.dashboard.items")}</TableHead>
+                              <TableHead>{t("vendor.dashboard.total")}</TableHead>
+                              <TableHead>{t("vendor.dashboard.status")}</TableHead>
+                              <TableHead className="text-right">{t("vendor.dashboard.actions")}</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {vendorOrders
+                              .filter(order => orderStatusFilter === "all" || order.status === orderStatusFilter)
+                              .map((order: any) => (
+                              <TableRow key={order.id} data-testid={`vendor-order-${order.id}`}>
+                                <TableCell>
+                                  <div className="font-mono text-sm">#{String(order.id).slice(-8)}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
                                   </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="text-sm">
+                                    <div className="font-medium">{order.customerName || order.guestName || "-"}</div>
+                                    {(order.customerEmail || order.guestEmail) && (
+                                      <div className="text-muted-foreground text-xs">{order.customerEmail || order.guestEmail}</div>
+                                    )}
+                                    {(order.customerPhone || order.guestPhone) && (
+                                      <div className="text-muted-foreground text-xs">{order.customerPhone || order.guestPhone}</div>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="text-sm text-muted-foreground">
+                                    {order.items?.length || 0} {t("vendor.dashboard.items")}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="font-semibold">{formatKWD(order.vendorTotal || order.total)}</TableCell>
+                                <TableCell>
+                                  <Badge variant="outline" className="capitalize">{order.status}</Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <Select
+                                    defaultValue={order.status}
+                                    onValueChange={(value) => updateStatusMutation.mutate({ orderId: order.id, status: value })}
+                                  >
+                                    <SelectTrigger className="w-[130px] h-8">
+                                      <SelectValue placeholder="Status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="pending">{t("common.pending")}</SelectItem>
+                                      <SelectItem value="processing">{t("common.processing")}</SelectItem>
+                                      <SelectItem value="shipped">{t("common.shipped")}</SelectItem>
+                                      <SelectItem value="delivered">{t("common.delivered")}</SelectItem>
+                                      <SelectItem value="cancelled">{t("common.cancelled")}</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
             )}
 
@@ -1286,6 +1409,166 @@ export default function VendorDashboard() {
             )}
 
             {activeTab === "products" && (
+              <div className="space-y-6">
+                {/* Create Product Button */}
+                <div className="flex justify-end">
+                  <Button onClick={() => setIsCreateProductDialogOpen(true)} className="gap-2">
+                    <Plus className="w-4 h-4" />
+                    {t("vendor.dashboard.addNewProduct")}
+                  </Button>
+                </div>
+
+                {/* Products Table */}
+                <Card className="border shadow-sm">
+                  <CardHeader>
+                    <CardTitle className="text-xl font-semibold">{t("vendor.dashboard.yourProducts")} ({myProducts.length})</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {myProducts.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                        <p className="font-medium">{t("vendor.dashboard.noProducts")}</p>
+                        <p className="text-sm mt-1">{t("vendor.dashboard.addFirst")}</p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-16">{t("vendor.dashboard.image")}</TableHead>
+                              <TableHead>{t("vendor.dashboard.productName")}</TableHead>
+                              <TableHead>{t("vendor.dashboard.category")}</TableHead>
+                              <TableHead>{t("vendor.dashboard.price")}</TableHead>
+                              <TableHead>{t("vendor.dashboard.stock")}</TableHead>
+                              <TableHead className="text-right">{t("vendor.dashboard.actions")}</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {myProducts.map((product) => (
+                              <TableRow key={product.id} data-testid={`product-row-${product.id}`}>
+                                <TableCell>
+                                  <img src={product.images?.[0] || "https://placehold.co/50"} alt="" className="w-12 h-12 object-cover rounded" />
+                                </TableCell>
+                                <TableCell className="font-medium">{product.name}</TableCell>
+                                <TableCell className="text-muted-foreground">
+                                  {categories?.find(c => c.id.toString() === product.categoryId?.toString())?.name || "-"}
+                                </TableCell>
+                                <TableCell>{formatKWD(product.price)}</TableCell>
+                                <TableCell>
+                                  <Badge variant="outline">{product.stock} {t("vendor.dashboard.inStock")}</Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex justify-end gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => handleEditProduct(product)}
+                                      data-testid={`button-edit-product-${product.id}`}
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                      onClick={() => handleDeleteProduct(product)}
+                                      data-testid={`button-delete-product-${product.id}`}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Create Product Dialog */}
+            <Dialog open={isCreateProductDialogOpen} onOpenChange={setIsCreateProductDialogOpen}>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>{t("vendor.dashboard.addNewProduct")}</DialogTitle>
+                  <DialogDescription>{t("vendor.dashboard.addProductDesc")}</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>{t("vendor.dashboard.productName")} *</Label>
+                    <Input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g., Performance Brake Pads" data-testid="input-product-name" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("vendor.dashboard.description")} *</Label>
+                    <Textarea value={productDesc} onChange={(e) => setProductDesc(e.target.value)} placeholder="Product details..." data-testid="input-product-desc" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>{t("vendor.dashboard.originalPrice")} *</Label>
+                      <Input type="number" value={productPrice} onChange={(e) => setProductPrice(e.target.value)} placeholder="0.000" data-testid="input-product-price" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("vendor.dashboard.salePrice")}</Label>
+                      <Input type="number" value={productComparePrice} onChange={(e) => setProductComparePrice(e.target.value)} placeholder="For discounts" data-testid="input-compare-price" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>{t("vendor.dashboard.stock")}</Label>
+                      <Input type="number" value={productStock} onChange={(e) => setProductStock(e.target.value)} placeholder="0" data-testid="input-product-stock" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("vendor.dashboard.brand")}</Label>
+                      <Input value={productBrand} onChange={(e) => setProductBrand(e.target.value)} placeholder="Brand name" data-testid="input-product-brand" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("vendor.dashboard.category")} *</Label>
+                    <Select value={productCategory} onValueChange={setProductCategory}>
+                      <SelectTrigger data-testid="select-category">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories?.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("vendor.dashboard.warranty")}</Label>
+                    <Input value={productWarranty} onChange={(e) => setProductWarranty(e.target.value)} placeholder="e.g., 2 years" data-testid="input-warranty" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("vendor.dashboard.productImages")}</Label>
+                    <input ref={productImageRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadProductImage(f); }} />
+                    <div className="flex gap-2 flex-wrap">
+                      {productImages.map((img, i) => (
+                        <img key={i} src={img} alt="" className="w-16 h-16 object-cover rounded border" />
+                      ))}
+                      <Button variant="outline" size="icon" onClick={() => productImageRef.current?.click()} disabled={isUploadingProduct} data-testid="button-add-image">
+                        {isUploadingProduct ? <Loader2 className="w-4 h-4 animate-spin" /> : <Image className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsCreateProductDialogOpen(false)}>
+                    {t("common.cancel")}
+                  </Button>
+                  <Button onClick={handleAddProduct} disabled={addProductMutation.isPending} data-testid="button-add-product">
+                    {addProductMutation.isPending ? t("common.loading") : t("vendor.dashboard.addProduct")}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Old Products Section - Remove this */}
+            {false && activeTab === "products-old" && (
               <div>
                 <div className="grid lg:grid-cols-2 gap-6">
               <Card className="border shadow-sm">
