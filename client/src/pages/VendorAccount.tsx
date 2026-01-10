@@ -22,7 +22,7 @@ export default function VendorAccount() {
   const { data: vendors } = useVendors();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [phone, setPhone] = useState("");
@@ -46,10 +46,10 @@ export default function VendorAccount() {
   const { uploadFile, isUploading } = useUpload({
     onSuccess: (response) => {
       setProfileImageUrl(response.objectPath);
-      toast({ title: "Photo Uploaded" });
+      toast({ title: t("account.photoUploaded"), description: t("account.photoUploadedDesc") });
     },
     onError: (error) => {
-      toast({ title: "Upload Failed", description: error.message, variant: "destructive" });
+      toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
     },
   });
 
@@ -59,10 +59,10 @@ export default function VendorAccount() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      toast({ title: "Settings Saved" });
+      toast({ title: t("account.settingsSaved"), description: t("account.settingsSavedDesc") });
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to save settings.", variant: "destructive" });
+      toast({ title: t("auth.error"), description: t("auth.genericError"), variant: "destructive" });
     },
   });
 
@@ -125,7 +125,7 @@ export default function VendorAccount() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" /> Profile
+              <User className="w-5 h-5" /> {t("account.profile")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -139,37 +139,37 @@ export default function VendorAccount() {
                   </div>
                 )}
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} data-testid="input-photo-file" />
-                <button onClick={handlePhotoClick} disabled={isUploading} className="absolute bottom-0 right-0 w-7 h-7 bg-primary text-white rounded-full flex items-center justify-center shadow-lg disabled:opacity-50" data-testid="button-change-photo">
+                <button onClick={handlePhotoClick} disabled={isUploading} className={`absolute bottom-0 ${isRTL ? 'left-0' : 'right-0'} w-7 h-7 bg-primary text-white rounded-full flex items-center justify-center shadow-lg disabled:opacity-50`} data-testid="button-change-photo">
                   {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
                 </button>
               </div>
               <div>
                 <div className="font-semibold text-lg">{user.firstName} {user.lastName}</div>
                 <div className="text-sm text-muted-foreground">{user.email}</div>
-                <Badge variant="secondary" className="mt-1">Vendor</Badge>
+                <Badge variant="secondary" className="mt-1">{t("account.vendor")}</Badge>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-2 pt-4 border-t">
               <Link href="/vendor/store">
                 <Button variant="outline" className="w-full" data-testid="button-store-page">
-                  <Store className="w-4 h-4 mr-2" /> My Store
+                  <Store className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} /> {t("account.myStore")}
                 </Button>
               </Link>
               <Link href="/vendor/dashboard">
                 <Button variant="outline" className="w-full" data-testid="button-dashboard">
-                  <LayoutDashboard className="w-4 h-4 mr-2" /> Dashboard
+                  <LayoutDashboard className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} /> {t("nav.dashboard")}
                 </Button>
               </Link>
               <Link href="/vendor/wallet" className="col-span-2">
                 <Button variant="outline" className="w-full" data-testid="button-wallet">
-                  <Wallet className="w-4 h-4 mr-2" /> Wallet
+                  <Wallet className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} /> {t("wallet.title")}
                 </Button>
               </Link>
             </div>
 
             <Button variant="outline" className="w-full" onClick={() => logout()} data-testid="button-logout">
-              Logout
+              {t("account.logout")}
             </Button>
           </CardContent>
         </Card>
@@ -177,45 +177,45 @@ export default function VendorAccount() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Settings className="w-5 h-5" /> Personal Settings
+              <Settings className="w-5 h-5" /> {t("account.personalSettings")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="flex items-center gap-2 text-sm">
-                <Mail className="w-4 h-4" /> Email
+                <Mail className="w-4 h-4" /> {t("account.email")}
               </Label>
               <Input id="email" value={user.email || ""} disabled className="bg-muted" data-testid="input-email" />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="bio" className="flex items-center gap-2 text-sm">
-                <FileText className="w-4 h-4" /> Bio
+                <FileText className="w-4 h-4" /> {t("account.bio")}
               </Label>
-              <Textarea id="bio" placeholder="Tell us about yourself..." value={bio} onChange={(e) => setBio(e.target.value)} className="min-h-[80px]" data-testid="input-bio" />
+              <Textarea id="bio" placeholder={t("account.bioPlaceholder")} value={bio} onChange={(e) => setBio(e.target.value)} className="min-h-[80px]" data-testid="input-bio" />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="phone" className="flex items-center gap-2 text-sm">
-                <Phone className="w-4 h-4" /> Phone Number
+                <Phone className="w-4 h-4" /> {t("account.phone")}
               </Label>
               <Input id="phone" placeholder="+965 XXXX XXXX" value={phone} onChange={(e) => setPhone(e.target.value)} data-testid="input-phone" />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="address" className="flex items-center gap-2 text-sm">
-                <MapPin className="w-4 h-4" /> Address
+                <MapPin className="w-4 h-4" /> {t("account.address")}
               </Label>
-              <Input id="address" placeholder="Street address" value={address} onChange={(e) => setAddress(e.target.value)} data-testid="input-address" />
+              <Input id="address" placeholder={isRTL ? "عنوان الشارع" : "Street address"} value={address} onChange={(e) => setAddress(e.target.value)} data-testid="input-address" />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="city" className="text-sm">City / Area</Label>
-              <Input id="city" placeholder="e.g., Salmiya, Kuwait City" value={city} onChange={(e) => setCity(e.target.value)} data-testid="input-city" />
+              <Label htmlFor="city" className="text-sm">{t("account.city")}</Label>
+              <Input id="city" placeholder={isRTL ? "مثال: السالمية، مدينة الكويت" : "e.g., Salmiya, Kuwait City"} value={city} onChange={(e) => setCity(e.target.value)} data-testid="input-city" />
             </div>
 
             <Button className="w-full" onClick={handleSaveSettings} disabled={updateProfileMutation.isPending} data-testid="button-save-settings">
-              {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+              {updateProfileMutation.isPending ? t("account.saving") : t("account.saveChanges")}
             </Button>
           </CardContent>
         </Card>

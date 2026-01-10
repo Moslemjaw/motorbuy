@@ -326,79 +326,79 @@ function TopSummaryCards() {
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card className="border shadow-sm hover:shadow-md transition-shadow">
+      <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200 dark:border-blue-800">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-2.5 bg-primary/10 rounded-lg">
-              <Store className="w-5 h-5 text-primary" />
-            </div>
-          </div>
-          <p
-            className="text-3xl font-bold mb-1"
-            data-testid="text-total-vendors"
-          >
-            {totalVendors}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {t("admin.dashboard.totalVendors")} ({approvedVendors}{" "}
-            {t("admin.dashboard.approved")})
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card className="border shadow-sm hover:shadow-md transition-shadow">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2.5 bg-primary/10 rounded-lg">
-              <Bell className="w-5 h-5 text-primary" />
-            </div>
-          </div>
-          <p
-            className="text-3xl font-bold mb-1"
-            data-testid="text-payout-requests"
-          >
-            {pendingPayouts}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {t("admin.dashboard.payoutRequests")}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card className="border shadow-sm hover:shadow-md transition-shadow">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2.5 bg-primary/10 rounded-lg">
-              <DollarSign className="w-5 h-5 text-primary" />
-            </div>
-          </div>
-          <p
-            className="text-3xl font-bold mb-1"
-            data-testid="text-pending-payouts"
-          >
-            {totalPendingAmount.toFixed(3)}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {t("admin.dashboard.pendingPayout")} (KWD)
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-2 bg-blue-500 rounded-lg">
+            <div className="p-2.5 bg-blue-500 rounded-lg">
               <Users className="w-5 h-5 text-white" />
             </div>
           </div>
           <p
-            className="text-2xl md:text-3xl font-bold text-blue-700 dark:text-blue-300"
+            className="text-3xl font-bold mb-1 text-blue-700 dark:text-blue-300"
             data-testid="text-total-users"
           >
             {totalUsers}
           </p>
           <p className="text-sm text-blue-600 dark:text-blue-400">
             {t("admin.dashboard.totalUsers")}
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border-green-200 dark:border-green-800">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2.5 bg-green-500 rounded-lg">
+              <Store className="w-5 h-5 text-white" />
+            </div>
+          </div>
+          <p
+            className="text-3xl font-bold mb-1 text-green-700 dark:text-green-300"
+            data-testid="text-total-vendors"
+          >
+            {totalVendors}
+          </p>
+          <p className="text-sm text-green-600 dark:text-green-400">
+            {t("admin.dashboard.totalVendors")} ({approvedVendors}{" "}
+            {t("admin.dashboard.approved")})
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-200 dark:border-amber-800">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2.5 bg-amber-500 rounded-lg">
+              <DollarSign className="w-5 h-5 text-white" />
+            </div>
+          </div>
+          <p
+            className="text-3xl font-bold mb-1 text-amber-700 dark:text-amber-300"
+            data-testid="text-pending-payouts"
+          >
+            {totalPendingAmount.toFixed(3)}
+          </p>
+          <p className="text-sm text-amber-600 dark:text-amber-400">
+            {t("admin.dashboard.pendingPayout")} (KWD)
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200 dark:border-purple-800">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2.5 bg-purple-500 rounded-lg">
+              <Bell className="w-5 h-5 text-white" />
+            </div>
+          </div>
+          <p
+            className="text-3xl font-bold mb-1 text-purple-700 dark:text-purple-300"
+            data-testid="text-payout-requests"
+          >
+            {pendingPayouts}
+          </p>
+          <p className="text-sm text-purple-600 dark:text-purple-400">
+            {t("admin.dashboard.payoutRequests")}
           </p>
         </CardContent>
       </Card>

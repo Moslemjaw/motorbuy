@@ -23,7 +23,7 @@ export default function Account() {
   const { data: orders, isLoading: isOrdersLoading } = useOrders();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [phone, setPhone] = useState(user?.phone || "");
@@ -36,10 +36,10 @@ export default function Account() {
     onSuccess: (response) => {
       const publicUrl = response.objectPath;
       setProfileImageUrl(publicUrl);
-      toast({ title: "Photo Uploaded", description: "Your profile photo has been uploaded." });
+      toast({ title: t("account.photoUploaded"), description: t("account.photoUploadedDesc") });
     },
     onError: (error) => {
-      toast({ title: "Upload Failed", description: error.message, variant: "destructive" });
+      toast({ title: t("auth.error"), description: error.message, variant: "destructive" });
     },
   });
 
@@ -49,10 +49,10 @@ export default function Account() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      toast({ title: "Settings Saved", description: "Your account settings have been updated successfully." });
+      toast({ title: t("account.settingsSaved"), description: t("account.settingsSavedDesc") });
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to save settings.", variant: "destructive" });
+      toast({ title: t("auth.error"), description: t("auth.genericError"), variant: "destructive" });
     },
   });
 
@@ -108,7 +108,7 @@ export default function Account() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" /> Profile
+              <User className="w-5 h-5" /> {t("account.profile")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -136,7 +136,7 @@ export default function Account() {
                 <button 
                   onClick={handlePhotoClick}
                   disabled={isUploading}
-                  className="absolute bottom-0 right-0 w-7 h-7 bg-primary text-white rounded-full flex items-center justify-center shadow-lg disabled:opacity-50"
+                  className={`absolute bottom-0 ${isRTL ? 'left-0' : 'right-0'} w-7 h-7 bg-primary text-white rounded-full flex items-center justify-center shadow-lg disabled:opacity-50`}
                   data-testid="button-change-photo"
                 >
                   {isUploading ? (
@@ -156,13 +156,13 @@ export default function Account() {
             
             <div className="pt-4 border-t">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-muted-foreground">Role</span>
+                <span className="text-sm text-muted-foreground">{t("account.role")}</span>
                 <Badge variant="secondary">{roleData?.role || "customer"}</Badge>
               </div>
             </div>
 
             <Button variant="outline" className="w-full" onClick={() => logout()} data-testid="button-logout">
-              Logout
+              {t("account.logout")}
             </Button>
           </CardContent>
         </Card>
@@ -170,13 +170,13 @@ export default function Account() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Settings className="w-5 h-5" /> Account Settings
+              <Settings className="w-5 h-5" /> {t("account.settings")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="flex items-center gap-2 text-sm">
-                <Mail className="w-4 h-4" /> Email
+                <Mail className="w-4 h-4" /> {t("account.email")}
               </Label>
               <Input 
                 id="email" 
@@ -185,16 +185,16 @@ export default function Account() {
                 className="bg-muted"
                 data-testid="input-email"
               />
-              <p className="text-xs text-muted-foreground">Email is managed by your Replit account</p>
+              <p className="text-xs text-muted-foreground">{t("account.emailManaged")}</p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="bio" className="flex items-center gap-2 text-sm">
-                <FileText className="w-4 h-4" /> Bio
+                <FileText className="w-4 h-4" /> {t("account.bio")}
               </Label>
               <Textarea 
                 id="bio" 
-                placeholder="Tell us about yourself..." 
+                placeholder={t("account.bioPlaceholder")} 
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 className="min-h-[80px]"
@@ -204,7 +204,7 @@ export default function Account() {
 
             <div className="space-y-2">
               <Label htmlFor="phone" className="flex items-center gap-2 text-sm">
-                <Phone className="w-4 h-4" /> Phone Number
+                <Phone className="w-4 h-4" /> {t("account.phone")}
               </Label>
               <Input 
                 id="phone" 
@@ -217,11 +217,11 @@ export default function Account() {
 
             <div className="space-y-2">
               <Label htmlFor="address" className="flex items-center gap-2 text-sm">
-                <MapPin className="w-4 h-4" /> Address
+                <MapPin className="w-4 h-4" /> {t("account.address")}
               </Label>
               <Input 
                 id="address" 
-                placeholder="Street address" 
+                placeholder={isRTL ? "عنوان الشارع" : "Street address"} 
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 data-testid="input-address"
@@ -230,11 +230,11 @@ export default function Account() {
 
             <div className="space-y-2">
               <Label htmlFor="city" className="text-sm">
-                City / Area
+                {t("account.city")}
               </Label>
               <Input 
                 id="city" 
-                placeholder="e.g., Salmiya, Kuwait City" 
+                placeholder={isRTL ? "مثال: السالمية، مدينة الكويت" : "e.g., Salmiya, Kuwait City"} 
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 data-testid="input-city"
@@ -247,7 +247,7 @@ export default function Account() {
               disabled={updateProfileMutation.isPending}
               data-testid="button-save-settings"
             >
-              {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+              {updateProfileMutation.isPending ? t("account.saving") : t("account.saveChanges")}
             </Button>
           </CardContent>
         </Card>
@@ -256,7 +256,7 @@ export default function Account() {
           <Card className="md:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle className="flex items-center gap-2">
-                <Package className="w-5 h-5" /> Order History
+                <Package className="w-5 h-5" /> {t("account.orderHistory")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -267,9 +267,9 @@ export default function Account() {
               ) : !orders || orders.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No orders yet.</p>
+                  <p>{t("account.noOrdersYet")}</p>
                   <Link href="/products">
-                    <Button variant="outline" className="mt-4" data-testid="button-start-shopping">Start Shopping</Button>
+                    <Button variant="outline" className="mt-4" data-testid="button-start-shopping">{t("account.startShopping")}</Button>
                   </Link>
                 </div>
               ) : (
@@ -300,15 +300,15 @@ export default function Account() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Store className="w-5 h-5" /> Vendor Tools
+                <Store className="w-5 h-5" /> {t("account.vendorTools")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">
-                Manage your products and view orders from your vendor dashboard.
+                {t("account.vendorToolsDesc")}
               </p>
               <Link href="/vendor-dashboard">
-                <Button className="w-full" data-testid="button-vendor-dashboard">Go to Dashboard</Button>
+                <Button className="w-full" data-testid="button-vendor-dashboard">{t("account.goToDashboard")}</Button>
               </Link>
             </CardContent>
           </Card>
@@ -318,15 +318,15 @@ export default function Account() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Store className="w-5 h-5" /> Admin Tools
+                <Store className="w-5 h-5" /> {t("account.adminTools")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">
-                Manage vendors, users, and platform settings.
+                {t("account.adminToolsDesc")}
               </p>
               <Link href="/admin">
-                <Button className="w-full" data-testid="button-admin-dashboard">Go to Admin Dashboard</Button>
+                <Button className="w-full" data-testid="button-admin-dashboard">{t("account.goToAdminDashboard")}</Button>
               </Link>
             </CardContent>
           </Card>
