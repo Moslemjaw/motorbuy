@@ -115,32 +115,32 @@ export default function Home() {
     <div className="min-h-screen bg-background font-body">
       <Navbar />
 
-      <section className="relative overflow-hidden bg-background pt-24 pb-20 lg:pt-32 lg:pb-32">
-        {/* Ambient Background similar to Mosey's clean look but with blue */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/40 via-background to-background dark:from-blue-950/20 dark:to-background -z-20" />
+      <section className="relative overflow-hidden bg-background pt-16 pb-16 lg:pt-24 lg:pb-24">
+        {/* Ambient Background with Blue Gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-background to-blue-50/30 dark:from-blue-950/20 dark:to-background -z-20" />
         
         <div className="container relative z-10 px-4 mx-auto text-center">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="max-w-5xl mx-auto"
+            className="max-w-4xl mx-auto"
           >
             {/* Pill Badge */}
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="inline-flex items-center gap-2 rounded-full border bg-background/50 backdrop-blur-sm px-4 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-background/80 mb-8"
+              className="inline-flex items-center gap-2 rounded-full border bg-white/80 dark:bg-background/80 backdrop-blur-sm px-3 py-1 text-sm font-medium text-foreground transition-colors hover:bg-white/90 mb-6 shadow-sm"
             >
-              <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+              <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
               {t("hero.badge")}
             </motion.div>
             
-            {/* Main Heading */}
-            <h1 className={`text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-display font-bold tracking-tight text-foreground ${isRTL ? 'leading-tight' : 'leading-[1.1]'} mb-8`}>
-              <span className="block">{t("hero.title")}</span>
-              <span className="block text-primary relative inline-block">
+            {/* Main Heading - Reduced Size */}
+            <h1 className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight text-foreground ${isRTL ? 'leading-tight' : 'leading-[1.1]'} mb-6`}>
+              <span className="inline-block mr-2">{t("hero.title")}</span>
+              <span className="inline-block text-primary relative">
                 {t("hero.title.highlight")}
                 {/* Underline decoration */}
                 <svg className="absolute w-full h-3 -bottom-1 left-0 text-blue-200 dark:text-blue-900 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
@@ -150,34 +150,34 @@ export default function Home() {
             </h1>
             
             {/* Subtitle */}
-            <p className={`text-xl md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed`}>
+            <p className={`text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed`}>
               {t("hero.subtitle")}
             </p>
             
             {/* Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-12">
               <Link href="/products">
-                <Button size="lg" className="w-full sm:w-auto h-14 px-8 text-lg rounded-full shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 bg-primary text-primary-foreground">
-                  {t("hero.shopParts")} <ArrowRight className={`w-5 h-5 ${isRTL ? 'mr-2 rotate-180' : 'ml-2'}`} />
+                <Button size="lg" className="w-full sm:w-auto h-12 px-8 text-base rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 bg-primary text-primary-foreground">
+                  {t("hero.shopParts")} <ArrowRight className={`w-4 h-4 ${isRTL ? 'mr-2 rotate-180' : 'ml-2'}`} />
                 </Button>
               </Link>
               <Link href="/vendors">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto h-14 px-8 text-lg rounded-full border-2 hover:bg-secondary/50 transition-all duration-300">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto h-12 px-8 text-base rounded-full border-2 bg-background/50 hover:bg-background transition-all duration-300">
                   {t("hero.browseVendors")}
                 </Button>
               </Link>
             </div>
 
             {/* Trusted By / Stats Bar */}
-            <div className="border-t pt-10">
-              <p className="text-sm text-muted-foreground font-medium uppercase tracking-widest mb-8">Trusted by automotive enthusiasts</p>
-              <div className="flex flex-wrap justify-center gap-x-12 gap-y-8 md:gap-x-24 grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-500">
+            <div className="border-t border-border/50 pt-8">
+              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-widest mb-6">Trusted by automotive enthusiasts</p>
+              <div className="flex flex-wrap justify-center gap-x-12 gap-y-6 md:gap-x-20">
                 {stats.map((stat, i) => (
-                  <div key={i} className="flex items-center gap-3 group cursor-default">
-                    <stat.icon className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
-                    <div className="text-left">
-                      <div className="text-2xl font-bold font-display text-foreground leading-none">{stat.value}+</div>
-                      <div className="text-xs text-muted-foreground font-medium mt-1">{stat.label}</div>
+                  <div key={i} className="flex flex-col items-center group cursor-default">
+                    <stat.icon className="w-5 h-5 text-primary/80 mb-2 group-hover:scale-110 transition-transform" />
+                    <div className="text-center">
+                      <div className="text-xl font-bold font-display text-foreground leading-none">{stat.value}+</div>
+                      <div className="text-[10px] text-muted-foreground font-medium mt-1 uppercase tracking-wide">{stat.label}</div>
                     </div>
                   </div>
                 ))}
