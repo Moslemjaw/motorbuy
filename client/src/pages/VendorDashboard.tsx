@@ -524,24 +524,48 @@ export default function VendorDashboard() {
       <div className="container mx-auto px-4 py-6 lg:py-8">
             {/* Header */}
             <div className="mb-8">
-              <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 ${isRTL ? 'md:flex-row-reverse' : ''}`}>
-                <div className={`${isRTL ? 'text-right md:ml-auto' : 'text-left'}`}>
-                  <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
-                    {t("vendor.dashboard.title")}
-                  </h1>
-                  <p className="text-muted-foreground text-base md:text-lg">{vendorProfile.storeName}</p>
-                </div>
-                <div className={`flex gap-2 items-center ${isRTL ? 'justify-start' : 'justify-center md:justify-end'}`}>
-                  <Link href="/vendor/wallet">
-                    <Button variant="outline" className="gap-2">
-                      <Wallet className="w-4 h-4" />
-                      {t("wallet.title")}
-                    </Button>
-                  </Link>
-                  {!vendorProfile.isApproved && (
-                    <Badge variant="secondary" className="text-sm px-3 py-1">{t("vendor.dashboard.pendingApproval")}</Badge>
-                  )}
-                </div>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                {isRTL ? (
+                  <>
+                    <div className="flex gap-2 items-center justify-start">
+                      <Link href="/vendor/wallet">
+                        <Button variant="outline" className="gap-2">
+                          <Wallet className="w-4 h-4" />
+                          {t("wallet.title")}
+                        </Button>
+                      </Link>
+                      {!vendorProfile.isApproved && (
+                        <Badge variant="secondary" className="text-sm px-3 py-1">{t("vendor.dashboard.pendingApproval")}</Badge>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
+                        {t("vendor.dashboard.title")}
+                      </h1>
+                      <p className="text-muted-foreground text-base md:text-lg">{vendorProfile.storeName}</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-left">
+                      <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
+                        {t("vendor.dashboard.title")}
+                      </h1>
+                      <p className="text-muted-foreground text-base md:text-lg">{vendorProfile.storeName}</p>
+                    </div>
+                    <div className="flex gap-2 items-center justify-center md:justify-end">
+                      <Link href="/vendor/wallet">
+                        <Button variant="outline" className="gap-2">
+                          <Wallet className="w-4 h-4" />
+                          {t("wallet.title")}
+                        </Button>
+                      </Link>
+                      {!vendorProfile.isApproved && (
+                        <Badge variant="secondary" className="text-sm px-3 py-1">{t("vendor.dashboard.pendingApproval")}</Badge>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 

@@ -122,14 +122,28 @@ export default function Home() {
 
       <section className="py-12 md:py-20">
         <div className="container px-4 mx-auto">
-          <div className={`flex flex-col items-center md:flex-row md:justify-between md:items-center gap-4 mb-8 ${isRTL ? 'md:flex-row-reverse' : ''}`}>
-            <div className={`max-w-2xl md:max-w-none ${isRTL ? 'md:ml-auto md:text-right' : 'text-center md:text-left'}`}>
-              <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">{t("section.categories")}</h2>
-              <p className="text-muted-foreground text-sm md:text-base">{t("section.categories.subtitle")}</p>
-            </div>
-            <Link href="/products" className={`text-primary text-sm font-medium flex items-center gap-1 group ${isRTL ? 'justify-center md:justify-start' : 'justify-center md:justify-start'}`}>
-              {t("common.viewAll")} <ChevronRight className={`w-4 h-4 transition-transform ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
-            </Link>
+          <div className="flex flex-col items-center md:flex-row md:justify-between md:items-center gap-4 mb-8">
+            {isRTL ? (
+              <>
+                <Link href="/products" className="text-primary text-sm font-medium flex items-center gap-1 group justify-center md:justify-start">
+                  {t("common.viewAll")} <ChevronRight className="w-4 h-4 transition-transform rotate-180 group-hover:-translate-x-1" />
+                </Link>
+                <div className="max-w-2xl md:max-w-none text-center md:text-right">
+                  <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">{t("section.categories")}</h2>
+                  <p className="text-muted-foreground text-sm md:text-base">{t("section.categories.subtitle")}</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="max-w-2xl md:max-w-none text-center md:text-left">
+                  <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">{t("section.categories")}</h2>
+                  <p className="text-muted-foreground text-sm md:text-base">{t("section.categories.subtitle")}</p>
+                </div>
+                <Link href="/products" className="text-primary text-sm font-medium flex items-center gap-1 group justify-center md:justify-start">
+                  {t("common.viewAll")} <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </>
+            )}
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
@@ -165,14 +179,28 @@ export default function Home() {
 
       <section className="py-12 md:py-20 bg-muted/30">
         <div className="container px-4 mx-auto">
-          <div className={`flex flex-col items-center md:flex-row md:justify-between md:items-center gap-4 mb-8 ${isRTL ? 'md:flex-row-reverse' : ''}`}>
-            <div className={`max-w-2xl md:max-w-none ${isRTL ? 'md:ml-auto md:text-right' : 'text-center md:text-left'}`}>
-              <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">{t("section.newArrivals")}</h2>
-              <p className="text-muted-foreground text-sm md:text-base">{t("section.newArrivals.subtitle")}</p>
-            </div>
-            <Link href="/products" className={`text-primary text-sm font-medium flex items-center gap-1 group ${isRTL ? 'justify-center md:justify-start' : 'justify-center md:justify-start'}`}>
-              {t("common.viewAll")} <ChevronRight className={`w-4 h-4 transition-transform ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
-            </Link>
+          <div className="flex flex-col items-center md:flex-row md:justify-between md:items-center gap-4 mb-8">
+            {isRTL ? (
+              <>
+                <Link href="/products" className="text-primary text-sm font-medium flex items-center gap-1 group justify-center md:justify-start">
+                  {t("common.viewAll")} <ChevronRight className="w-4 h-4 transition-transform rotate-180 group-hover:-translate-x-1" />
+                </Link>
+                <div className="max-w-2xl md:max-w-none text-center md:text-right">
+                  <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">{t("section.newArrivals")}</h2>
+                  <p className="text-muted-foreground text-sm md:text-base">{t("section.newArrivals.subtitle")}</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="max-w-2xl md:max-w-none text-center md:text-left">
+                  <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">{t("section.newArrivals")}</h2>
+                  <p className="text-muted-foreground text-sm md:text-base">{t("section.newArrivals.subtitle")}</p>
+                </div>
+                <Link href="/products" className="text-primary text-sm font-medium flex items-center gap-1 group justify-center md:justify-start">
+                  {t("common.viewAll")} <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </>
+            )}
           </div>
           
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
@@ -197,14 +225,28 @@ export default function Home() {
 
       <section className="py-12 md:py-20">
         <div className="container px-4 mx-auto">
-          <div className={`flex flex-col items-center md:flex-row md:justify-between md:items-center gap-4 mb-8 ${isRTL ? 'md:flex-row-reverse' : ''}`}>
-            <div className={`max-w-2xl md:max-w-none ${isRTL ? 'md:ml-auto md:text-right' : 'text-center md:text-left'}`}>
-              <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">{t("section.featuredAds")}</h2>
-              <p className="text-muted-foreground text-sm md:text-base">{t("section.featuredAds.subtitle")}</p>
-            </div>
-            <Link href="/stories" className={`text-primary text-sm font-medium flex items-center gap-1 group ${isRTL ? 'justify-center md:justify-start' : 'justify-center md:justify-start'}`}>
-              {t("common.viewAll")} <ChevronRight className={`w-4 h-4 transition-transform ${isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
-            </Link>
+          <div className="flex flex-col items-center md:flex-row md:justify-between md:items-center gap-4 mb-8">
+            {isRTL ? (
+              <>
+                <Link href="/stories" className="text-primary text-sm font-medium flex items-center gap-1 group justify-center md:justify-start">
+                  {t("common.viewAll")} <ChevronRight className="w-4 h-4 transition-transform rotate-180 group-hover:-translate-x-1" />
+                </Link>
+                <div className="max-w-2xl md:max-w-none text-center md:text-right">
+                  <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">{t("section.featuredAds")}</h2>
+                  <p className="text-muted-foreground text-sm md:text-base">{t("section.featuredAds.subtitle")}</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="max-w-2xl md:max-w-none text-center md:text-left">
+                  <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">{t("section.featuredAds")}</h2>
+                  <p className="text-muted-foreground text-sm md:text-base">{t("section.featuredAds.subtitle")}</p>
+                </div>
+                <Link href="/stories" className="text-primary text-sm font-medium flex items-center gap-1 group justify-center md:justify-start">
+                  {t("common.viewAll")} <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </>
+            )}
           </div>
           
           {stories && stories.length > 0 ? (
