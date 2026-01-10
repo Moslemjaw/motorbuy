@@ -163,4 +163,52 @@
     inset: 0;
     background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.8) 100%);
   }
+
+  /* Auto-scrolling animations */
+  .animate-scroll-features-auto {
+    animation: scroll-features-auto 30s linear infinite;
+  }
+  
+  .animate-scroll-categories-auto {
+    animation: scroll-categories-auto 40s linear infinite;
+  }
+
+  .animate-blob-pulse {
+    animation: blob-pulse 10s infinite;
+  }
+
+  @keyframes scroll-features-auto {
+    from { transform: translateX(0); }
+    to { transform: translateX(-33.333%); }
+  }
+  
+  @keyframes scroll-categories-auto {
+    from { transform: translateX(0); }
+    to { transform: translateX(-33.333%); }
+  }
+
+  /* RTL Support */
+  [dir="rtl"] .animate-scroll-features-auto {
+    animation: scroll-features-auto-rtl 30s linear infinite;
+  }
+
+  [dir="rtl"] .animate-scroll-categories-auto {
+    animation: scroll-categories-auto-rtl 40s linear infinite;
+  }
+
+  @keyframes scroll-features-auto-rtl {
+    from { transform: translateX(0); }
+    to { transform: translateX(33.333%); }
+  }
+
+  @keyframes scroll-categories-auto-rtl {
+    from { transform: translateX(0); }
+    to { transform: translateX(33.333%); }
+  }
+
+  @keyframes blob-pulse {
+    0% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 0.5; }
+  }
 }
