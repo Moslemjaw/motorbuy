@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n";
 import { ArrowRight, ChevronRight, ChevronLeft, Package, Users, ShoppingCart, Wrench, Battery, Disc, Zap, Cog, AlertTriangle, ShieldCheck, Truck, Clock, CreditCard } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { useProducts, useCategories, useVendors } from "@/hooks/use-motorbuy";
 import { useState, useRef, useEffect } from "react";
 import carEngineImage from "@assets/stock_images/car_engine_parts_aut_6393f4c6.jpg";
@@ -101,32 +102,14 @@ export default function Home() {
     <div className="min-h-screen bg-background font-body">
       <Navbar />
 
-      <section className="relative overflow-hidden bg-slate-900 text-white min-h-[600px] flex items-center">
-        {/* Background Image with Overlay */}
-        <div className="absolute inset-0 z-0">
-          <motion.div 
-            initial={{ scale: 1.1 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
-            className="w-full h-full"
-          >
-            <img 
-              src={carEngineImage} 
-              alt="Background" 
-              className="w-full h-full object-cover opacity-40"
-            />
-          </motion.div>
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-900/60" />
-          <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-background to-transparent" />
-        </div>
-        
-        <div className="container relative z-10 px-4 mx-auto py-12 md:py-20">
-          <div className={`max-w-2xl mx-auto md:mx-0 text-center ${isRTL ? 'md:text-right' : 'md:text-left'}`}>
+      <section className="relative overflow-hidden bg-background pt-8 md:pt-12 pb-12 md:pb-20">
+        <div className="container relative z-10 px-4 mx-auto">
+          <div className={`max-w-3xl mx-auto md:mx-0 text-center ${isRTL ? 'md:text-right' : 'md:text-left'}`}>
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-bold tracking-tight ${isRTL ? 'leading-normal mb-6' : 'leading-tight mb-6'}`}
+              className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight text-foreground ${isRTL ? 'leading-normal mb-6' : 'leading-tight mb-6'}`}
             >
               {t("hero.title")} <span className="text-primary block mt-2">{t("hero.title.highlight")}</span>
             </motion.h1>
@@ -135,7 +118,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className={`text-base md:text-lg text-slate-300 mb-8 max-w-lg mx-auto md:mx-0 ${isRTL ? 'leading-relaxed' : 'leading-relaxed'}`}
+              className={`text-lg md:text-xl text-muted-foreground mb-8 max-w-xl mx-auto md:mx-0 ${isRTL ? 'leading-relaxed' : 'leading-relaxed'}`}
             >
               {t("hero.subtitle")}
             </motion.p>
@@ -147,12 +130,12 @@ export default function Home() {
               className="flex flex-wrap gap-4 justify-center md:justify-start"
             >
               <Link href="/products">
-                <Button size="lg" className="rounded-full px-8 h-12 text-base font-semibold shadow-xl hover:scale-105 transition-transform" data-testid="button-shop-parts">
+                <Button size="lg" className="rounded-full px-8 h-12 text-base font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all" data-testid="button-shop-parts">
                   {t("hero.shopParts")} <ArrowRight className={`w-4 h-4 ${isRTL ? 'mr-2 rotate-180' : 'ml-2'}`} />
                 </Button>
               </Link>
               <Link href="/vendors">
-                <Button size="lg" variant="outline" className="rounded-full px-8 h-12 text-base font-semibold border-white/20 text-white bg-white/5 hover:bg-white/10 hover:text-white backdrop-blur-sm" data-testid="button-browse-vendors">
+                <Button size="lg" variant="outline" className="rounded-full px-8 h-12 text-base font-semibold border-input bg-background hover:bg-accent hover:text-accent-foreground" data-testid="button-browse-vendors">
                   {t("hero.browseVendors")}
                 </Button>
               </Link>
@@ -162,16 +145,16 @@ export default function Home() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex flex-wrap gap-8 md:gap-12 mt-12 pt-8 border-t border-white/10 justify-center md:justify-start"
+              className="flex flex-wrap gap-8 md:gap-16 mt-12 pt-8 border-t border-border justify-center md:justify-start"
             >
               {stats.map((stat, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-primary/20 backdrop-blur-md flex items-center justify-center border border-primary/20">
-                    <stat.icon className="w-6 h-6 text-primary" />
+                <div key={i} className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                    <stat.icon className="w-7 h-7" />
                   </div>
                   <div className={`text-${isRTL ? 'right' : 'left'}`}>
-                    <div className="text-2xl font-bold font-display">{stat.value}+</div>
-                    <div className="text-xs text-slate-400 font-medium uppercase tracking-wider">{stat.label}</div>
+                    <div className="text-3xl font-bold font-display text-foreground">{stat.value}+</div>
+                    <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">{stat.label}</div>
                   </div>
                 </div>
               ))}
@@ -262,7 +245,7 @@ export default function Home() {
 
           {/* Desktop: Grid Layout */}
           <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-            {categories?.slice(0, 10).map((cat, index) => {
+            {categories?.map((cat, index) => {
               const IconComponent = cat.icon ? iconMap[cat.icon] : Wrench;
               const translatedName = t(`cat.${cat.slug}`) !== `cat.${cat.slug}` ? t(`cat.${cat.slug}`) : cat.name;
               return (
@@ -430,6 +413,7 @@ export default function Home() {
         </div>
       </section>
 
+      <Footer />
     </div>
   );
 }

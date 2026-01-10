@@ -721,12 +721,22 @@ export default function VendorDashboard() {
           <div className="container mx-auto px-4 py-4 lg:py-6">
             {/* Header */}
             <div className={`mb-4 ${isRTL ? "text-right" : "text-left"}`}>
-              <h1 className="text-2xl md:text-3xl font-display font-bold mb-1">
-                {activeTab === "overview" ? t("vendor.dashboard.title") : navItems.find(i => i.value === activeTab)?.label}
-              </h1>
-              {activeTab === "overview" && (
-                <p className="text-muted-foreground text-sm md:text-base">{vendorProfile?.storeName || ""}</p>
-              )}
+              <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-display font-bold mb-1">
+                    {activeTab === "overview" ? t("vendor.dashboard.title") : navItems.find(i => i.value === activeTab)?.label}
+                  </h1>
+                  {activeTab === "overview" && (
+                    <p className="text-muted-foreground text-sm md:text-base">{vendorProfile?.storeName || ""}</p>
+                  )}
+                </div>
+                {activeTab === "products" && (
+                  <Button onClick={() => setIsCreateProductDialogOpen(true)} className="gap-2">
+                    <Plus className="w-4 h-4" />
+                    {t("vendor.dashboard.addNewProduct")}
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* Overview Section */}
@@ -1412,14 +1422,6 @@ export default function VendorDashboard() {
 
             {activeTab === "products" && (
               <div className="space-y-4">
-                {/* Create Product Button */}
-                <div className="flex justify-end">
-                  <Button onClick={() => setIsCreateProductDialogOpen(true)} className="gap-2">
-                    <Plus className="w-4 h-4" />
-                    {t("vendor.dashboard.addNewProduct")}
-                  </Button>
-                </div>
-
                 {/* Products Table */}
                 <Card className="border shadow-sm">
                   <CardHeader>

@@ -1776,7 +1776,7 @@ function VendorRequestsSection() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className={isRTL ? "text-right" : "text-left"}>
         <h2 className="text-2xl font-display font-bold mb-2">{t("admin.dashboard.vendorRequests")}</h2>
         <p className="text-muted-foreground">{t("admin.dashboard.vendorRequestsDesc")}</p>
       </div>
@@ -1798,19 +1798,19 @@ function VendorRequestsSection() {
                   key={request.id}
                   className="p-4 space-y-3"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
+                  <div className={`flex items-start justify-between gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <div className={`flex-1 ${isRTL ? 'text-right' : 'text-left'}`}>
                       <h3 className="font-semibold text-lg mb-2">{request.companyName}</h3>
-                      <div className="space-y-1 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2">
+                      <div className={`space-y-1 text-sm text-muted-foreground ${isRTL ? 'text-right' : 'text-left'}`}>
+                        <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
                           <span className="font-medium">{t("admin.dashboard.phone")}:</span>
                           <span>{request.phone}</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
                           <span className="font-medium">{t("admin.dashboard.email")}:</span>
                           <span>{request.email}</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
                           <span className="font-medium">{t("admin.dashboard.requestedOn")}:</span>
                           <span>{new Date(request.createdAt).toLocaleDateString()}</span>
                         </div>
@@ -1818,7 +1818,7 @@ function VendorRequestsSection() {
                     </div>
                     <Badge variant="secondary">{t("admin.dashboard.pending")}</Badge>
                   </div>
-                  <div className="flex gap-2">
+                  <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
                     <Button
                       size="sm"
                       onClick={() => updateRequestMutation.mutate({ id: request.id, status: "approved" })}
@@ -1859,10 +1859,10 @@ function VendorRequestsSection() {
                   key={request.id}
                   className="p-4"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
+                  <div className={`flex items-start justify-between gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <div className={`flex-1 ${isRTL ? 'text-right' : 'text-left'}`}>
                       <h3 className="font-semibold mb-2">{request.companyName}</h3>
-                      <div className="space-y-1 text-sm text-muted-foreground">
+                      <div className={`space-y-1 text-sm text-muted-foreground ${isRTL ? 'text-right' : 'text-left'}`}>
                         <div>{request.phone}</div>
                         <div>{request.email}</div>
                         <div className="text-xs">
