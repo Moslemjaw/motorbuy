@@ -179,7 +179,7 @@ export default function AdminDashboard() {
             {/* Header */}
             <div className={`mb-4 ${isRTL ? "text-right" : "text-left"}`}>
               <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <div className={isRTL ? "text-right" : "text-left"}>
+                <div className={`flex-1 ${isRTL ? "text-right" : "text-left"}`}>
                   <h1 className={`text-2xl md:text-3xl font-display font-bold mb-1 ${isRTL ? "text-right" : "text-left"}`}>
                     {activeTab === "analytics" ? t("admin.dashboard.title") : getActiveTabLabel()}
                   </h1>
@@ -404,6 +404,8 @@ function UsersSection() {
     const [editLastName, setEditLastName] = useState("");
     const [editEmail, setEditEmail] = useState("");
     const [editRole, setEditRole] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [roleFilter, setRoleFilter] = useState<string>("all");
 
     const { data: users, isLoading } = useQuery({
         queryKey: ["/api/admin/users"],
@@ -478,10 +480,64 @@ function UsersSection() {
         });
     };
 
+    // Filter and search users
+    const filteredUsers = useMemo(() => {
+        if (!users) return [];
+        let filtered = users;
+
+        // Filter by role
+        if (roleFilter !== "all") {
+            filtered = filtered.filter((user: any) => user.role === roleFilter);
+        }
+
+        // Search by name or email
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter((user: any) => {
+                const fullName = `${user.firstName || ""} ${user.lastName || ""}`.toLowerCase();
+                const email = (user.email || "").toLowerCase();
+                return fullName.includes(query) || email.includes(query);
+            });
+        }
+
+        return filtered;
+    }, [users, roleFilter, searchQuery]);
+
     if (isLoading) return <LoadingPage message="Loading..." fullScreen={false} />;
 
     return (
         <>
+        <div className="space-y-4">
+          {/* Search and Filter Bar */}
+          <Card className="border shadow-sm">
+            <CardContent className="p-4">
+              <div className={`flex flex-col md:flex-row gap-4 ${isRTL ? "md:flex-row-reverse" : ""}`}>
+                <div className="flex-1 relative">
+                  <Search className={`absolute top-1/2 transform -translate-y-1/2 ${isRTL ? "right-3" : "left-3"} w-4 h-4 text-muted-foreground`} />
+                  <Input
+                    placeholder={t("admin.dashboard.searchUsers") || "Search by name or email..."}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={`${isRTL ? "pr-10" : "pl-10"}`}
+                  />
+                </div>
+                <div className="w-full md:w-48">
+                  <Select value={roleFilter} onValueChange={setRoleFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("admin.dashboard.filterRole") || "Filter by role"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("admin.dashboard.allRoles") || "All Roles"}</SelectItem>
+                      <SelectItem value="customer">{t("account.customer") || "Customer"}</SelectItem>
+                      <SelectItem value="vendor">{t("account.vendor") || "Vendor"}</SelectItem>
+                      <SelectItem value="admin">{t("nav.admin") || "Admin"}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
         <Card className="border shadow-sm">
             <CardContent className="p-0">
                 <Table>
@@ -494,19 +550,26 @@ function UsersSection() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {!users || users.length === 0 ? (
+                        {!filteredUsers || filteredUsers.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={4} className="text-center text-muted-foreground py-12">
-                                    {t("admin.dashboard.noUsers") || "No users found"}
+                                <TableCell colSpan={4} className={`text-center text-muted-foreground py-12 ${isRTL ? "text-right" : "text-left"}`}>
+                                    {searchQuery || roleFilter !== "all" 
+                                      ? (t("common.noResults") || "No users match your filters")
+                                      : (t("admin.dashboard.noUsers") || "No users found")}
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            users.map((u: any) => (
+                            filteredUsers.map((u: any) => (
                                 <TableRow key={u.id} className="hover:bg-muted/50">
                                     <TableCell className={`font-medium ${isRTL ? "text-right" : "text-left"}`}>{u.firstName} {u.lastName}</TableCell>
                                     <TableCell className={`text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>{u.email}</TableCell>
                                     <TableCell className={isRTL ? "text-right" : "text-left"}>
-                                        <Badge variant="outline" className="font-normal capitalize">{u.role}</Badge>
+                                        <Badge variant="outline" className="font-normal">
+                                          {u.role === "customer" ? t("account.customer") || "Customer" :
+                                           u.role === "vendor" ? t("account.vendor") || "Vendor" :
+                                           u.role === "admin" ? t("nav.admin") || "Admin" :
+                                           u.role}
+                                        </Badge>
                                     </TableCell>
                                     <TableCell className={isRTL ? "text-left" : "text-right"}>
                                         <div className={`flex gap-1 ${isRTL ? 'justify-start flex-row-reverse' : 'justify-end'}`}>
@@ -564,7 +627,12 @@ function UsersSection() {
               <Label>{t("common.role")} *</Label>
               <Select value={editRole} onValueChange={setEditRole}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder={t("common.role")}>
+                    {editRole === "customer" ? t("account.customer") || "Customer" :
+                     editRole === "vendor" ? t("account.vendor") || "Vendor" :
+                     editRole === "admin" ? t("nav.admin") || "Admin" :
+                     editRole}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="customer">{t("account.customer") || "Customer"}</SelectItem>
@@ -585,6 +653,7 @@ function UsersSection() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+        </div>
       </>
   );
 }
@@ -836,82 +905,49 @@ function VendorsSection() {
         </Card>
       )}
 
-      <Card>
+      <Card className="border shadow-sm">
         <CardContent className="p-0">
           {!vendors || vendors.length === 0 ? (
-            <p className="text-center text-muted-foreground py-12">
-              No vendors registered yet.
-            </p>
+            <div className="text-center text-muted-foreground py-12">
+              {t("admin.dashboard.noVendors") || "No vendors registered yet."}
+            </div>
           ) : (
-            <div className="divide-y">
-              {vendors.map((vendor) => {
-                const balance = parseFloat(vendor.walletBalanceKwd || vendor.pendingPayoutKwd || "0");
-                const isNegative = balance < 0;
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>{t("admin.dashboard.tabVendors")}</TableHead>
+                  <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>{t("admin.dashboard.commission")}</TableHead>
+                  <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-left" : "text-right"}`}>{t("admin.dashboard.grossSales")}</TableHead>
+                  <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-left" : "text-right"}`}>{t("admin.dashboard.balance")}</TableHead>
+                  <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>{t("common.status")}</TableHead>
+                  <TableHead className={`font-medium text-muted-foreground ${isRTL ? "text-left" : "text-right"}`}>{t("admin.dashboard.actions")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {vendors.map((vendor: any) => {
+                  const balance = parseFloat(vendor.walletBalanceKwd || vendor.pendingPayoutKwd || "0");
+                  const isNegative = balance < 0;
 
-                return (
-                <div 
-                  key={vendor.id} 
-                  className="p-4 md:p-6"
-                  data-testid={`vendor-row-${vendor.id}`}
-                >
-                  <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                    <div className="flex items-start gap-4 flex-1 min-w-0">
-                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Store className="w-6 h-6 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <h3 className="font-semibold text-base truncate">
-                            {vendor.storeName}
-                          </h3>
-                          <Badge
-                            variant={
-                              vendor.isApproved ? "default" : "secondary"
-                            }
-                          >
-                            {vendor.isApproved ? t("admin.dashboard.approved") : t("admin.dashboard.pending")}
-                          </Badge>
-                          {vendor.hasPendingRequest && (
-                            <Badge variant="destructive">{t("admin.dashboard.payoutRequest")}</Badge>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => handleEditVendor(vendor)}
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => handleToggleApproval(vendor)}
-                            disabled={approveVendorMutation.isPending}
-                            title={vendor.isApproved ? "Unapprove Vendor" : "Approve Vendor"}
-                          >
-                            {approveVendorMutation.isPending ? (
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            ) : vendor.isApproved ? (
-                              <XCircle className="w-3.5 h-3.5 text-destructive" />
-                            ) : (
-                              <CheckCircle className="w-3.5 h-3.5 text-green-600" />
-                            )}
-                          </Button>
+                  return (
+                    <TableRow key={vendor.id} className="hover:bg-muted/50" data-testid={`vendor-row-${vendor.id}`}>
+                      <TableCell>
+                        <div className={`flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Store className="w-5 h-5 text-primary" />
+                          </div>
+                          <div className={`flex-1 min-w-0 ${isRTL ? "text-right" : "text-left"}`}>
+                            <div className="font-semibold text-base truncate mb-1">
+                              {vendor.storeName}
+                            </div>
+                            <p className="text-xs text-muted-foreground line-clamp-1">
+                              {vendor.description || "-"}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground line-clamp-1">
-                          {vendor.description}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-6">
-                      <div className="bg-muted/50 rounded-lg p-3 text-center">
-                        <div className="text-xs text-muted-foreground mb-1">
-                          {t("admin.dashboard.commission")}
-                        </div>
+                      </TableCell>
+                      <TableCell className={isRTL ? "text-right" : "text-left"}>
                         {editingVendor === vendor.id ? (
-                          <div className="flex items-center gap-1 justify-center">
+                          <div className={`flex items-center gap-1 ${isRTL ? "flex-row-reverse justify-end" : ""}`}>
                             <Select
                               value={commissionType}
                               onValueChange={setCommissionType}
@@ -927,10 +963,8 @@ function VendorsSection() {
                             <Input
                               type="number"
                               value={commissionValue}
-                              onChange={(e) =>
-                                setCommissionValue(e.target.value)
-                              }
-                              className="w-14 h-8 text-xs"
+                              onChange={(e) => setCommissionValue(e.target.value)}
+                              className="w-16 h-8 text-xs"
                               min="0"
                               step="0.01"
                             />
@@ -947,7 +981,11 @@ function VendorsSection() {
                               }
                               disabled={updateCommissionMutation.isPending}
                             >
-                              <Save className="w-3 h-3" />
+                              {updateCommissionMutation.isPending ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Save className="w-3 h-3" />
+                              )}
                             </Button>
                             <Button
                               size="icon"
@@ -959,8 +997,8 @@ function VendorsSection() {
                             </Button>
                           </div>
                         ) : (
-                          <div className="flex items-center justify-center gap-1">
-                            <span className="font-semibold text-sm">
+                          <div className={`flex items-center gap-1 ${isRTL ? "flex-row-reverse justify-end" : ""}`}>
+                            <span className="font-medium text-sm">
                               {vendor.commissionValue || "5"}
                               {vendor.commissionType === "fixed" ? " KWD" : "%"}
                             </span>
@@ -974,78 +1012,92 @@ function VendorsSection() {
                             </Button>
                           </div>
                         )}
-                      </div>
-
-                      <div className="bg-muted/50 rounded-lg p-3 text-center">
-                        <div className="text-xs text-muted-foreground mb-1">
-                          {t("admin.dashboard.grossSales")}
-                        </div>
-                        <div className="font-semibold text-sm">
-                          {parseFloat(vendor.grossSalesKwd || "0").toFixed(3)}
-                          <span className="text-xs text-muted-foreground ml-1">
-                            KWD
+                      </TableCell>
+                      <TableCell className={`font-medium ${isRTL ? "text-left" : "text-right"}`}>
+                        {formatKWD(vendor.grossSalesKwd || "0")}
+                      </TableCell>
+                      <TableCell className={`font-medium ${isRTL ? "text-left" : "text-right"}`}>
+                        <div className={`flex flex-col ${isRTL ? "items-start" : "items-end"}`}>
+                          <span className={isNegative ? "text-red-600" : balance > 0 ? "text-green-600" : ""}>
+                            {isNegative ? t("admin.dashboard.outstanding") : t("admin.dashboard.balance")}
                           </span>
+                          <span className={`text-sm ${isNegative ? "text-red-600" : balance > 0 ? "text-green-600" : ""}`}>
+                            {formatKWD(Math.abs(balance))}
+                          </span>
+                          {isNegative && Math.abs(balance) > 100 && (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="mt-1 text-xs h-7"
+                              onClick={() => toast({ title: "Feature coming soon", description: "Payment request to vendor email." })}
+                            >
+                              {t("admin.dashboard.requestPay")}
+                            </Button>
+                          )}
+                          {balance > 0 && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="mt-1 text-xs h-7"
+                              onClick={() => payoutMutation.mutate(vendor.id)}
+                              disabled={payoutMutation.isPending}
+                            >
+                              {payoutMutation.isPending ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <DollarSign className="w-3 h-3" />
+                              )}
+                              {t("admin.dashboard.processPayout")}
+                            </Button>
+                          )}
                         </div>
-                      </div>
-
-                      <div
-                        className={`rounded-lg p-3 text-center ${
-                          isNegative
-                            ? "bg-red-50 border border-red-100"
-                            : balance > 0
-                            ? "bg-green-50 border border-green-100"
-                            : "bg-muted/50"
-                        }`}
-                      >
-                        <div className="text-xs text-muted-foreground mb-1">
-                          {isNegative ? t("admin.dashboard.outstanding") : t("admin.dashboard.balance")}
+                      </TableCell>
+                      <TableCell className={isRTL ? "text-right" : "text-left"}>
+                        <div className={`flex items-center gap-2 flex-wrap ${isRTL ? "flex-row-reverse justify-end" : ""}`}>
+                          <Badge variant={vendor.isApproved ? "default" : "secondary"}>
+                            {vendor.isApproved ? t("admin.dashboard.approved") : t("admin.dashboard.pending")}
+                          </Badge>
+                          {vendor.hasPendingRequest && (
+                            <Badge variant="destructive" className="text-xs">
+                              {t("admin.dashboard.payoutRequest")}
+                            </Badge>
+                          )}
                         </div>
-                        <div
-                          className={`font-semibold text-sm ${
-                            isNegative
-                              ? "text-red-600"
-                              : balance > 0
-                              ? "text-green-600"
-                              : ""
-                          }`}
-                        >
-                          {formatKWD(Math.abs(balance))}
-                      </div>
-                    </div>
-
-                      <div className="flex items-center justify-center">
-                        {isNegative && Math.abs(balance) > 100 ? (
-                      <Button
-                             size="sm" 
-                             variant="destructive"
-                             onClick={() => toast({ title: "Feature coming soon", description: "Payment request to vendor email." })}
-                           >
-                             {t("admin.dashboard.requestPay")}
-                      </Button>
-                        ) : balance > 0 ? (
+                      </TableCell>
+                      <TableCell className={isRTL ? "text-left" : "text-right"}>
+                        <div className={`flex gap-1 ${isRTL ? 'justify-start flex-row-reverse' : 'justify-end'}`}>
                           <Button
-                            size="sm"
-                            variant="outline"
-                            className="w-full text-xs"
-                            onClick={() => payoutMutation.mutate(vendor.id)}
-                            disabled={payoutMutation.isPending}
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleEditVendor(vendor)}
+                            title={t("common.edit")}
                           >
-                            {payoutMutation.isPending ? (
-                              <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                            ) : (
-                              <DollarSign className="w-3 h-3 mr-1" />
-                            )}
-                            {t("admin.dashboard.processPayout")}
+                            <Pencil className="w-4 h-4" />
                           </Button>
-                        ) : (
-                            <span className="text-xs text-muted-foreground">-</span>
-                        )}
-                    </div>
-                  </div>
-                </div>
-                </div>
-              )})}
-            </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleToggleApproval(vendor)}
+                            disabled={approveVendorMutation.isPending}
+                            title={vendor.isApproved ? t("admin.dashboard.pending") : t("admin.dashboard.approved")}
+                          >
+                            {approveVendorMutation.isPending ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : vendor.isApproved ? (
+                              <XCircle className="w-4 h-4 text-destructive" />
+                            ) : (
+                              <CheckCircle className="w-4 h-4 text-green-600" />
+                            )}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

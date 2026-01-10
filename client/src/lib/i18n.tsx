@@ -473,6 +473,9 @@ const en: Translations = {
   "admin.dashboard.allStatuses": "All Statuses",
   "admin.dashboard.customer": "Customer",
   "admin.dashboard.searchOrders": "Search by order ID, customer name, email, or phone...",
+  "admin.dashboard.searchUsers": "Search by name or email...",
+  "admin.dashboard.filterRole": "Filter by role",
+  "admin.dashboard.allRoles": "All Roles",
   "admin.dashboard.editOrder": "Edit Order",
   "admin.dashboard.editOrderDesc": "Update order information.",
   "admin.dashboard.changeStatus": "Change Status",
@@ -741,6 +744,7 @@ const en: Translations = {
   "vendorRequest.missingFields": "Missing Fields",
   "vendorRequest.missingFieldsDesc": "Please fill in all required fields",
   "account.startShopping": "Start Shopping",
+  "account.customer": "Customer",
   "account.vendor": "Vendor",
   
   // Order History
@@ -1199,6 +1203,9 @@ const ar: Translations = {
   "admin.dashboard.allStatuses": "جميع الحالات",
   "admin.dashboard.customer": "العميل",
   "admin.dashboard.searchOrders": "ابحث برقم الطلب أو اسم العميل أو البريد الإلكتروني أو الهاتف...",
+  "admin.dashboard.searchUsers": "ابحث بالاسم أو البريد الإلكتروني...",
+  "admin.dashboard.filterRole": "تصفية حسب الدور",
+  "admin.dashboard.allRoles": "جميع الأدوار",
   "admin.dashboard.editOrder": "تعديل الطلب",
   "admin.dashboard.editOrderDesc": "تحديث معلومات الطلب.",
   "admin.dashboard.changeStatus": "تغيير الحالة",
@@ -1468,6 +1475,7 @@ const ar: Translations = {
   "account.goToAdminDashboard": "الذهاب إلى لوحة تحكم الإدارة",
   "account.noOrdersYet": "لا توجد طلبات بعد.",
   "account.startShopping": "ابدأ التسوق",
+  "account.customer": "عميل",
   "account.vendor": "مورد",
   "account.becomeVendor": "كن مورداً",
   
