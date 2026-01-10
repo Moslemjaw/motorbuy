@@ -33,14 +33,21 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { useProducts, useCategories, useVendors } from "@/hooks/use-motorbuy";
+import {
+  useProducts,
+  useCategories,
+  useVendors,
+  useStories,
+} from "@/hooks/use-motorbuy";
 import { useMemo, useState, useRef, useEffect } from "react";
+import { Sparkles } from "lucide-react";
 
 export default function Home() {
   const { t, isRTL } = useLanguage();
   const { data: categories } = useCategories();
   const { data: vendors } = useVendors();
   const { data: products } = useProducts();
+  const { data: stories } = useStories();
 
   // Categories carousel pause/resume logic with manual scroll support
   const categoriesCarouselRef = useRef<HTMLDivElement>(null);
@@ -183,6 +190,21 @@ export default function Home() {
     [products, vendors, categories, t]
   );
 
+  // Compute vendors with ads indicator
+  const vendorsWithAds = useMemo(() => {
+    const approvedVendors = vendors?.filter((v) => v.isApproved) || [];
+    const vendorIdsWithAds = new Set(
+      stories?.map((story) => story.vendorId) || []
+    );
+
+    return approvedVendors
+      .map((vendor) => ({
+        ...vendor,
+        hasAd: vendorIdsWithAds.has(vendor.id),
+      }))
+      .slice(0, 8); // Show up to 8 vendors
+  }, [vendors, stories]);
+
   const features = [
     {
       icon: ShieldCheck,
@@ -261,8 +283,8 @@ export default function Home() {
                 isRTL ? "leading-tight" : "leading-[1.1]"
               } mb-4`}
             >
-              <span className="inline mr-2">{t("hero.title")}</span>
-              <span className="inline-block text-primary relative">
+              <span className="block">{t("hero.title")}</span>
+              <span className="block text-primary relative mt-2">
                 {t("hero.title.highlight")}
                 {/* Underline decoration */}
                 <svg
@@ -626,6 +648,192 @@ export default function Home() {
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Trusted Vendors Section */}
+      <section className="py-16 md:py-24 bg-background">
+        <div className="container px-4 mx-auto">
+          <div className="flex flex-col items-center md:flex-row md:justify-between md:items-center gap-4 mb-12">
+            {isRTL ? (
+              <>
+                <div className="max-w-2xl md:max-w-none text-center md:text-right">
+                  <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">
+                    {t("section.trustedVendors")}
+                  </h2>
+                  <p className="text-muted-foreground text-sm md:text-base">
+                    {t("section.trustedVendors.subtitle")}
+                  </p>
+                </div>
+                <Link
+                  href="/stories"
+                  className="text-primary text-sm font-medium flex items-center gap-1 group justify-center md:justify-start"
+                >
+                  {t("section.trustedVendors.viewMoreAds")}{" "}
+                  <ChevronRight className="w-4 h-4 transition-transform rotate-180 group-hover:-translate-x-1" />
+                </Link>
+              </>
+            ) : (
+              <>
+                <div className="max-w-2xl md:max-w-none text-center md:text-left">
+                  <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">
+                    {t("section.trustedVendors")}
+                  </h2>
+                  <p className="text-muted-foreground text-sm md:text-base">
+                    {t("section.trustedVendors.subtitle")}
+                  </p>
+                </div>
+                <Link
+                  href="/stories"
+                  className="text-primary text-sm font-medium flex items-center gap-1 group justify-center md:justify-start"
+                >
+                  {t("section.trustedVendors.viewMoreAds")}{" "}
+                  <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Desktop: Grid Layout */}
+          {vendorsWithAds.length > 0 && (
+            <>
+              <div className="hidden md:grid md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-6">
+                {vendorsWithAds.map((vendor, i) => (
+                  <motion.div
+                    key={vendor.id}
+                    initial={{ opacity: 0, y: 15 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.1 }}
+                  >
+                    <Link href={`/vendors/${vendor.id}`}>
+                      <div className="group relative bg-card border rounded-2xl p-6 hover:border-primary/50 hover:shadow-lg transition-all text-center h-full flex flex-col items-center">
+                        {/* Bright ring indicator for vendors with ads */}
+                        {vendor.hasAd && (
+                          <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center shadow-lg z-10 animate-pulse">
+                            <Sparkles className="w-3 h-3 text-white" />
+                          </div>
+                        )}
+                        {vendor.hasAd && (
+                          <div className="absolute inset-0 rounded-2xl border-2 border-primary/30 animate-pulse pointer-events-none" />
+                        )}
+
+                        {/* Vendor Logo */}
+                        <div
+                          className={`relative w-20 h-20 mb-4 rounded-full overflow-hidden border-2 flex items-center justify-center ${
+                            vendor.hasAd
+                              ? "border-primary shadow-lg shadow-primary/20"
+                              : "border-border"
+                          }`}
+                        >
+                          {vendor.logoUrl ? (
+                            <img
+                              src={vendor.logoUrl}
+                              alt={vendor.storeName}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                              <span className="text-2xl font-bold text-primary">
+                                {vendor.storeName.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Vendor Name */}
+                        <h3 className="font-semibold text-base mb-1 group-hover:text-primary transition-colors line-clamp-2">
+                          {vendor.storeName}
+                        </h3>
+
+                        {/* Vendor Description */}
+                        {vendor.description && (
+                          <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                            {vendor.description}
+                          </p>
+                        )}
+
+                        {/* Has Ad Badge */}
+                        {vendor.hasAd && (
+                          <div className="mt-3 px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full">
+                            {t("section.trustedVendors.hasAd")}
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Mobile: Horizontal Scrollable */}
+              <div className="md:hidden relative -mx-4 overflow-x-auto scrollbar-hide pb-4 snap-x snap-mandatory">
+                <div className="flex gap-4 px-4 w-max">
+                  {vendorsWithAds.map((vendor) => (
+                    <div
+                      key={vendor.id}
+                      className="w-[200px] flex-shrink-0 snap-center"
+                    >
+                      <Link href={`/vendors/${vendor.id}`}>
+                        <div className="group relative bg-card border rounded-2xl p-5 hover:border-primary/50 hover:shadow-lg transition-all text-center h-full flex flex-col items-center">
+                          {/* Bright ring indicator for vendors with ads */}
+                          {vendor.hasAd && (
+                            <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center shadow-lg z-10 animate-pulse">
+                              <Sparkles className="w-3 h-3 text-white" />
+                            </div>
+                          )}
+                          {vendor.hasAd && (
+                            <div className="absolute inset-0 rounded-2xl border-2 border-primary/30 animate-pulse pointer-events-none" />
+                          )}
+
+                          {/* Vendor Logo */}
+                          <div
+                            className={`relative w-16 h-16 mb-3 rounded-full overflow-hidden border-2 flex items-center justify-center ${
+                              vendor.hasAd
+                                ? "border-primary shadow-lg shadow-primary/20"
+                                : "border-border"
+                            }`}
+                          >
+                            {vendor.logoUrl ? (
+                              <img
+                                src={vendor.logoUrl}
+                                alt={vendor.storeName}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                                <span className="text-xl font-bold text-primary">
+                                  {vendor.storeName.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Vendor Name */}
+                          <h3 className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors line-clamp-2">
+                            {vendor.storeName}
+                          </h3>
+
+                          {/* Has Ad Badge */}
+                          {vendor.hasAd && (
+                            <div className="mt-2 px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-medium rounded-full">
+                              {t("section.trustedVendors.hasAd")}
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Empty State */}
+          {vendorsWithAds.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground">
+              {t("section.trustedVendors.noVendors")}
+            </div>
+          )}
         </div>
       </section>
 

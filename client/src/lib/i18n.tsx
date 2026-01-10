@@ -51,6 +51,11 @@ const en: Translations = {
   "section.noAds": "No ads available yet. Check back soon!",
   "section.whyUs": "Why Choose MotorBuy?",
   "section.whyUs.subtitle": "Your trusted automotive parts marketplace in Kuwait",
+  "section.trustedVendors": "Trusted Vendors",
+  "section.trustedVendors.subtitle": "Shop from verified vendors with featured promotions",
+  "section.trustedVendors.viewMoreAds": "View More Ads",
+  "section.trustedVendors.hasAd": "Featured",
+  "section.trustedVendors.noVendors": "No vendors available yet",
   
   // Features
   "feature.quality": "Quality Parts",
