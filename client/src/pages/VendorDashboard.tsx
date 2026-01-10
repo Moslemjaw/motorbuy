@@ -525,13 +525,13 @@ export default function VendorDashboard() {
             {/* Header */}
             <div className="mb-8">
               <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 ${isRTL ? 'md:flex-row-reverse' : ''}`}>
-                <div className={isRTL ? 'text-right md:ml-auto' : 'text-left'}>
+                <div className={`${isRTL ? 'text-right md:ml-auto' : 'text-left'}`}>
                   <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
                     {t("vendor.dashboard.title")}
                   </h1>
                   <p className="text-muted-foreground text-base md:text-lg">{vendorProfile.storeName}</p>
                 </div>
-                <div className={`flex gap-2 items-center ${isRTL ? 'justify-start md:justify-start' : 'justify-center md:justify-end'}`}>
+                <div className={`flex gap-2 items-center ${isRTL ? 'justify-start' : 'justify-center md:justify-end'}`}>
                   <Link href="/vendor/wallet">
                     <Button variant="outline" className="gap-2">
                       <Wallet className="w-4 h-4" />
