@@ -173,10 +173,27 @@ export class MongoStorage implements IStorage {
       }
     }
 
-    const recentOrders = orders
+    const sortedOrders = orders
       .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 10)
-      .map(toPlainObject);
+      .slice(0, 10);
+    
+    // Get order items for recent orders
+    const recentOrders = await Promise.all(sortedOrders.map(async (order) => {
+      const orderItems = await OrderItem.find({ orderId: order._id })
+        .populate('productId');
+      
+      const orderObj = toPlainObject(order);
+      orderObj.items = orderItems.map(item => {
+        const itemObj = toPlainObject(item);
+        if (itemObj.productId && typeof itemObj.productId === 'object') {
+          itemObj.product = toPlainObject(itemObj.productId);
+          delete itemObj.productId;
+        }
+        return itemObj;
+      });
+      
+      return orderObj;
+    }));
 
     return {
       totalRevenue: totalRevenue.toFixed(3),
@@ -193,7 +210,26 @@ export class MongoStorage implements IStorage {
 
   async getAllOrders(): Promise<any[]> {
     const orders = await Order.find({}).sort({ createdAt: -1 });
-    return orders.map(toPlainObject);
+    
+    // Get order items for each order
+    const ordersWithItems = await Promise.all(orders.map(async (order) => {
+      const orderItems = await OrderItem.find({ orderId: order._id })
+        .populate('productId');
+      
+      const orderObj = toPlainObject(order);
+      orderObj.items = orderItems.map(item => {
+        const itemObj = toPlainObject(item);
+        if (itemObj.productId && typeof itemObj.productId === 'object') {
+          itemObj.product = toPlainObject(itemObj.productId);
+          delete itemObj.productId;
+        }
+        return itemObj;
+      });
+      
+      return orderObj;
+    }));
+    
+    return ordersWithItems;
   }
 
   async getProducts(filters?: { categoryId?: string; vendorId?: string; search?: string; sortBy?: string }): Promise<any[]> {
@@ -360,12 +396,28 @@ export class MongoStorage implements IStorage {
     await CartItem.deleteMany({ userId });
   }
 
-  async createOrder(userId: string, total: string, items: { productId: string; quantity: number; price: string }[]): Promise<any> {
-    const order = await Order.create({
+  async createOrder(
+    userId: string, 
+    total: string, 
+    items: { productId: string; quantity: number; price: string }[],
+    customerInfo?: { name?: string; email?: string; phone?: string; address?: string; city?: string }
+  ): Promise<any> {
+    const orderData: any = {
       userId,
       total,
       status: "paid"
-    });
+    };
+    
+    // Add customer information if provided
+    if (customerInfo) {
+      orderData.customerName = customerInfo.name;
+      orderData.customerEmail = customerInfo.email;
+      orderData.customerPhone = customerInfo.phone;
+      orderData.customerAddress = customerInfo.address;
+      orderData.customerCity = customerInfo.city;
+    }
+    
+    const order = await Order.create(orderData);
 
     const vendorEarnings: Record<string, number> = {};
 
@@ -599,8 +651,39 @@ export class MongoStorage implements IStorage {
     
     if (orderIds.length === 0) return [];
     
-    const orders = await Order.find({ _id: { $in: orderIds.map(id => new mongoose.Types.ObjectId(id)) } }).sort({ createdAt: -1 });
-    return orders.map(toPlainObject);
+    const orders = await Order.find({ _id: { $in: orderIds.map(id => new mongoose.Types.ObjectId(id)) } })
+      .sort({ createdAt: -1 });
+    
+    // Get order items for each order and include customer info
+    const ordersWithItems = await Promise.all(orders.map(async (order) => {
+      const orderItems = await OrderItem.find({ orderId: order._id })
+        .populate('productId');
+      
+      const vendorOrderItems = orderItems.filter(item => {
+        const productId = item.productId?._id?.toString() || item.productId?.toString();
+        return productIds.some(vpId => vpId.toString() === productId);
+      });
+      
+      const orderObj = toPlainObject(order);
+      orderObj.items = vendorOrderItems.map(item => {
+        const itemObj = toPlainObject(item);
+        if (itemObj.productId && typeof itemObj.productId === 'object') {
+          itemObj.product = toPlainObject(itemObj.productId);
+          delete itemObj.productId;
+        }
+        return itemObj;
+      });
+      
+      // Calculate total for this vendor's items in the order
+      const vendorTotal = vendorOrderItems.reduce((sum, item) => {
+        return sum + (parseFloat(item.price) * item.quantity);
+      }, 0);
+      orderObj.vendorTotal = vendorTotal.toFixed(3);
+      
+      return orderObj;
+    }));
+    
+    return ordersWithItems;
   }
 }
 

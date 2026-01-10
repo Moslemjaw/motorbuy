@@ -924,28 +924,43 @@ export async function registerRoutes(
   });
 
   app.post(api.orders.create.path, isAuthenticated, async (req: any, res) => {
-    const cartItems = await storage.getCartItems(req.session.userId);
-    if (cartItems.length === 0)
-      return res.status(400).json({ message: "Cart is empty" });
+    try {
+      const cartItems = await storage.getCartItems(req.session.userId);
+      if (cartItems.length === 0)
+        return res.status(400).json({ message: "Cart is empty" });
 
-    let total = 0;
-    const items = cartItems.map((item) => {
-      const price = parseFloat(item.product.price);
-      total += price * item.quantity;
-      return {
-        productId: item.product.id,
-        quantity: item.quantity,
-        price: item.product.price,
+      let total = 0;
+      const items = cartItems.map((item) => {
+        const price = parseFloat(item.product.price);
+        total += price * item.quantity;
+        return {
+          productId: item.product.id,
+          quantity: item.quantity,
+          price: item.product.price,
+        };
+      });
+
+      // Extract customer information from request body
+      const customerInfo = {
+        name: req.body.customerName,
+        email: req.body.customerEmail,
+        phone: req.body.customerPhone,
+        address: req.body.customerAddress,
+        city: req.body.customerCity,
       };
-    });
 
-    const order = await storage.createOrder(
-      req.session.userId,
-      total.toString(),
-      items
-    );
-    await storage.clearCart(req.session.userId);
-    res.status(201).json(order);
+      const order = await storage.createOrder(
+        req.session.userId,
+        total.toFixed(3),
+        items,
+        customerInfo
+      );
+      await storage.clearCart(req.session.userId);
+      res.status(201).json(order);
+    } catch (e: any) {
+      console.error("Error creating order:", e);
+      res.status(500).json({ message: e.message || "Failed to create order" });
+    }
   });
 
   // Guest checkout - allows purchase without authentication

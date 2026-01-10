@@ -436,29 +436,73 @@ function AnalyticsSection() {
               No orders yet.
             </p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {analytics.recentOrders.map((order: any) => (
-                <div
-                  key={order.id}
-                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                >
-                  <div>
-                    <p className="font-medium">Order #{order.id.slice(-8)}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </p>
+                <Card key={order.id} className="p-4">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">
+                          Order #{order.id.slice(-8)}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold">{order.total} KWD</p>
+                        <Badge
+                          variant={
+                            order.status === "paid" ? "default" : "secondary"
+                          }
+                        >
+                          {order.status}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {(order.customerName || order.guestName) && (
+                      <div className="border-t pt-3 space-y-1 text-sm">
+                        <div className="font-medium">Customer Information:</div>
+                        <div className="text-muted-foreground">
+                          <div>
+                            Name: {order.customerName || order.guestName}
+                          </div>
+                          {(order.customerEmail || order.guestEmail) && (
+                            <div>
+                              Email: {order.customerEmail || order.guestEmail}
+                            </div>
+                          )}
+                          {(order.customerPhone || order.guestPhone) && (
+                            <div>
+                              Phone: {order.customerPhone || order.guestPhone}
+                            </div>
+                          )}
+                          {order.customerAddress && (
+                            <div>Address: {order.customerAddress}</div>
+                          )}
+                          {order.customerCity && (
+                            <div>City: {order.customerCity}</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {order.items && order.items.length > 0 && (
+                      <div className="border-t pt-3">
+                        <div className="text-sm font-medium mb-2">Items:</div>
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                          {order.items.map((item: any, idx: number) => (
+                            <div key={idx}>
+                              {item.product?.name || "Unknown"} - Qty:{" "}
+                              {item.quantity} × {item.price} KWD
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold">{order.total} KWD</p>
-                    <Badge
-                      variant={
-                        order.status === "paid" ? "default" : "secondary"
-                      }
-                    >
-                      {order.status}
-                    </Badge>
-                  </div>
-                </div>
+                </Card>
               ))}
             </div>
           )}

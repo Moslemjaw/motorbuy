@@ -45,25 +45,8 @@ export default function Cart() {
       return;
     }
 
-    createOrder(undefined, {
-      onSuccess: () => {
-        toast({ 
-          title: t("cart.orderPlaced"), 
-          description: t("cart.orderPlacedDesc") 
-        });
-        setTimeout(() => {
-          setLocation("/orders");
-        }, 1000);
-      },
-      onError: (error: any) => {
-        const message = error?.message || t("cart.checkoutSimDesc");
-        toast({ 
-          title: t("cart.checkoutSim") || "Checkout Error", 
-          description: message, 
-          variant: "destructive" 
-        });
-      }
-    });
+    // Redirect to checkout page to collect customer information
+    setLocation("/checkout");
   };
 
   const handleRemoveItem = (itemId: string, productName: string) => {

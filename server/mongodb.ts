@@ -72,6 +72,12 @@ const orderSchema = new mongoose.Schema({
   guestEmail: { type: String },
   guestName: { type: String },
   guestPhone: { type: String },
+  // Customer information for authenticated users
+  customerName: { type: String },
+  customerEmail: { type: String },
+  customerPhone: { type: String },
+  customerAddress: { type: String },
+  customerCity: { type: String },
   total: { type: String, required: true },
   status: { type: String, enum: ["pending", "paid", "shipped", "delivered", "cancelled"], default: "pending" },
   createdAt: { type: Date, default: Date.now },

@@ -820,33 +820,61 @@ export default function VendorDashboard() {
                     <p className="text-sm mt-1">Orders will appear here when customers purchase your products.</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Order ID</th>
-                          <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Date</th>
-                          <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Amount</th>
-                          <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {vendorOrders.map((order) => (
-                          <tr key={order.id} className="border-b last:border-0" data-testid={`vendor-order-${order.id}`}>
-                            <td className="py-3 px-2 text-sm font-mono">#{String(order.id).slice(-8)}</td>
-                            <td className="py-3 px-2 text-sm text-muted-foreground">
-                              {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
-                            </td>
-                            <td className="py-3 px-2 text-sm font-medium">{formatKWD(order.total)}</td>
-                            <td className="py-3 px-2">
-                              <Badge variant={order.status === "delivered" ? "default" : "secondary"} className="capitalize">
+                  <div className="space-y-4">
+                    {vendorOrders.map((order: any) => (
+                      <Card key={order.id} className="p-4" data-testid={`vendor-order-${order.id}`}>
+                        <div className="flex flex-col gap-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-mono text-sm text-muted-foreground">Order #{String(order.id).slice(-8)}</div>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-bold text-lg">{formatKWD(order.vendorTotal || order.total)}</div>
+                              <Badge variant={order.status === "delivered" ? "default" : "secondary"} className="capitalize mt-1">
                                 {order.status}
                               </Badge>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                            </div>
+                          </div>
+                          
+                          {(order.customerName || order.guestName) && (
+                            <div className="border-t pt-3 space-y-1 text-sm">
+                              <div className="font-medium">Customer Information:</div>
+                              <div className="text-muted-foreground">
+                                <div>Name: {order.customerName || order.guestName}</div>
+                                {(order.customerEmail || order.guestEmail) && (
+                                  <div>Email: {order.customerEmail || order.guestEmail}</div>
+                                )}
+                                {(order.customerPhone || order.guestPhone) && (
+                                  <div>Phone: {order.customerPhone || order.guestPhone}</div>
+                                )}
+                                {order.customerAddress && (
+                                  <div>Address: {order.customerAddress}</div>
+                                )}
+                                {order.customerCity && (
+                                  <div>City: {order.customerCity}</div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {order.items && order.items.length > 0 && (
+                            <div className="border-t pt-3">
+                              <div className="text-sm font-medium mb-2">Items:</div>
+                              <div className="space-y-1 text-sm text-muted-foreground">
+                                {order.items.map((item: any, idx: number) => (
+                                  <div key={idx}>
+                                    {item.product?.name || "Unknown"} - Qty: {item.quantity} × {formatKWD(item.price)}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </Card>
+                    ))}
                   </div>
                 )}
               </CardContent>

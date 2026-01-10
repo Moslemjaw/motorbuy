@@ -10,6 +10,7 @@ import ProductList from "@/pages/ProductList";
 import ProductDetail from "@/pages/ProductDetail";
 import VendorList from "@/pages/VendorList";
 import Cart from "@/pages/Cart";
+import Checkout from "@/pages/Checkout";
 import VendorDashboard from "@/pages/VendorDashboard";
 import CustomerAccount from "@/pages/CustomerAccount";
 import OrderHistory from "@/pages/OrderHistory";
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/products/:id" component={ProductDetail} />
       <Route path="/vendors" component={VendorList} />
       <Route path="/cart" component={Cart} />
+      <Route path="/checkout" component={Checkout} />
       <Route path="/stories" component={Stories} />
       
       {/* Auth routes */}
