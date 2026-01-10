@@ -50,6 +50,11 @@ export async function registerRoutes(
   registerAuthRoutes(app);
   registerObjectStorageRoutes(app);
 
+  // Health check endpoint for keepalive pings
+  app.get("/api/health", async (_req: Request, res: Response) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   // One-time setup endpoint to seed database (no auth required for initial setup)
   app.post("/api/setup/seed", async (req: any, res) => {
     try {

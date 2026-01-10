@@ -4,6 +4,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LanguageProvider } from "@/lib/i18n";
+import { initKeepalive } from "@/lib/keepalive";
+import { useEffect } from "react";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import ProductList from "@/pages/ProductList";
@@ -72,6 +74,11 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    // Initialize keepalive service to prevent server from sleeping
+    initKeepalive();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>

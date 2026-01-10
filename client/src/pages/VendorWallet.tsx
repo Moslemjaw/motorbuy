@@ -12,12 +12,14 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { PaymentRequest } from "@shared/schema";
 import { useEffect } from "react";
+import { useLanguage } from "@/lib/i18n";
 
 export default function VendorWallet() {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { data: roleData, isLoading: isRoleLoading } = useRole();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { t, isRTL } = useLanguage();
 
   const { data: walletData, isLoading: isWalletLoading } = useQuery<{
     grossSalesKwd: string;
@@ -37,10 +39,10 @@ export default function VendorWallet() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/vendor/wallet"] });
-      toast({ title: "Payment Requested", description: "Your payment request has been submitted for review." });
+      toast({ title: t("wallet.paymentRequested"), description: t("wallet.paymentRequestedDesc") });
     },
     onError: (error: Error) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     },
   });
 
@@ -83,6 +85,15 @@ export default function VendorWallet() {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "paid": return t("wallet.status.paid");
+      case "approved": return t("wallet.status.approved");
+      case "rejected": return t("wallet.status.rejected");
+      default: return t("wallet.status.pending");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background font-body pb-20">
       <Navbar />
@@ -91,11 +102,11 @@ export default function VendorWallet() {
         <div className="container mx-auto px-4">
           <Link href="/vendor/account">
             <Button variant="ghost" size="sm" className="mb-4" data-testid="button-back">
-              <ArrowLeft className="w-4 h-4 mr-2" /> Back to Account
+              <ArrowLeft className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} /> {t("wallet.backToAccount")}
             </Button>
           </Link>
-          <h1 className="text-3xl font-display font-bold mb-2">Wallet</h1>
-          <p className="text-muted-foreground">View your earnings and request payouts.</p>
+          <h1 className="text-3xl font-display font-bold mb-2">{t("wallet.title")}</h1>
+          <p className="text-muted-foreground">{t("wallet.subtitle")}</p>
         </div>
       </div>
 
@@ -103,7 +114,7 @@ export default function VendorWallet() {
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">Available Balance</CardTitle>
+              <CardTitle className="text-sm text-muted-foreground">{t("wallet.availableBalance")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
@@ -111,18 +122,20 @@ export default function VendorWallet() {
                 <span className="text-3xl font-bold" data-testid="text-balance">{formatKWD(balance)}</span>
               </div>
               <p className="text-sm text-muted-foreground mt-2">
-                Platform fee: {commissionType === "percentage" ? `${commissionValue}%` : `${formatKWD(commissionValue)}`} per order
+                {t("wallet.platformFee")}: {commissionType === "percentage" 
+                  ? t("wallet.platformFeePercentage").replace("{value}", commissionValue)
+                  : t("wallet.platformFeeFixed").replace("{value}", formatKWD(commissionValue))}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">Request Payout</CardTitle>
+              <CardTitle className="text-sm text-muted-foreground">{t("wallet.requestPayout")}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">
-                Request a payout of your available balance. Payments are processed within 3-5 business days.
+                {t("wallet.requestPayoutDesc")}
               </p>
               <Button 
                 onClick={() => requestPaymentMutation.mutate()}
@@ -131,13 +144,13 @@ export default function VendorWallet() {
                 data-testid="button-request-payment"
               >
                 {requestPaymentMutation.isPending ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
+                  <><Loader2 className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"} animate-spin`} /> {t("wallet.processing")}</>
                 ) : (
-                  <><DollarSign className="w-4 h-4 mr-2" /> Request Payment</>
+                  <><DollarSign className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} /> {t("wallet.requestPayment")}</>
                 )}
               </Button>
               {!canRequestPayment && (
-                <p className="text-xs text-muted-foreground mt-2 text-center">No balance available for payout</p>
+                <p className="text-xs text-muted-foreground mt-2 text-center">{t("wallet.noBalance")}</p>
               )}
             </CardContent>
           </Card>
@@ -146,7 +159,7 @@ export default function VendorWallet() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" /> Payment History
+              <Clock className="w-5 h-5" /> {t("wallet.paymentHistory")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -157,7 +170,7 @@ export default function VendorWallet() {
             ) : !walletData?.paymentRequests || walletData.paymentRequests.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Wallet className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No payment requests yet</p>
+                <p>{t("wallet.noPaymentRequests")}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -177,7 +190,7 @@ export default function VendorWallet() {
                       request.status === "approved" ? "secondary" :
                       request.status === "rejected" ? "destructive" : "outline"
                     }>
-                      {request.status}
+                      {getStatusLabel(request.status)}
                     </Badge>
                   </div>
                 ))}

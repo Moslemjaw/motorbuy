@@ -1,5 +1,5 @@
-import { Navbar } from "@/components/Navbar";
 import { LoadingPage } from "@/components/LoadingPage";
+import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +45,26 @@ export default function VendorDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t, isRTL } = useLanguage();
+  const [location] = useLocation();
+  
+  // Get active tab from URL hash or default to "products"
+  const getActiveTab = () => {
+    const hash = window.location.hash.replace("#", "");
+    if (hash && ["products", "shop", "orders"].includes(hash)) {
+      return hash;
+    }
+    return "products";
+  };
+  const [activeTab, setActiveTab] = useState(getActiveTab());
+
+  // Update tab when hash changes
+  useEffect(() => {
+    const handleHashChange = () => {
+      setActiveTab(getActiveTab());
+    };
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ orderId, status }: { orderId: string, status: string }) => {
@@ -299,13 +319,15 @@ export default function VendorDashboard() {
 
   if (roleData?.role !== "vendor") {
     return (
-      <div className="min-h-screen bg-background font-body">
-        <Navbar />
-        <div className="container mx-auto px-4 py-16 text-center">
-          <Store className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-          <h1 className="text-2xl font-bold mb-2">{t("vendor.dashboard.vendorAccess")}</h1>
-          <p className="text-muted-foreground mb-6">{t("vendor.dashboard.needVendor")}</p>
-          <Button onClick={() => setLocation("/")} data-testid="button-go-home">{t("vendor.dashboard.goHome")}</Button>
+      <div className="min-h-screen bg-background font-body flex">
+        <DashboardSidebar type="vendor" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="container mx-auto px-4 py-16 text-center">
+            <Store className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+            <h1 className="text-2xl font-bold mb-2">{t("vendor.dashboard.vendorAccess")}</h1>
+            <p className="text-muted-foreground mb-6">{t("vendor.dashboard.needVendor")}</p>
+            <Button onClick={() => setLocation("/")} data-testid="button-go-home">{t("vendor.dashboard.goHome")}</Button>
+          </div>
         </div>
       </div>
     );
@@ -436,10 +458,10 @@ export default function VendorDashboard() {
   // Show profile creation form if vendor profile doesn't exist
   if (!vendorProfile && !isProfileLoading) {
     return (
-      <div className="min-h-screen bg-muted/30 font-body pb-20">
-        <Navbar />
-        
-        <div className="container mx-auto px-4 py-12 max-w-lg">
+      <div className="min-h-screen bg-muted/30 font-body flex">
+        <DashboardSidebar type="vendor" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="container mx-auto px-4 py-12 max-w-lg">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <Store className="w-8 h-8 text-primary" />
@@ -492,33 +514,34 @@ export default function VendorDashboard() {
               </Button>
             </CardContent>
           </Card>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 font-body pb-20">
-      <Navbar />
+    <div className="min-h-screen bg-muted/30 font-body flex">
+      <DashboardSidebar type="vendor" />
       
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-display font-bold">{t("vendor.dashboard.title")}</h1>
-            <p className="text-muted-foreground">{vendorProfile.storeName}</p>
-          </div>
-          <div className="flex gap-2">
-            {!vendorProfile.isApproved && (
-              <Badge variant="secondary">{t("vendor.dashboard.pendingApproval")}</Badge>
-            )}
-            <Link href="/vendor/wallet">
-              <Button variant="outline" size="sm" data-testid="button-view-wallet">
-                <Wallet className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
-                {t("vendor.dashboard.wallet")}
-              </Button>
-            </Link>
-          </div>
-        </div>
+      <div className="flex-1 flex flex-col lg:ml-0">
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto pt-16 lg:pt-0">
+          <div className="container mx-auto px-4 py-6 lg:py-8">
+            {/* Header */}
+            <div className="mb-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-display font-bold">{t("vendor.dashboard.title")}</h1>
+                  <p className="text-muted-foreground">{vendorProfile.storeName}</p>
+                </div>
+                <div className="flex gap-2">
+                  {!vendorProfile.isApproved && (
+                    <Badge variant="secondary">{t("vendor.dashboard.pendingApproval")}</Badge>
+                  )}
+                </div>
+              </div>
+            </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
@@ -690,7 +713,7 @@ export default function VendorDashboard() {
           </Card>
         </div>
 
-        <Tabs defaultValue="products" className="w-full">
+        <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value); window.location.hash = value; }} className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-6 h-auto">
             <TabsTrigger value="products" className="py-3" data-testid="tab-products">
               <Package className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
@@ -1056,7 +1079,10 @@ export default function VendorDashboard() {
             </div>
           </TabsContent>
         </Tabs>
+          </div>
+        </main>
       </div>
+    </div>
 
       {/* Edit Product Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
