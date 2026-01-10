@@ -3,7 +3,6 @@ import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole, useProducts, useCategories, useDeleteProduct } from "@/hooks/use-motorbuy";
 import { useLanguage } from "@/lib/i18n";
@@ -710,7 +709,7 @@ export default function VendorDashboard() {
         </aside>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto pb-20 lg:pb-0">
           <div className="container mx-auto px-4 py-6 lg:py-8">
             {/* Header */}
             <div className={`mb-8 ${isRTL ? "text-right" : "text-left"}`}>
@@ -894,29 +893,6 @@ export default function VendorDashboard() {
               </>
             )}
 
-            {/* Mobile Tabs */}
-            <div className="lg:hidden mb-6">
-              <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value); window.location.hash = value; }} className="w-full">
-                <TabsList className="grid w-full grid-cols-4 h-auto">
-                  <TabsTrigger value="products" className="py-3" data-testid="tab-products">
-                    <Package className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
-                    {t("vendor.dashboard.tabProducts")}
-                  </TabsTrigger>
-                  <TabsTrigger value="shop" className="py-3" data-testid="tab-shop">
-                    <Store className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
-                    {t("vendor.dashboard.tabShop")}
-                  </TabsTrigger>
-                  <TabsTrigger value="orders" className="py-3" data-testid="tab-orders">
-                    <ShoppingCart className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
-                    {t("vendor.dashboard.tabOrders")}
-                  </TabsTrigger>
-                  <TabsTrigger value="create-order" className="py-3" data-testid="tab-create-order">
-                    <Plus className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
-                    {t("vendor.dashboard.tabCreateOrder")}
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
 
             {/* Content based on active tab */}
             {activeTab === "shop" && (
@@ -1679,6 +1655,48 @@ export default function VendorDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className={`lg:hidden fixed bottom-0 left-0 right-0 bg-card border-t shadow-lg z-50 ${isRTL ? 'border-b' : ''}`}>
+        <div className="flex items-center justify-around h-16">
+          {navItems.filter(item => !item.isLink).map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.value;
+            return (
+              <button
+                key={item.value}
+                onClick={() => {
+                  setActiveTab(item.value);
+                  window.location.hash = item.value;
+                }}
+                className={`flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors ${
+                  isActive
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                }`}
+                data-testid={`mobile-nav-${item.value}`}
+              >
+                <Icon className={`w-5 h-5 ${isActive ? 'scale-110' : ''} transition-transform`} />
+                <span className="text-[10px] font-medium leading-tight">{item.label}</span>
+              </button>
+            );
+          })}
+          {navItems.filter(item => item.isLink).map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.value}
+                href={item.href}
+                className="flex flex-col items-center justify-center gap-1 flex-1 h-full text-muted-foreground transition-colors"
+                data-testid={`mobile-nav-${item.value}`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-[10px] font-medium leading-tight">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

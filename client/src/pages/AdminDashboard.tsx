@@ -1,6 +1,5 @@
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -214,7 +213,7 @@ export default function AdminDashboard() {
         </aside>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto pb-20 lg:pb-0">
           <div className="container mx-auto px-4 py-6 lg:py-8">
             {/* Header */}
             <div className={`mb-8 ${isRTL ? "text-right" : "text-left"}`}>
@@ -228,65 +227,8 @@ export default function AdminDashboard() {
 
             <TopSummaryCards />
 
-            {/* Mobile Navigation Tabs */}
-            <Tabs
-              value={activeTab}
-              onValueChange={(value) => {
-                setActiveTab(value);
-                window.location.hash = value;
-              }}
-              className="space-y-6 mt-6 lg:hidden"
-            >
-              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1 h-auto p-1">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <TabsTrigger
-                      key={item.value}
-                      value={item.value}
-                      className="gap-2 py-2"
-                      data-testid={`tab-${item.value}`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      <span className="hidden sm:inline text-xs">
-                        {item.label}
-                      </span>
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
-
-              <TabsContent value="analytics">
-                <AnalyticsSection />
-              </TabsContent>
-
-              <TabsContent value="vendors">
-                <VendorSection />
-              </TabsContent>
-
-              <TabsContent value="users">
-                <UsersSection />
-              </TabsContent>
-
-              <TabsContent value="categories">
-                <CategoriesSection />
-              </TabsContent>
-
-              <TabsContent value="ads">
-                <AdsSection />
-              </TabsContent>
-
-              <TabsContent value="orders">
-                <OrdersSection />
-              </TabsContent>
-
-              <TabsContent value="payouts">
-                <PayoutsSection />
-              </TabsContent>
-            </Tabs>
-
-            {/* Desktop Content */}
-            <div className="hidden lg:block mt-10 space-y-6">
+            {/* Content Sections */}
+            <div className="mt-6 lg:mt-10 space-y-6">
               {activeTab === "analytics" && <AnalyticsSection />}
               {activeTab === "vendors" && <VendorSection />}
               {activeTab === "users" && <UsersSection />}
@@ -298,6 +240,42 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <nav
+        className={`lg:hidden fixed bottom-0 left-0 right-0 bg-card border-t shadow-lg z-50 ${
+          isRTL ? "border-b" : ""
+        }`}
+      >
+        <div className="flex items-center justify-around h-16 overflow-x-auto scrollbar-hide">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.value;
+            return (
+              <button
+                key={item.value}
+                onClick={() => {
+                  setActiveTab(item.value);
+                  window.location.hash = item.value;
+                }}
+                className={`flex flex-col items-center justify-center gap-1 flex-1 min-w-[60px] h-full transition-colors ${
+                  isActive ? "text-primary" : "text-muted-foreground"
+                }`}
+                data-testid={`mobile-nav-${item.value}`}
+              >
+                <Icon
+                  className={`w-5 h-5 ${
+                    isActive ? "scale-110" : ""
+                  } transition-transform`}
+                />
+                <span className="text-[10px] font-medium leading-tight text-center px-1">
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

@@ -171,17 +171,16 @@ export default function Home() {
             })}
           </div>
 
-          {/* Mobile: Horizontal Scrolling Carousel (3 per row) */}
+          {/* Mobile: Horizontal Scrollable Row (All 10 categories) */}
           {categories && categories.length > 0 ? (
-            <div className="md:hidden overflow-hidden -mx-4 px-4">
-              <div className={`flex gap-3 animate-scroll-categories ${isRTL ? 'animate-scroll-categories-rtl' : ''}`}>
-                {/* Duplicate items for seamless loop */}
-                {[...categories.slice(0, 10), ...categories.slice(0, 10), ...categories.slice(0, 10)].map((cat, index) => {
+            <div className="md:hidden overflow-x-auto -mx-4 px-4 scrollbar-hide">
+              <div className="flex gap-3 min-w-max">
+                {categories.slice(0, 10).map((cat, index) => {
                   const IconComponent = cat.icon ? iconMap[cat.icon] : Wrench;
                   const translatedName = t(`cat.${cat.slug}`) !== `cat.${cat.slug}` ? t(`cat.${cat.slug}`) : cat.name;
                   return (
                     <div
-                      key={`${cat.id}-${index}`}
+                      key={cat.id}
                       className="flex-shrink-0 w-[calc((100vw-2rem-0.75rem*2)/3)]"
                     >
                       <Link href={`/products?categoryId=${cat.id}`}>
@@ -356,14 +355,13 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Mobile: Horizontal Scrolling Carousel */}
-          <div className="md:hidden overflow-hidden -mx-4 px-4">
-            <div className={`flex gap-4 animate-scroll ${isRTL ? 'animate-scroll-rtl' : ''}`}>
-              {/* Duplicate items for seamless loop */}
-              {[...features, ...features, ...features].map((item, i) => (
+          {/* Mobile: Horizontal Scrollable Row */}
+          <div className="md:hidden overflow-x-auto -mx-4 px-4 scrollbar-hide">
+            <div className="flex gap-4 min-w-max">
+              {features.map((item, i) => (
                 <div
                   key={i}
-                  className="flex-shrink-0 w-[280px] text-center px-4"
+                  className="flex-shrink-0 w-[calc(100vw-2rem)] text-center px-4"
                 >
                   <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <item.icon className="w-8 h-8 text-primary" />
