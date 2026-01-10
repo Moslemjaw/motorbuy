@@ -28,7 +28,7 @@ export interface IStorage {
   updateCartItemQuantity(id: string, quantity: number): Promise<any>;
   removeFromCart(id: string): Promise<void>;
   clearCart(userId: string): Promise<void>;
-  createOrder(userId: string, total: string, items: { productId: string; quantity: number; price: string }[], customerInfo?: { name?: string; email?: string; phone?: string; address?: string; city?: string }, paymentMethod?: string): Promise<any>;
+  createOrder(userId: string, total: string, items: { productId: string; quantity: number; price: string }[], customerInfo?: { name?: string; email?: string; phone?: string; address?: string; city?: string }, paymentMethod?: string, platformFee?: string, netAmount?: string): Promise<any>;
   createGuestOrder(guestEmail: string, guestName: string, guestPhone: string, total: string, items: { productId: string; quantity: number; price: string }[], paymentMethod?: string): Promise<any>;
   updateOrder(id: string, status: string): Promise<any>;
   getOrders(userId: string): Promise<any[]>;
@@ -55,7 +55,6 @@ function toPlainObject(doc: any): any {
   delete obj.__v;
   
   // Helper to safely convert ObjectId to string only if it's an ObjectId instance
-  // This prevents converting populated objects (which have toString) into "[object Object]"
   const safeIdToString = (val: any) => {
     if (val && val instanceof mongoose.Types.ObjectId) {
       return val.toString();
@@ -313,8 +312,6 @@ export class MongoStorage implements IStorage {
             // Check if productId was populated (it's an object) or if it's still an ID
             if (obj.productId) {
               // If it's a valid ObjectId (instance or string), it wasn't populated properly
-              // Note: toPlainObject might convert ObjectId instance to string if configured, 
-              // but here we check if it's NOT a populated object.
               const isId = obj.productId instanceof mongoose.Types.ObjectId || 
                            (typeof obj.productId === 'string') ||
                            mongoose.Types.ObjectId.isValid(obj.productId);
@@ -431,13 +428,18 @@ export class MongoStorage implements IStorage {
     total: string, 
     items: { productId: string; quantity: number; price: string }[],
     customerInfo?: { name?: string; email?: string; phone?: string; address?: string; city?: string },
-    paymentMethod: string = "cod"
+    paymentMethod: string = "pay-in-store",
+    platformFee: string = "0",
+    netAmount: string = "0"
   ): Promise<any> {
     const orderData: any = {
       userId,
       total,
       status: "pending", 
-      paymentMethod
+      paymentMethod,
+      platformFee,
+      netAmount,
+      paymentStatus: paymentMethod === "pay-in-store" ? "pending" : "paid" // Simple assumption for now
     };
     
     // Add customer information if provided
@@ -451,8 +453,6 @@ export class MongoStorage implements IStorage {
     
     const order = await Order.create(orderData);
 
-    const vendorEarnings: Record<string, number> = {};
-
     for (const item of items) {
       await OrderItem.create({
         orderId: order._id,
@@ -460,47 +460,12 @@ export class MongoStorage implements IStorage {
         quantity: item.quantity,
         price: item.price
       });
-
-      const product = await Product.findById(item.productId);
-      if (product) {
-        const vendorIdStr = product.vendorId.toString();
-        const lineTotal = parseFloat(item.price) * item.quantity;
-        
-        if (!vendorEarnings[vendorIdStr]) {
-          vendorEarnings[vendorIdStr] = 0;
-        }
-        vendorEarnings[vendorIdStr] += lineTotal;
-      }
-    }
-
-    for (const [vendorId, grossAmount] of Object.entries(vendorEarnings)) {
-      const vendor = await Vendor.findById(vendorId);
-      if (vendor) {
-        const commissionType = vendor.commissionType || "percentage";
-        const commissionValue = parseFloat(vendor.commissionValue || "5");
-        
-        let commission = 0;
-        if (commissionType === "percentage") {
-          commission = grossAmount * (commissionValue / 100);
-        } else {
-          commission = commissionValue;
-        }
-        
-        const netEarning = Math.max(0, grossAmount - commission);
-        const newGross = parseFloat(vendor.grossSalesKwd || "0") + grossAmount;
-        const newPending = parseFloat(vendor.pendingPayoutKwd || "0") + netEarning;
-
-        await Vendor.findByIdAndUpdate(vendorId, {
-          grossSalesKwd: newGross.toFixed(3),
-          pendingPayoutKwd: newPending.toFixed(3),
-        });
-      }
     }
 
     return toPlainObject(order);
   }
 
-  async createGuestOrder(guestEmail: string, guestName: string, guestPhone: string, total: string, items: { productId: string; quantity: number; price: string }[], paymentMethod: string = "cod"): Promise<any> {
+  async createGuestOrder(guestEmail: string, guestName: string, guestPhone: string, total: string, items: { productId: string; quantity: number; price: string }[], paymentMethod: string = "pay-in-store"): Promise<any> {
     const order = await Order.create({
       userId: `guest:${guestEmail}`,
       guestEmail,
@@ -508,10 +473,9 @@ export class MongoStorage implements IStorage {
       guestPhone,
       total,
       status: "pending",
-      paymentMethod
+      paymentMethod,
+      paymentStatus: paymentMethod === "pay-in-store" ? "pending" : "paid"
     });
-
-    const vendorEarnings: Record<string, number> = {};
 
     for (const item of items) {
       await OrderItem.create({
@@ -520,41 +484,6 @@ export class MongoStorage implements IStorage {
         quantity: item.quantity,
         price: item.price
       });
-
-      const product = await Product.findById(item.productId);
-      if (product) {
-        const vendorIdStr = product.vendorId.toString();
-        const lineTotal = parseFloat(item.price) * item.quantity;
-        
-        if (!vendorEarnings[vendorIdStr]) {
-          vendorEarnings[vendorIdStr] = 0;
-        }
-        vendorEarnings[vendorIdStr] += lineTotal;
-      }
-    }
-
-    for (const [vendorId, grossAmount] of Object.entries(vendorEarnings)) {
-      const vendor = await Vendor.findById(vendorId);
-      if (vendor) {
-        const commissionType = vendor.commissionType || "percentage";
-        const commissionValue = parseFloat(vendor.commissionValue || "5");
-        
-        let commission = 0;
-        if (commissionType === "percentage") {
-          commission = grossAmount * (commissionValue / 100);
-        } else {
-          commission = commissionValue;
-        }
-        
-        const netEarning = Math.max(0, grossAmount - commission);
-        const newGross = parseFloat(vendor.grossSalesKwd || "0") + grossAmount;
-        const newPending = parseFloat(vendor.pendingPayoutKwd || "0") + netEarning;
-
-        await Vendor.findByIdAndUpdate(vendorId, {
-          grossSalesKwd: newGross.toFixed(3),
-          pendingPayoutKwd: newPending.toFixed(3),
-        });
-      }
     }
 
     return toPlainObject(order);

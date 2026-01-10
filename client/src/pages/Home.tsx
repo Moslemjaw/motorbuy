@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n";
-import { ArrowRight, ChevronRight, ChevronLeft, Package, Users, ShoppingCart, Wrench, Battery, Disc, Zap, Cog, AlertTriangle, ShieldCheck, Truck, Clock, CreditCard } from "lucide-react";
+import { ArrowRight, ChevronRight, ChevronLeft, Package, Users, ShoppingCart, Wrench, Battery, Disc, Zap, Cog, AlertTriangle, ShieldCheck, Truck, Clock, CreditCard, Settings, CircleStop, Gauge, Thermometer, Fuel, Wind, Car, Armchair, Circle, Lightbulb, Droplets } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useProducts, useCategories, useVendors } from "@/hooks/use-motorbuy";
@@ -90,9 +90,23 @@ export default function Home() {
   ];
   
   const iconMap: any = {
+    "Cog": Cog,
+    "Settings": Settings,
+    "CircleStop": CircleStop,
+    "Gauge": Gauge,
+    "Zap": Zap,
+    "Thermometer": Thermometer,
+    "Fuel": Fuel,
+    "Wind": Wind,
+    "Car": Car,
+    "Armchair": Armchair,
+    "Circle": Circle,
+    "Lightbulb": Lightbulb,
+    "Droplets": Droplets,
+    // Fallbacks or legacy
     "engine": Cog,
-    "brakes": Disc,
-    "suspension": AlertTriangle,
+    "brakes": CircleStop,
+    "suspension": Gauge,
     "electrical": Zap,
     "batteries": Battery,
     "filters": Package,
@@ -102,63 +116,109 @@ export default function Home() {
     <div className="min-h-screen bg-background font-body">
       <Navbar />
 
-      <section className="relative overflow-hidden bg-background pt-8 md:pt-12 pb-12 md:pb-20">
-        <div className="container relative z-10 px-4 mx-auto">
-          <div className={`max-w-3xl mx-auto md:mx-0 text-center ${isRTL ? 'md:text-right' : 'md:text-left'}`}>
-            <motion.h1 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight text-foreground ${isRTL ? 'leading-normal mb-6' : 'leading-tight mb-6'}`}
-            >
-              {t("hero.title")} <span className="text-primary block mt-2">{t("hero.title.highlight")}</span>
-            </motion.h1>
-            
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className={`text-lg md:text-xl text-muted-foreground mb-8 max-w-xl mx-auto md:mx-0 ${isRTL ? 'leading-relaxed' : 'leading-relaxed'}`}
-            >
-              {t("hero.subtitle")}
-            </motion.p>
-            
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="flex flex-wrap gap-4 justify-center md:justify-start"
-            >
-              <Link href="/products">
-                <Button size="lg" className="rounded-full px-8 h-12 text-base font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all" data-testid="button-shop-parts">
-                  {t("hero.shopParts")} <ArrowRight className={`w-4 h-4 ${isRTL ? 'mr-2 rotate-180' : 'ml-2'}`} />
-                </Button>
-              </Link>
-              <Link href="/vendors">
-                <Button size="lg" variant="outline" className="rounded-full px-8 h-12 text-base font-semibold border-input bg-background hover:bg-accent hover:text-accent-foreground" data-testid="button-browse-vendors">
-                  {t("hero.browseVendors")}
-                </Button>
-              </Link>
-            </motion.div>
+      <section className="relative overflow-hidden bg-background pt-16 md:pt-20 pb-16 md:pb-24">
+        {/* Background blobs for visual interest */}
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl opacity-50 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-3xl opacity-50 pointer-events-none" />
 
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex flex-wrap gap-8 md:gap-16 mt-12 pt-8 border-t border-border justify-center md:justify-start"
-            >
-              {stats.map((stat, i) => (
-                <div key={i} className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                    <stat.icon className="w-7 h-7" />
-                  </div>
-                  <div className={`text-${isRTL ? 'right' : 'left'}`}>
-                    <div className="text-3xl font-bold font-display text-foreground">{stat.value}+</div>
-                    <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">{stat.label}</div>
-                  </div>
+        <div className="container relative z-10 px-4 mx-auto">
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+            {/* Text Content */}
+            <div className={`flex-1 text-center ${isRTL ? 'lg:text-right' : 'lg:text-left'}`}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className={`inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary/10 text-primary hover:bg-primary/20 mb-6 ${isRTL ? 'ml-auto' : 'mr-auto'}`}>
+                  <span className="flex h-2 w-2 rounded-full bg-primary mr-2"></span>
+                  {t("hero.badge")}
                 </div>
-              ))}
-            </motion.div>
+                
+                <h1 className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight text-foreground ${isRTL ? 'leading-tight' : 'leading-tight'} mb-6`}>
+                  {t("hero.title")} <span className="text-primary">{t("hero.title.highlight")}</span>
+                </h1>
+                
+                <p className={`text-lg md:text-xl text-muted-foreground mb-8 max-w-xl mx-auto ${isRTL ? 'lg:mr-0' : 'lg:ml-0'} leading-relaxed`}>
+                  {t("hero.subtitle")}
+                </p>
+                
+                <div className={`flex flex-wrap gap-4 justify-center ${isRTL ? 'lg:justify-end' : 'lg:justify-start'}`}>
+                  <Link href="/products">
+                    <Button size="lg" className="rounded-full px-8 h-12 text-base font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all" data-testid="button-shop-parts">
+                      {t("hero.shopParts")} <ArrowRight className={`w-4 h-4 ${isRTL ? 'mr-2 rotate-180' : 'ml-2'}`} />
+                    </Button>
+                  </Link>
+                  <Link href="/vendors">
+                    <Button size="lg" variant="outline" className="rounded-full px-8 h-12 text-base font-semibold border-input bg-background hover:bg-accent hover:text-accent-foreground" data-testid="button-browse-vendors">
+                      {t("hero.browseVendors")}
+                    </Button>
+                  </Link>
+                </div>
+
+                {/* Stats Row */}
+                <div className={`flex flex-wrap gap-8 md:gap-12 mt-12 pt-8 border-t border-border/50 justify-center ${isRTL ? 'lg:justify-end' : 'lg:justify-start'}`}>
+                  {stats.map((stat, i) => (
+                    <div key={i} className="text-center lg:text-left">
+                      <div className="text-3xl font-bold font-display text-foreground">{stat.value}+</div>
+                      <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mt-1">{stat.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Hero Image */}
+            <div className="flex-1 w-full max-w-xl lg:max-w-none">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.7, delay: 0.2 }}
+                className="relative"
+              >
+                <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/10 aspect-square lg:aspect-[4/3]">
+                   <img 
+                    src={carEngineImage} 
+                    alt="Car Engine" 
+                    className="w-full h-full object-cover"
+                   />
+                   {/* Overlay gradient */}
+                   <div className="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent pointer-events-none" />
+                </div>
+                
+                {/* Floating Badge 1 */}
+                <motion.div 
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5, duration: 0.5 }}
+                  className={`absolute -bottom-6 ${isRTL ? '-right-6 md:-right-8' : '-left-6 md:-left-8'} md:bottom-8 bg-card p-4 rounded-2xl shadow-xl border flex items-center gap-4 z-20 max-w-[200px]`}
+                >
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div className={isRTL ? "text-right" : "text-left"}>
+                    <div className="font-bold text-sm">{t("feature.quality")}</div>
+                    <div className="text-xs text-muted-foreground">{t("hero.badge.quality")}</div>
+                  </div>
+                </motion.div>
+
+                 {/* Floating Badge 2 */}
+                 <motion.div 
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.7, duration: 0.5 }}
+                  className={`absolute -top-6 ${isRTL ? '-left-6 md:-left-8' : '-right-6 md:-right-8'} md:top-8 bg-card p-4 rounded-2xl shadow-xl border flex items-center gap-4 z-20 max-w-[200px]`}
+                >
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+                    <Truck className="w-5 h-5" />
+                  </div>
+                  <div className={isRTL ? "text-right" : "text-left"}>
+                    <div className="font-bold text-sm">{t("feature.delivery")}</div>
+                    <div className="text-xs text-muted-foreground">{t("hero.badge.delivery")}</div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            </div>
           </div>
         </div>
       </section>
@@ -245,7 +305,7 @@ export default function Home() {
 
           {/* Desktop: Grid Layout */}
           <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-            {categories?.map((cat, index) => {
+            {categories?.slice(0, 10).map((cat, index) => {
               const IconComponent = cat.icon ? iconMap[cat.icon] : Wrench;
               const translatedName = t(`cat.${cat.slug}`) !== `cat.${cat.slug}` ? t(`cat.${cat.slug}`) : cat.name;
               return (

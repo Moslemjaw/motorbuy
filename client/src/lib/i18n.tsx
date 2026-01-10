@@ -30,6 +30,9 @@ const en: Translations = {
   "hero.subtitle": "Connect with trusted vendors, discover quality parts, and build your dream machine. All in one marketplace.",
   "hero.shopParts": "Shop Parts",
   "hero.browseVendors": "Browse Vendors",
+  "hero.badge": "The #1 Marketplace for Auto Parts",
+  "hero.badge.quality": "Guaranteed",
+  "hero.badge.delivery": "Fast & Secure",
   
   // Stats
   "stats.products": "Products",
@@ -712,6 +715,9 @@ const ar: Translations = {
   "hero.subtitle": "تواصل مع موردين موثوقين، اكتشف قطع غيار عالية الجودة، وابني سيارة أحلامك. كل ذلك في سوق واحد.",
   "hero.shopParts": "تسوق القطع",
   "hero.browseVendors": "تصفح الموردين",
+  "hero.badge": "سوق قطع غيار السيارات الأول",
+  "hero.badge.quality": "مضمونة",
+  "hero.badge.delivery": "سريع وآمن",
   
   // Stats
   "stats.products": "المنتجات",

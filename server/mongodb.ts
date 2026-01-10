@@ -40,8 +40,10 @@ const vendorSchema = new mongoose.Schema({
   isApproved: { type: Boolean, default: false },
   commissionType: { type: String, enum: ["percentage", "fixed"], default: "percentage" },
   commissionValue: { type: String, default: "5" },
+  commissionRate: { type: String, default: "0.10" }, // New: Default 10%
   grossSalesKwd: { type: String, default: "0" },
-  pendingPayoutKwd: { type: String, default: "0" },
+  pendingPayoutKwd: { type: String, default: "0" }, // Legacy: Consider migrating to walletBalanceKwd
+  walletBalanceKwd: { type: String, default: "0" }, // New: Tracks net balance (positive = owed to vendor, negative = owed to platform)
   lifetimePayoutsKwd: { type: String, default: "0" },
   createdAt: { type: Date, default: Date.now },
 });
@@ -78,7 +80,10 @@ const orderSchema = new mongoose.Schema({
   customerPhone: { type: String },
   customerAddress: { type: String },
   customerCity: { type: String },
-  paymentMethod: { type: String, enum: ["cod", "online"], default: "cod" },
+  paymentMethod: { type: String, enum: ["cod", "online", "pay-in-store", "gateway"], default: "pay-in-store" }, // Updated enums
+  paymentStatus: { type: String, enum: ["pending", "paid", "failed"], default: "pending" }, // New
+  platformFee: { type: String, default: "0" }, // New
+  netAmount: { type: String, default: "0" }, // New: Vendor earnings for this order
   total: { type: String, required: true },
   status: { type: String, enum: ["pending", "paid", "shipped", "delivered", "cancelled"], default: "pending" },
   createdAt: { type: Date, default: Date.now },

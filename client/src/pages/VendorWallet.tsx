@@ -24,6 +24,7 @@ export default function VendorWallet() {
   const { data: walletData, isLoading: isWalletLoading } = useQuery<{
     grossSalesKwd: string;
     pendingPayoutKwd: string;
+    walletBalanceKwd: string; // New
     lifetimePayoutsKwd: string;
     commissionType: "percentage" | "fixed";
     commissionValue: string;
@@ -71,10 +72,13 @@ export default function VendorWallet() {
     );
   }
 
-  const balance = walletData?.pendingPayoutKwd || "0";
+  // Use walletBalanceKwd if available, fallback to pendingPayoutKwd
+  const balance = walletData?.walletBalanceKwd || walletData?.pendingPayoutKwd || "0";
+  const numBalance = parseFloat(balance);
   const commissionType = walletData?.commissionType || "percentage";
   const commissionValue = walletData?.commissionValue || "5";
-  const canRequestPayment = parseFloat(balance) > 0;
+  const canRequestPayment = numBalance > 0;
+  const isNegative = numBalance < 0;
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -100,7 +104,7 @@ export default function VendorWallet() {
       
       <div className="bg-primary/10 py-12 mb-8 border-b border-primary/20">
         <div className="container mx-auto px-4">
-          <Link href="/vendor/account">
+          <Link href="/vendor/dashboard#wallet">
             <Button variant="ghost" size="sm" className="mb-4" data-testid="button-back">
               <ArrowLeft className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} /> {t("wallet.backToAccount")}
             </Button>
@@ -114,12 +118,16 @@ export default function VendorWallet() {
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">{t("wallet.availableBalance")}</CardTitle>
+              <CardTitle className="text-sm text-muted-foreground">
+                {isNegative ? "Outstanding Balance (Owed to MotorBuy)" : t("wallet.availableBalance")}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <Wallet className="w-8 h-8 text-primary" />
-                <span className="text-3xl font-bold" data-testid="text-balance">{formatKWD(balance)}</span>
+                <Wallet className={`w-8 h-8 ${isNegative ? "text-destructive" : "text-primary"}`} />
+                <span className={`text-3xl font-bold ${isNegative ? "text-destructive" : ""}`} data-testid="text-balance">
+                  {formatKWD(Math.abs(numBalance))}
+                </span>
               </div>
               <p className="text-sm text-muted-foreground mt-2">
                 {t("wallet.platformFee")}: {commissionType === "percentage" 
@@ -135,7 +143,9 @@ export default function VendorWallet() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">
-                {t("wallet.requestPayoutDesc")}
+                {isNegative 
+                  ? "Orders paid in store reduce your balance. Online orders will increase it."
+                  : t("wallet.requestPayoutDesc")}
               </p>
               <Button 
                 onClick={() => requestPaymentMutation.mutate()}
@@ -149,7 +159,7 @@ export default function VendorWallet() {
                   <><DollarSign className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} /> {t("wallet.requestPayment")}</>
                 )}
               </Button>
-              {!canRequestPayment && (
+              {!canRequestPayment && !isNegative && (
                 <p className="text-xs text-muted-foreground mt-2 text-center">{t("wallet.noBalance")}</p>
               )}
             </CardContent>

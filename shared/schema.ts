@@ -45,8 +45,10 @@ export interface Vendor {
   isApproved: boolean;
   commissionType: "percentage" | "fixed";
   commissionValue: string;
+  commissionRate: string;
   grossSalesKwd: string;
   pendingPayoutKwd: string;
+  walletBalanceKwd: string;
   lifetimePayoutsKwd: string;
   createdAt?: Date | null;
 }
@@ -79,6 +81,10 @@ export interface Order {
   userId: string;
   total: string;
   status: "pending" | "paid" | "shipped" | "delivered" | "cancelled";
+  paymentMethod: "pay-in-store" | "gateway" | "cod" | "online";
+  paymentStatus: "pending" | "paid" | "failed";
+  platformFee: string;
+  netAmount: string;
   createdAt?: Date | null;
 }
 

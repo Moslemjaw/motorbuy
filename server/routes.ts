@@ -144,16 +144,10 @@ export async function registerRoutes(
 
   app.get(api.roles.get.path, isAuthenticated, async (req: any, res) => {
     try {
-      console.log("Role endpoint - Session ID:", req.sessionID);
-      console.log("Role endpoint - Session userId:", req.session.userId);
-      console.log("Role endpoint - Session exists:", !!req.session);
-
       if (!req.session || !req.session.userId) {
-        console.log("Role endpoint - No session or userId");
         return res.status(401).json({ message: "Not authenticated" });
       }
       const role = await storage.getUserRole(req.session.userId);
-      console.log("Role endpoint - userId:", req.session.userId, "role:", role);
       res.json({ role: role || "customer" });
     } catch (error) {
       console.error("Error fetching role:", error);
@@ -820,6 +814,32 @@ export async function registerRoutes(
         }
       }
 
+      // Get vendor commission rate (default 10% if not set)
+      const commissionRate = parseFloat(vendor.commissionRate || "0.10");
+      const orderTotal = parseFloat(total);
+      const commission = orderTotal * commissionRate;
+      const netAmount = orderTotal - commission;
+
+      // Update Vendor Balance Logic
+      // 1. Pay in Store: Vendor got full cash. They owe us commission. Balance decreases.
+      // 2. Gateway: We got full cash. We owe them net amount. Balance increases.
+      
+      const currentBalance = parseFloat(vendor.walletBalanceKwd || "0");
+      let newBalance = currentBalance;
+
+      if (paymentMethod === "pay-in-store") {
+        newBalance -= commission;
+      } else if (paymentMethod === "gateway") {
+        newBalance += netAmount;
+      }
+
+      // Update vendor wallet balance
+      await storage.updateVendor(vendor.id, {
+        walletBalanceKwd: newBalance.toFixed(3),
+        // Also update gross sales
+        grossSalesKwd: (parseFloat(vendor.grossSalesKwd || "0") + orderTotal).toFixed(3)
+      });
+
       // Create order
       const order = await storage.createOrder(
         req.session.userId,
@@ -829,7 +849,9 @@ export async function registerRoutes(
           name: customerName,
           phone: customerPhone,
         },
-        paymentMethod || "pay-in-store"
+        paymentMethod || "pay-in-store",
+        commission.toFixed(3),
+        netAmount.toFixed(3)
       );
 
       let qrCodeUrl = null;
@@ -845,6 +867,8 @@ export async function registerRoutes(
             customerName,
             customerPhone,
             timestamp: new Date().toISOString(),
+            // Mock payment link for now
+            link: `https://motorbuy.com/pay/${order.id}` 
           };
 
           // Generate QR code as data URL
@@ -862,6 +886,9 @@ export async function registerRoutes(
       res.status(201).json({
         ...order,
         qrCodeUrl,
+        commission: commission.toFixed(3),
+        netAmount: netAmount.toFixed(3),
+        updatedBalance: newBalance.toFixed(3)
       });
     } catch (e: any) {
       console.error("Error creating vendor order:", e);
@@ -985,7 +1012,7 @@ export async function registerRoutes(
         totalOrders: orders.length,
         totalRevenue: totalRevenue.toFixed(3),
         pendingOrders,
-        pendingPayoutKwd: vendor.pendingPayoutKwd || "0",
+        pendingPayoutKwd: vendor.walletBalanceKwd || vendor.pendingPayoutKwd || "0", // Use new wallet balance
         grossSalesKwd: vendor.grossSalesKwd || "0",
       });
     } catch (e) {
@@ -1181,6 +1208,50 @@ export async function registerRoutes(
 
       const paymentMethod = req.body.paymentMethod || "pay-in-store";
 
+      // Commission Logic
+      // Group items by vendor to handle commission updates per vendor
+      const itemsByVendor: Record<string, typeof items> = {};
+      const vendorTotals: Record<string, number> = {};
+
+      for (const item of items) {
+        const product = await storage.getProduct(item.productId);
+        if (product) {
+          if (!itemsByVendor[product.vendorId]) {
+            itemsByVendor[product.vendorId] = [];
+            vendorTotals[product.vendorId] = 0;
+          }
+          itemsByVendor[product.vendorId].push(item);
+          vendorTotals[product.vendorId] += parseFloat(item.price) * item.quantity;
+        }
+      }
+
+      // Update each vendor's balance
+      for (const vendorId of Object.keys(vendorTotals)) {
+        const vendor = await storage.getVendor(vendorId);
+        if (vendor) {
+          const vTotal = vendorTotals[vendorId];
+          const commissionRate = parseFloat(vendor.commissionRate || "0.10");
+          const commission = vTotal * commissionRate;
+          const netAmount = vTotal - commission;
+
+          let currentBalance = parseFloat(vendor.walletBalanceKwd || "0");
+          let newBalance = currentBalance;
+
+          if (paymentMethod === "pay-in-store") {
+            // Vendor got cash, they owe us commission
+            newBalance -= commission;
+          } else if (paymentMethod === "gateway" || paymentMethod === "online") {
+            // We got cash (gateway), we owe them net amount
+            newBalance += netAmount;
+          }
+
+          await storage.updateVendor(vendorId, {
+            walletBalanceKwd: newBalance.toFixed(3),
+            grossSalesKwd: (parseFloat(vendor.grossSalesKwd || "0") + vTotal).toFixed(3)
+          });
+        }
+      }
+
       const order = await storage.createOrder(
         req.session.userId,
         total.toFixed(3),
@@ -1214,6 +1285,9 @@ export async function registerRoutes(
       // Validate items and get prices from database (never trust client prices)
       let total = 0;
       const orderItems = [];
+      const itemsByVendor: Record<string, { productId: string, quantity: number, price: string }[]> = {};
+      const vendorTotals: Record<string, number> = {};
+
       for (const item of items) {
         const product = await storage.getProduct(item.productId);
         if (!product) {
@@ -1223,11 +1297,49 @@ export async function registerRoutes(
         }
         const price = parseFloat(product.price);
         total += price * item.quantity;
-        orderItems.push({
+        const orderItem = {
           productId: item.productId,
           quantity: item.quantity,
-          price: product.price, // Use database price, not client-provided price
-        });
+          price: product.price,
+        };
+        orderItems.push(orderItem);
+
+        // Group for commission calculation
+        if (!itemsByVendor[product.vendorId.toString()]) {
+          itemsByVendor[product.vendorId.toString()] = [];
+          vendorTotals[product.vendorId.toString()] = 0;
+        }
+        itemsByVendor[product.vendorId.toString()].push(orderItem);
+        vendorTotals[product.vendorId.toString()] += price * item.quantity;
+      }
+
+      // Assuming Guest checkout is Pay in Store for now or Gateway logic similar to auth
+      // For now, let's treat guest as "pay-in-store" unless specified
+      const paymentMethod = req.body.paymentMethod || "pay-in-store";
+
+      // Update vendor balances
+      for (const vendorId of Object.keys(vendorTotals)) {
+        const vendor = await storage.getVendor(vendorId);
+        if (vendor) {
+          const vTotal = vendorTotals[vendorId];
+          const commissionRate = parseFloat(vendor.commissionRate || "0.10");
+          const commission = vTotal * commissionRate;
+          const netAmount = vTotal - commission;
+
+          let currentBalance = parseFloat(vendor.walletBalanceKwd || "0");
+          let newBalance = currentBalance;
+
+          if (paymentMethod === "pay-in-store") {
+            newBalance -= commission;
+          } else if (paymentMethod === "gateway" || paymentMethod === "online") {
+            newBalance += netAmount;
+          }
+
+          await storage.updateVendor(vendorId, {
+            walletBalanceKwd: newBalance.toFixed(3),
+            grossSalesKwd: (parseFloat(vendor.grossSalesKwd || "0") + vTotal).toFixed(3)
+          });
+        }
       }
 
       const order = await storage.createGuestOrder(
@@ -1277,9 +1389,6 @@ export async function registerRoutes(
         if (!status) {
           return res.status(400).json({ message: "Status is required" });
         }
-
-        // If vendor, check if order contains their products (optional but good for security)
-        // For now, assuming vendors can update status of orders they see in their dashboard
 
         const updated = await storage.updateOrder(req.params.id, status);
         res.json(updated);

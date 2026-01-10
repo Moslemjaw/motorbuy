@@ -722,22 +722,22 @@ export default function VendorDashboard() {
             {/* Header */}
             <div className={`mb-4 ${isRTL ? "text-right" : "text-left"}`}>
               <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <div>
+          <div>
                   <h1 className="text-2xl md:text-3xl font-display font-bold mb-1">
                     {activeTab === "overview" ? t("vendor.dashboard.title") : navItems.find(i => i.value === activeTab)?.label}
                   </h1>
                   {activeTab === "overview" && (
                     <p className="text-muted-foreground text-sm md:text-base">{vendorProfile?.storeName || ""}</p>
                   )}
-                </div>
+          </div>
                 {activeTab === "products" && (
                   <Button onClick={() => setIsCreateProductDialogOpen(true)} className="gap-2">
                     <Plus className="w-4 h-4" />
                     {t("vendor.dashboard.addNewProduct")}
-                  </Button>
+              </Button>
                 )}
-              </div>
-            </div>
+          </div>
+        </div>
 
             {/* Overview Section */}
             {activeTab === "overview" && (
@@ -974,7 +974,7 @@ export default function VendorDashboard() {
                     {isStoriesLoading ? (
                       <div className="flex justify-center py-8">
                         <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                      </div>
+                    </div>
                     ) : myStories.length === 0 ? (
                       <div className="text-center py-12 text-muted-foreground">
                         <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-30" />
@@ -1043,11 +1043,11 @@ export default function VendorDashboard() {
                             ))}
                           </TableBody>
                         </Table>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
             )}
 
             {/* Old Shop Section - Remove */}
@@ -1199,18 +1199,18 @@ export default function VendorDashboard() {
                 <Card className="border shadow-sm">
                   <CardHeader>
                     <CardTitle className="text-xl font-semibold">{t("vendor.dashboard.recentOrders")}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {isOrdersLoading ? (
-                      <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>
-                    ) : !vendorOrders || vendorOrders.length === 0 ? (
-                      <div className="text-center py-12 text-muted-foreground">
-                        <ShoppingCart className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              </CardHeader>
+              <CardContent>
+                {isOrdersLoading ? (
+                  <div className="flex justify-center py-8"><Loader2 className="animate-spin" /></div>
+                ) : !vendorOrders || vendorOrders.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <ShoppingCart className="w-12 h-12 mx-auto mb-3 opacity-30" />
                         <p className="font-medium">{t("vendor.dashboard.noOrders")}</p>
                         <p className="text-sm mt-1">{t("vendor.dashboard.ordersWillAppear")}</p>
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto">
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
                         <Table>
                           <TableHeader>
                             <TableRow>
@@ -1230,7 +1230,7 @@ export default function VendorDashboard() {
                                 <TableCell>
                                   <div className="font-mono text-sm">#{String(order.id).slice(-8)}</div>
                                   <div className="text-xs text-muted-foreground">
-                                    {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
+                              {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
                                   </div>
                                 </TableCell>
                                 <TableCell>
@@ -1271,13 +1271,13 @@ export default function VendorDashboard() {
                                   </Select>
                                 </TableCell>
                               </TableRow>
-                            ))}
+                        ))}
                           </TableBody>
                         </Table>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
               </div>
             )}
 
@@ -1574,7 +1574,7 @@ export default function VendorDashboard() {
             {/* Old Products Section - Remove this */}
             {false && activeTab === "products-old" && (
               <div>
-                <div className="grid lg:grid-cols-2 gap-6">
+            <div className="grid lg:grid-cols-2 gap-6">
               <Card className="border shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-xl font-semibold">
@@ -1693,7 +1693,7 @@ export default function VendorDashboard() {
                 </CardContent>
               </Card>
             </div>
-              </div>
+      </div>
             )}
           </div>
         </div>
