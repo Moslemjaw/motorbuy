@@ -51,18 +51,19 @@ function toPlainObject(doc: any): any {
   }
   delete obj.__v;
   
-  if (obj.vendorId && obj.vendorId.toString) {
-    obj.vendorId = obj.vendorId.toString();
-  }
-  if (obj.categoryId && obj.categoryId.toString) {
-    obj.categoryId = obj.categoryId.toString();
-  }
-  if (obj.productId && obj.productId.toString) {
-    obj.productId = obj.productId.toString();
-  }
-  if (obj.orderId && obj.orderId.toString) {
-    obj.orderId = obj.orderId.toString();
-  }
+  // Helper to safely convert ObjectId to string only if it's an ObjectId instance
+  // This prevents converting populated objects (which have toString) into "[object Object]"
+  const safeIdToString = (val: any) => {
+    if (val && val instanceof mongoose.Types.ObjectId) {
+      return val.toString();
+    }
+    return val;
+  };
+  
+  if (obj.vendorId) obj.vendorId = safeIdToString(obj.vendorId);
+  if (obj.categoryId) obj.categoryId = safeIdToString(obj.categoryId);
+  if (obj.productId) obj.productId = safeIdToString(obj.productId);
+  if (obj.orderId) obj.orderId = safeIdToString(obj.orderId);
   
   return obj;
 }
@@ -300,28 +301,54 @@ export class MongoStorage implements IStorage {
   }
 
   async getCartItems(userId: string): Promise<any[]> {
-    const items = await CartItem.find({ userId }).populate('productId');
-    return items
-      .map(item => {
-        const obj = toPlainObject(item);
-        // Check if productId was populated (it's an object) or if it's still an ID
-        if (obj.productId) {
-          if (typeof obj.productId === 'object' && obj.productId !== null) {
-            // Product was populated successfully
-            obj.product = toPlainObject(obj.productId);
-            delete obj.productId;
-          } else if (typeof obj.productId === 'string') {
-            // Product wasn't populated, try to fetch it
-            // This shouldn't happen with proper populate, but handle it
+    try {
+      const items = await CartItem.find({ userId }).populate('productId');
+      return items
+        .map(item => {
+          try {
+            const obj = toPlainObject(item);
+            // Check if productId was populated (it's an object) or if it's still an ID
+            if (obj.productId) {
+              // If it's a valid ObjectId (instance or string), it wasn't populated properly
+              // Note: toPlainObject might convert ObjectId instance to string if configured, 
+              // but here we check if it's NOT a populated object.
+              const isId = obj.productId instanceof mongoose.Types.ObjectId || 
+                           (typeof obj.productId === 'string') ||
+                           mongoose.Types.ObjectId.isValid(obj.productId);
+
+              // If it is an object and NOT just an ID, it is populated
+              if (typeof obj.productId === 'object' && obj.productId !== null && !isId) {
+                // Product was populated successfully
+                obj.product = toPlainObject(obj.productId);
+                delete obj.productId;
+              } else {
+                // Product wasn't populated or is just an ID
+                // This means product might be deleted or populate failed
+                return null;
+              }
+            } else {
+              // Product doesn't exist (was deleted)
+              return null;
+            }
+            
+            // Ensure product ID is properly set in the product object
+            if (obj.product) {
+               if (!obj.product.id && obj.product._id) {
+                 obj.product.id = obj.product._id.toString();
+               }
+            }
+            
+            return obj;
+          } catch (err) {
+            console.error("Error processing cart item:", err);
             return null;
           }
-        } else {
-          // Product doesn't exist (was deleted)
-          return null;
-        }
-        return obj;
-      })
-      .filter(item => item !== null && item.product !== null && item.product !== undefined);
+        })
+        .filter(item => item !== null && item.product);
+    } catch (e) {
+      console.error("Critical error in getCartItems:", e);
+      throw e;
+    }
   }
 
   async addToCart(item: any): Promise<any> {
