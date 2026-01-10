@@ -309,6 +309,43 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/sales-chart", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "admin")
+        return res.status(403).json({ message: "Forbidden" });
+      
+      const range = (req.query.range as "day" | "month" | "year") || "month";
+      const vendorId = req.query.vendorId as string | undefined;
+      
+      const data = await storage.getSalesChartData(range, vendorId);
+      res.json({ data });
+    } catch (e) {
+      console.error("Error fetching sales chart:", e);
+      res.status(500).json({ message: "Failed to fetch sales chart data" });
+    }
+  });
+
+  app.get("/api/vendor/sales-chart", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "vendor")
+        return res.status(403).json({ message: "Forbidden" });
+      
+      const vendor = await storage.getVendorByUserId(req.session.userId);
+      if (!vendor)
+        return res.status(404).json({ message: "Vendor not found" });
+      
+      const range = (req.query.range as "day" | "month" | "year") || "month";
+      
+      const data = await storage.getSalesChartData(range, vendor.id);
+      res.json({ data });
+    } catch (e) {
+      console.error("Error fetching vendor sales chart:", e);
+      res.status(500).json({ message: "Failed to fetch sales chart data" });
+    }
+  });
+
   app.post("/api/admin/categories", isAuthenticated, async (req: any, res) => {
     try {
       const role = await storage.getUserRole(req.session.userId);
@@ -1043,18 +1080,31 @@ export async function registerRoutes(
       const averageOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
       const walletBalance = parseFloat(vendor.walletBalanceKwd || "0");
       const lifetimePayouts = parseFloat(vendor.lifetimePayoutsKwd || "0");
+      
+      // Calculate net revenue after commission
+      const commissionRate = parseFloat(vendor.commissionRate || "0.10");
+      const totalCommission = totalSales * commissionRate;
+      const netRevenue = totalSales - totalCommission;
+      
+      // Calculate outstanding payment (negative balance - vendor owes MotorBuy)
+      const outstandingPayment = walletBalance < 0 ? Math.abs(walletBalance) : 0;
+      
+      // Calculate pending payment (positive balance that can be paid out)
+      const pendingPayment = walletBalance > 0 ? walletBalance : 0;
 
       res.json({
         totalProducts: products.length,
         totalOrders: orders.length,
         totalRevenue: totalRevenue.toFixed(3),
         totalSales: totalSales.toFixed(3),
+        netRevenue: netRevenue.toFixed(3),
         pendingOrders,
         completedOrders,
         averageOrderValue: averageOrderValue.toFixed(3),
         walletBalance: walletBalance.toFixed(3),
         lifetimePayouts: lifetimePayouts.toFixed(3),
-        pendingPayoutKwd: vendor.walletBalanceKwd || vendor.pendingPayoutKwd || "0", // Use new wallet balance
+        pendingPayoutKwd: pendingPayment.toFixed(3),
+        outstandingPayment: outstandingPayment.toFixed(3),
         grossSalesKwd: vendor.grossSalesKwd || "0",
       });
     } catch (e) {

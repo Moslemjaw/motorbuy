@@ -25,7 +25,8 @@ import {
   BarChart3,
   Wallet,
   Search,
-  Filter
+  Filter,
+  Calendar
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,8 @@ import { useLanguage } from "@/lib/i18n";
 import { formatKWD } from "@/lib/currency";
 import { Navbar } from "@/components/Navbar";
 import { LoadingPage } from "@/components/LoadingPage";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 function buildApiUrl(path: string) {
   return path.startsWith("/") ? path : `/${path}`;
@@ -243,15 +246,15 @@ function TopSummaryCards() {
         labelColor: "text-blue-600 dark:text-blue-400",
       },
       {
-        icon: Store,
-        value: analytics.totalVendors || 0,
-        label: t("admin.dashboard.activeVendors"),
-        color: "green",
-        bgGradient: "from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10",
-        borderColor: "border-green-200 dark:border-green-800",
-        iconBg: "bg-green-500",
-        textColor: "text-green-700 dark:text-green-300",
-        labelColor: "text-green-600 dark:text-green-400",
+        icon: TrendingUp,
+        value: formatKWD(analytics.totalSales || "0"),
+        label: t("admin.dashboard.totalSales"),
+        color: "indigo",
+        bgGradient: "from-indigo-50 to-indigo-100/50 dark:from-indigo-950/20 dark:to-indigo-900/10",
+        borderColor: "border-indigo-200 dark:border-indigo-800",
+        iconBg: "bg-indigo-500",
+        textColor: "text-indigo-700 dark:text-indigo-300",
+        labelColor: "text-indigo-600 dark:text-indigo-400",
       },
       {
         icon: ShoppingBag,
@@ -265,28 +268,6 @@ function TopSummaryCards() {
         labelColor: "text-amber-600 dark:text-amber-400",
       },
       {
-        icon: DollarSign,
-        value: formatKWD(analytics.totalRevenue || "0"),
-        label: t("admin.dashboard.totalRevenue"),
-        color: "purple",
-        bgGradient: "from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10",
-        borderColor: "border-purple-200 dark:border-purple-800",
-        iconBg: "bg-purple-500",
-        textColor: "text-purple-700 dark:text-purple-300",
-        labelColor: "text-purple-600 dark:text-purple-400",
-      },
-      {
-        icon: TrendingUp,
-        value: formatKWD(analytics.totalSales || "0"),
-        label: t("admin.dashboard.totalSales"),
-        color: "indigo",
-        bgGradient: "from-indigo-50 to-indigo-100/50 dark:from-indigo-950/20 dark:to-indigo-900/10",
-        borderColor: "border-indigo-200 dark:border-indigo-800",
-        iconBg: "bg-indigo-500",
-        textColor: "text-indigo-700 dark:text-indigo-300",
-        labelColor: "text-indigo-600 dark:text-indigo-400",
-      },
-      {
         icon: Package,
         value: analytics.totalProducts || 0,
         label: t("admin.dashboard.totalProducts"),
@@ -296,17 +277,6 @@ function TopSummaryCards() {
         iconBg: "bg-teal-500",
         textColor: "text-teal-700 dark:text-teal-300",
         labelColor: "text-teal-600 dark:text-teal-400",
-      },
-      {
-        icon: FolderOpen,
-        value: analytics.totalCategories || 0,
-        label: t("admin.dashboard.totalCategories"),
-        color: "pink",
-        bgGradient: "from-pink-50 to-pink-100/50 dark:from-pink-950/20 dark:to-pink-900/10",
-        borderColor: "border-pink-200 dark:border-pink-800",
-        iconBg: "bg-pink-500",
-        textColor: "text-pink-700 dark:text-pink-300",
-        labelColor: "text-pink-600 dark:text-pink-400",
       },
       {
         icon: Clock,
@@ -320,17 +290,6 @@ function TopSummaryCards() {
         labelColor: "text-orange-600 dark:text-orange-400",
       },
       {
-        icon: CheckCircle,
-        value: analytics.completedOrders || 0,
-        label: t("admin.dashboard.completedOrders"),
-        color: "emerald",
-        bgGradient: "from-emerald-50 to-emerald-100/50 dark:from-emerald-950/20 dark:to-emerald-900/10",
-        borderColor: "border-emerald-200 dark:border-emerald-800",
-        iconBg: "bg-emerald-500",
-        textColor: "text-emerald-700 dark:text-emerald-300",
-        labelColor: "text-emerald-600 dark:text-emerald-400",
-      },
-      {
         icon: Percent,
         value: formatKWD(analytics.totalCommission || "0"),
         label: t("admin.dashboard.totalCommission"),
@@ -341,32 +300,10 @@ function TopSummaryCards() {
         textColor: "text-cyan-700 dark:text-cyan-300",
         labelColor: "text-cyan-600 dark:text-cyan-400",
       },
-      {
-        icon: BarChart3,
-        value: formatKWD(analytics.averageOrderValue || "0"),
-        label: t("admin.dashboard.averageOrderValue"),
-        color: "rose",
-        bgGradient: "from-rose-50 to-rose-100/50 dark:from-rose-950/20 dark:to-rose-900/10",
-        borderColor: "border-rose-200 dark:border-rose-800",
-        iconBg: "bg-rose-500",
-        textColor: "text-rose-700 dark:text-rose-300",
-        labelColor: "text-rose-600 dark:text-rose-400",
-      },
-      {
-        icon: Wallet,
-        value: formatKWD(analytics.totalPendingPayouts || "0"),
-        label: t("admin.dashboard.totalPendingPayouts"),
-        color: "violet",
-        bgGradient: "from-violet-50 to-violet-100/50 dark:from-violet-950/20 dark:to-violet-900/10",
-        borderColor: "border-violet-200 dark:border-violet-800",
-        iconBg: "bg-violet-500",
-        textColor: "text-violet-700 dark:text-violet-300",
-        labelColor: "text-violet-600 dark:text-violet-400",
-      },
     ];
 
   return (
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-4">
             {stats.map((stat, index) => {
                 const Icon = stat.icon;
                 return (
@@ -390,8 +327,121 @@ function TopSummaryCards() {
 }
 
 function AnalyticsSection() {
-    // ... (implementation same as before or simplified)
-    return null; // Placeholder as it was not requested to change
+  const { t, isRTL } = useLanguage();
+  const { data: vendors } = useVendors();
+  const [timeRange, setTimeRange] = useState<"day" | "month" | "year">("month");
+  const [selectedVendor, setSelectedVendor] = useState<string>("all");
+
+  const { data: salesData, isLoading } = useQuery({
+    queryKey: ["/api/admin/sales-chart", timeRange, selectedVendor],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        range: timeRange,
+        ...(selectedVendor !== "all" && { vendorId: selectedVendor }),
+      });
+      const res = await fetch(buildApiUrl(`/api/admin/sales-chart?${params}`), {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch sales data");
+      return res.json();
+    },
+  });
+
+  const chartData = salesData?.data || [];
+  const chartConfig = {
+    sales: {
+      label: t("admin.dashboard.totalSales") || "Sales",
+      color: "hsl(var(--chart-1))",
+    },
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="border shadow-sm">
+        <CardContent className="p-6">
+          <LoadingPage message="Loading chart..." fullScreen={false} />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="border shadow-sm">
+      <CardHeader>
+        <div className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${isRTL ? "md:flex-row-reverse" : ""}`}>
+          <div>
+            <CardTitle>{t("admin.dashboard.salesChart") || "Sales Chart"}</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              {t("admin.dashboard.salesChartDesc") || "Sales performance over time"}
+            </p>
+          </div>
+          <div className={`flex gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+            <Select value={timeRange} onValueChange={(v: "day" | "month" | "year") => setTimeRange(v)}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="day">{t("admin.dashboard.day") || "Day"}</SelectItem>
+                <SelectItem value="month">{t("admin.dashboard.month") || "Month"}</SelectItem>
+                <SelectItem value="year">{t("admin.dashboard.year") || "Year"}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={selectedVendor} onValueChange={setSelectedVendor}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder={t("admin.dashboard.allVendors") || "All Vendors"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("admin.dashboard.allVendors") || "All Vendors"}</SelectItem>
+                {vendors?.map((vendor) => (
+                  <SelectItem key={vendor.id} value={vendor.id}>
+                    {vendor.storeName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {chartData.length === 0 ? (
+          <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+            {t("admin.dashboard.noSalesData") || "No sales data available"}
+          </div>
+        ) : (
+          <ChartContainer config={chartConfig} className="h-[300px] w-full">
+            <AreaChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="label"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={(value) => {
+                  if (timeRange === "day") return value;
+                  if (timeRange === "month") return value;
+                  return value;
+                }}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={(value) => formatKWD(value.toString())}
+              />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Area
+                type="monotone"
+                dataKey="sales"
+                stroke="var(--color-sales)"
+                fill="var(--color-sales)"
+                fillOpacity={0.2}
+              />
+            </AreaChart>
+          </ChartContainer>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 function UsersSection() {
@@ -2116,13 +2166,14 @@ function ProductsSection() {
   };
 
   const handleUpdateProduct = () => {
-    if (!productName || !productDesc || !productPrice || !productCategory || !editingProduct) {
+    if (!productName || !productDesc || !productPrice || !productCategory || !productVendor || !editingProduct) {
       toast({ title: "Missing Fields", description: "Please fill all required fields.", variant: "destructive" });
       return;
     }
     updateProductMutation.mutate({
       id: editingProduct.id,
       data: {
+        vendorId: productVendor,
         categoryId: productCategory,
         name: productName,
         description: productDesc,
@@ -2255,7 +2306,7 @@ function ProductsSection() {
                     <SelectValue placeholder={t("admin.dashboard.selectVendor")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {vendors?.filter((v) => v.isApproved).map((vendor) => (
+                    {vendors?.map((vendor) => (
                       <SelectItem key={vendor.id} value={vendor.id}>
                         {vendor.storeName}
                       </SelectItem>
@@ -2361,8 +2412,19 @@ function ProductsSection() {
                 <Input value={productName} onChange={(e) => setProductName(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>{t("admin.dashboard.tabVendors")}</Label>
-                <Input value={getVendorName(productVendor)} disabled />
+                <Label>{t("admin.dashboard.tabVendors")} *</Label>
+                <Select value={productVendor} onValueChange={setProductVendor}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("admin.dashboard.selectVendor")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vendors?.map((vendor) => (
+                      <SelectItem key={vendor.id} value={vendor.id}>
+                        {vendor.storeName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="space-y-2">

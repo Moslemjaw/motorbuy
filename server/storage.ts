@@ -17,6 +17,7 @@ export interface IStorage {
   deleteCategory(id: string): Promise<void>;
   getAllUsers(): Promise<any[]>;
   getAnalytics(): Promise<any>;
+  getSalesChartData(range: "day" | "month" | "year", vendorId?: string): Promise<any[]>;
   getAllOrders(): Promise<any[]>;
   getProducts(filters?: { categoryId?: string; vendorId?: string; search?: string; sortBy?: string }): Promise<any[]>;
   getProduct(id: string): Promise<any | undefined>;
@@ -240,6 +241,102 @@ export class MongoStorage implements IStorage {
       salesByVendor,
       recentOrders
     };
+  }
+
+  async getSalesChartData(range: "day" | "month" | "year", vendorId?: string): Promise<any[]> {
+    const now = new Date();
+    let startDate: Date;
+    let groupFormat: string;
+    let dateFormat: (date: Date) => string;
+
+    if (range === "day") {
+      // Last 30 days
+      startDate = new Date(now);
+      startDate.setDate(startDate.getDate() - 30);
+      groupFormat = "%Y-%m-%d";
+      dateFormat = (d: Date) => d.toISOString().split("T")[0];
+    } else if (range === "month") {
+      // Last 12 months
+      startDate = new Date(now);
+      startDate.setMonth(startDate.getMonth() - 12);
+      groupFormat = "%Y-%m";
+      dateFormat = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    } else {
+      // Last 5 years
+      startDate = new Date(now);
+      startDate.setFullYear(startDate.getFullYear() - 5);
+      groupFormat = "%Y";
+      dateFormat = (d: Date) => String(d.getFullYear());
+    }
+
+    // Build query
+    const query: any = {
+      createdAt: { $gte: startDate },
+    };
+
+    // Filter by vendor if specified
+    if (vendorId && mongoose.Types.ObjectId.isValid(vendorId)) {
+      const orderItems = await OrderItem.find({}).populate("productId");
+      const orderIds = orderItems
+        .filter((item: any) => {
+          const product = item.productId;
+          return product && product.vendorId && product.vendorId.toString() === vendorId;
+        })
+        .map((item: any) => item.orderId);
+      
+      if (orderIds.length === 0) {
+        return [];
+      }
+      query._id = { $in: orderIds };
+    }
+
+    const orders = await Order.find(query).sort({ createdAt: 1 });
+    
+    // Group orders by date
+    const salesByDate: Record<string, number> = {};
+    
+    for (const order of orders) {
+      const orderDate = new Date(order.createdAt);
+      const dateKey = dateFormat(orderDate);
+      
+      // If filtering by vendor, only count items from that vendor
+      if (vendorId && mongoose.Types.ObjectId.isValid(vendorId)) {
+        const orderItems = await OrderItem.find({ orderId: order._id }).populate("productId");
+        let orderTotal = 0;
+        for (const item of orderItems) {
+          const product = (item as any).productId;
+          if (product && product.vendorId && product.vendorId.toString() === vendorId) {
+            orderTotal += parseFloat((item as any).price || "0") * ((item as any).quantity || 1);
+          }
+        }
+        salesByDate[dateKey] = (salesByDate[dateKey] || 0) + orderTotal;
+      } else {
+        salesByDate[dateKey] = (salesByDate[dateKey] || 0) + parseFloat(order.total || "0");
+      }
+    }
+
+    // Convert to array format
+    const result: { label: string; sales: number }[] = [];
+    const currentDate = new Date(startDate);
+    const endDate = new Date(now);
+
+    while (currentDate <= endDate) {
+      const dateKey = dateFormat(currentDate);
+      result.push({
+        label: dateKey,
+        sales: salesByDate[dateKey] || 0,
+      });
+
+      if (range === "day") {
+        currentDate.setDate(currentDate.getDate() + 1);
+      } else if (range === "month") {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+      } else {
+        currentDate.setFullYear(currentDate.getFullYear() + 1);
+      }
+    }
+
+    return result;
   }
 
   async getAllOrders(): Promise<any[]> {

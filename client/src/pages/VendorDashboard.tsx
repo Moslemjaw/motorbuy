@@ -9,7 +9,7 @@ import { useRole, useProducts, useCategories, useDeleteProduct } from "@/hooks/u
 import { useLanguage } from "@/lib/i18n";
 import { 
   Package, ShoppingCart, Loader2, Plus, Image, Trash2, BookOpen, 
-  Store, TrendingUp, DollarSign, Clock, Wallet, Send, Camera, Save, Edit, AlertTriangle, X, QrCode, BarChart3, LayoutDashboard, CheckCircle
+  Store, TrendingUp, DollarSign, Clock, Wallet, Send, Camera, Save, Edit, AlertTriangle, X, QrCode, BarChart3, LayoutDashboard, CheckCircle, Calendar, AlertCircle
 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -27,18 +27,22 @@ import { apiRequest } from "@/lib/queryClient";
 import { buildApiUrl } from "@/lib/api-config";
 import type { Order, VendorStory, Vendor } from "@shared/schema";
 import carLogo from "@assets/image_2026-01-09_142631252-removebg-preview_1767958016384.png";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 interface VendorAnalytics {
   totalProducts: number;
   totalOrders: number;
   totalRevenue: string;
   totalSales: string;
+  netRevenue: string;
   pendingOrders: number;
   completedOrders: number;
   averageOrderValue: string;
   walletBalance: string;
   lifetimePayouts: string;
   pendingPayoutKwd: string;
+  outstandingPayment: string;
   grossSalesKwd: string;
 }
 
@@ -111,6 +115,13 @@ export default function VendorDashboard() {
 
   const { data: analytics } = useQuery<VendorAnalytics>({
     queryKey: ["/api/vendor/analytics"],
+    queryFn: async () => {
+      const res = await fetch(buildApiUrl("/api/vendor/analytics"), {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch analytics");
+      return res.json();
+    },
     enabled: !!vendorProfile,
   });
 
@@ -787,122 +798,109 @@ export default function VendorDashboard() {
             {activeTab === "overview" && (
               <>
                 {/* Analytics Cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                {/* Summary Cards - 7 cards in one row */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-4">
           <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200 dark:border-blue-800">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-2.5 bg-blue-500 rounded-lg">
-                  <Package className="w-5 h-5 text-white" />
+            <CardContent className="p-4">
+              <div className={`flex items-center justify-between mb-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div className="p-2 bg-blue-500 rounded-lg">
+                  <Package className="w-4 h-4 text-white" />
                 </div>
               </div>
-              <p className="text-3xl font-bold mb-1 text-blue-700 dark:text-blue-300" data-testid="text-vendor-products">
+              <p className="text-2xl font-bold mb-1 text-blue-700 dark:text-blue-300">
                 {analytics?.totalProducts || myProducts.length}
               </p>
-              <p className="text-sm text-blue-600 dark:text-blue-400">{t("vendor.dashboard.products")}</p>
+              <p className="text-xs text-blue-600 dark:text-blue-400">{t("vendor.dashboard.products")}</p>
             </CardContent>
           </Card>
           
           <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/20 dark:to-green-900/10 border-green-200 dark:border-green-800">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-2.5 bg-green-500 rounded-lg">
-                  <ShoppingCart className="w-5 h-5 text-white" />
+            <CardContent className="p-4">
+              <div className={`flex items-center justify-between mb-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div className="p-2 bg-green-500 rounded-lg">
+                  <ShoppingCart className="w-4 h-4 text-white" />
                 </div>
               </div>
-              <p className="text-3xl font-bold mb-1 text-green-700 dark:text-green-300" data-testid="text-vendor-orders">
+              <p className="text-2xl font-bold mb-1 text-green-700 dark:text-green-300">
                 {analytics?.totalOrders || 0}
               </p>
-              <p className="text-sm text-green-600 dark:text-green-400">{t("vendor.dashboard.orders")}</p>
+              <p className="text-xs text-green-600 dark:text-green-400">{t("vendor.dashboard.orders")}</p>
             </CardContent>
           </Card>
           
-          <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10 border-amber-200 dark:border-amber-800">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-2.5 bg-amber-500 rounded-lg">
-                  <TrendingUp className="w-5 h-5 text-white" />
+          <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-teal-50 to-teal-100/50 dark:from-teal-950/20 dark:to-teal-900/10 border-teal-200 dark:border-teal-800">
+            <CardContent className="p-4">
+              <div className={`flex items-center justify-between mb-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div className="p-2 bg-teal-500 rounded-lg">
+                  <TrendingUp className="w-4 h-4 text-white" />
                 </div>
               </div>
-              <p className="text-3xl font-bold mb-1 text-amber-700 dark:text-amber-300" data-testid="text-vendor-revenue">
-                {analytics?.grossSalesKwd || "0"}
+              <p className="text-2xl font-bold mb-1 text-teal-700 dark:text-teal-300">
+                {formatKWD(analytics?.netRevenue || "0")}
               </p>
-              <p className="text-sm text-amber-600 dark:text-amber-400">{t("vendor.dashboard.revenue")}</p>
+              <p className="text-xs text-teal-600 dark:text-teal-400">{t("vendor.dashboard.netRevenue")}</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-indigo-50 to-indigo-100/50 dark:from-indigo-950/20 dark:to-indigo-900/10 border-indigo-200 dark:border-indigo-800">
+            <CardContent className="p-4">
+              <div className={`flex items-center justify-between mb-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div className="p-2 bg-indigo-500 rounded-lg">
+                  <BarChart3 className="w-4 h-4 text-white" />
+                </div>
+              </div>
+              <p className="text-2xl font-bold mb-1 text-indigo-700 dark:text-indigo-300">
+                {formatKWD(analytics?.totalSales || vendorProfile?.grossSalesKwd || "0")}
+              </p>
+              <p className="text-xs text-indigo-600 dark:text-indigo-400">{t("vendor.dashboard.totalSales")}</p>
             </CardContent>
           </Card>
           
           <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/20 dark:to-purple-900/10 border-purple-200 dark:border-purple-800">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-2.5 bg-purple-500 rounded-lg">
-                  <DollarSign className="w-5 h-5 text-white" />
+            <CardContent className="p-4">
+              <div className={`flex items-center justify-between mb-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div className="p-2 bg-purple-500 rounded-lg">
+                  <Clock className="w-4 h-4 text-white" />
                 </div>
               </div>
-              <p className="text-3xl font-bold mb-1 text-purple-700 dark:text-purple-300" data-testid="text-vendor-payout">
-                {analytics?.pendingPayoutKwd || "0"}
+              <p className="text-2xl font-bold mb-1 text-purple-700 dark:text-purple-300">
+                {formatKWD(analytics?.pendingPayoutKwd || "0")}
               </p>
-              <p className="text-sm text-purple-600 dark:text-purple-400">{t("vendor.dashboard.pending")}</p>
+              <p className="text-xs text-purple-600 dark:text-purple-400">{t("vendor.dashboard.pendingPayment")}</p>
             </CardContent>
           </Card>
-        </div>
-
-                {/* Additional Statistics Cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-indigo-50 to-indigo-100/50 dark:from-indigo-950/20 dark:to-indigo-900/10 border-indigo-200 dark:border-indigo-800">
-            <CardContent className="p-6">
-              <div className={`flex items-center justify-between mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
-                <div className="p-2.5 bg-indigo-500 rounded-lg">
-                  <TrendingUp className="w-5 h-5 text-white" />
+          
+          <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-950/20 dark:to-red-900/10 border-red-200 dark:border-red-800">
+            <CardContent className="p-4">
+              <div className={`flex items-center justify-between mb-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div className="p-2 bg-red-500 rounded-lg">
+                  <AlertCircle className="w-4 h-4 text-white" />
                 </div>
               </div>
-              <p className="text-3xl font-bold mb-1 text-indigo-700 dark:text-indigo-300">
-                {formatKWD(analytics?.totalSales || vendorProfile?.grossSalesKwd || "0")}
+              <p className="text-2xl font-bold mb-1 text-red-700 dark:text-red-300">
+                {formatKWD(analytics?.outstandingPayment || "0")}
               </p>
-              <p className="text-sm text-indigo-600 dark:text-indigo-400">{t("vendor.dashboard.totalSales")}</p>
+              <p className="text-xs text-red-600 dark:text-red-400">{t("vendor.dashboard.outstandingPayment")}</p>
             </CardContent>
           </Card>
           
           <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/20 dark:to-emerald-900/10 border-emerald-200 dark:border-emerald-800">
-            <CardContent className="p-6">
-              <div className={`flex items-center justify-between mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
-                <div className="p-2.5 bg-emerald-500 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-white" />
+            <CardContent className="p-4">
+              <div className={`flex items-center justify-between mb-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div className="p-2 bg-emerald-500 rounded-lg">
+                  <CheckCircle className="w-4 h-4 text-white" />
                 </div>
               </div>
-              <p className="text-3xl font-bold mb-1 text-emerald-700 dark:text-emerald-300">
+              <p className="text-2xl font-bold mb-1 text-emerald-700 dark:text-emerald-300">
                 {analytics?.completedOrders || 0}
               </p>
-              <p className="text-sm text-emerald-600 dark:text-emerald-400">{t("vendor.dashboard.completedOrders")}</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-cyan-50 to-cyan-100/50 dark:from-cyan-950/20 dark:to-cyan-900/10 border-cyan-200 dark:border-cyan-800">
-            <CardContent className="p-6">
-              <div className={`flex items-center justify-between mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
-                <div className="p-2.5 bg-cyan-500 rounded-lg">
-                  <BarChart3 className="w-5 h-5 text-white" />
-                </div>
-              </div>
-              <p className="text-3xl font-bold mb-1 text-cyan-700 dark:text-cyan-300">
-                {formatKWD(analytics?.averageOrderValue || "0")}
-              </p>
-              <p className="text-sm text-cyan-600 dark:text-cyan-400">{t("vendor.dashboard.averageOrderValue")}</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-violet-50 to-violet-100/50 dark:from-violet-950/20 dark:to-violet-900/10 border-violet-200 dark:border-violet-800">
-            <CardContent className="p-6">
-              <div className={`flex items-center justify-between mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
-                <div className="p-2.5 bg-violet-500 rounded-lg">
-                  <Wallet className="w-5 h-5 text-white" />
-                </div>
-              </div>
-              <p className={`text-3xl font-bold mb-1 ${parseFloat(analytics?.walletBalance || vendorProfile?.walletBalanceKwd || "0") < 0 ? "text-red-700 dark:text-red-300" : "text-violet-700 dark:text-violet-300"}`}>
-                {formatKWD(analytics?.walletBalance || vendorProfile?.walletBalanceKwd || "0")}
-              </p>
-              <p className="text-sm text-violet-600 dark:text-violet-400">{t("vendor.dashboard.walletBalance")}</p>
+              <p className="text-xs text-emerald-600 dark:text-emerald-400">{t("vendor.dashboard.completedOrders")}</p>
             </CardContent>
           </Card>
         </div>
+
+                {/* Sales Chart */}
+                <VendorSalesChart />
               </>
             )}
 
@@ -1993,5 +1991,103 @@ export default function VendorDashboard() {
         </div>
       </nav>
     </div>
+  );
+}
+
+function VendorSalesChart() {
+  const { t, isRTL } = useLanguage();
+  const [timeRange, setTimeRange] = useState<"day" | "month" | "year">("month");
+
+  const { data: salesData, isLoading } = useQuery({
+    queryKey: ["/api/vendor/sales-chart", timeRange],
+    queryFn: async () => {
+      const params = new URLSearchParams({ range: timeRange });
+      const res = await fetch(buildApiUrl(`/api/vendor/sales-chart?${params}`), {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch sales data");
+      return res.json();
+    },
+  });
+
+  const chartData = salesData?.data || [];
+  const chartConfig = {
+    sales: {
+      label: t("vendor.dashboard.totalSales") || "Sales",
+      color: "hsl(var(--chart-1))",
+    },
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="border shadow-sm">
+        <CardContent className="p-6">
+          <LoadingPage message="Loading chart..." fullScreen={false} />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="border shadow-sm">
+      <CardHeader>
+        <div className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${isRTL ? "md:flex-row-reverse" : ""}`}>
+          <div>
+            <CardTitle>{t("vendor.dashboard.salesChart") || "Sales Chart"}</CardTitle>
+            <CardDescription className="text-sm mt-1">
+              {t("vendor.dashboard.salesChartDesc") || "Your sales performance over time"}
+            </CardDescription>
+          </div>
+          <Select value={timeRange} onValueChange={(v: "day" | "month" | "year") => setTimeRange(v)}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="day">{t("admin.dashboard.day") || "Day"}</SelectItem>
+              <SelectItem value="month">{t("admin.dashboard.month") || "Month"}</SelectItem>
+              <SelectItem value="year">{t("admin.dashboard.year") || "Year"}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {chartData.length === 0 ? (
+          <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+            {t("admin.dashboard.noSalesData") || "No sales data available"}
+          </div>
+        ) : (
+          <ChartContainer config={chartConfig} className="h-[300px] w-full">
+            <AreaChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="label"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={(value) => {
+                  if (timeRange === "day") return value;
+                  if (timeRange === "month") return value;
+                  return value;
+                }}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={(value) => formatKWD(value.toString())}
+              />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Area
+                type="monotone"
+                dataKey="sales"
+                stroke="var(--color-sales)"
+                fill="var(--color-sales)"
+                fillOpacity={0.2}
+              />
+            </AreaChart>
+          </ChartContainer>
+        )}
+      </CardContent>
+    </Card>
   );
 }
