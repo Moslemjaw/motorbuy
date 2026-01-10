@@ -4,6 +4,8 @@ import { randomUUID } from "crypto";
 import multer from "multer";
 import path from "path";
 import fs from "fs/promises";
+import { readFileSync } from "fs";
+import { uploadToCloudinary } from "../../cloudinary";
 
 /**
  * Register object storage routes for file uploads.
@@ -108,8 +110,8 @@ export function registerObjectStorageRoutes(app: Express): void {
   });
   const uploadSingle = upload.single("file");
 
-  app.post("/api/uploads/direct-upload", (req, res) => {
-    uploadSingle(req, res, (err) => {
+  app.post("/api/uploads/direct-upload", async (req, res) => {
+    uploadSingle(req, res, async (err) => {
       if (err) {
         console.error("Upload error:", err);
         return res.status(500).json({ error: "Upload failed", details: String(err) });
@@ -119,11 +121,43 @@ export function registerObjectStorageRoutes(app: Express): void {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      const objectPath = `/uploads/${req.file.filename}`;
-      res.json({
-        objectPath,
-        url: objectPath, // URL to access the file
-      });
+      try {
+        // Check if Cloudinary is configured
+        const cloudinaryUrl = process.env.CLOUDINARY_URL || process.env.CLOUDINARY_CONNECTION_STRING;
+        
+        if (cloudinaryUrl) {
+          // Upload to Cloudinary
+          const fileBuffer = readFileSync(req.file.path);
+          const uniqueId = randomUUID();
+          const folder = "motorbuy/uploads";
+          
+          const result = await uploadToCloudinary(fileBuffer, folder, uniqueId);
+          
+          // Clean up local file
+          await fs.unlink(req.file.path).catch(console.error);
+          
+          return res.json({
+            objectPath: result.secureUrl,
+            url: result.secureUrl,
+            publicId: result.publicId,
+          });
+        } else {
+          // Fallback to local storage if Cloudinary is not configured
+          const objectPath = `/uploads/${req.file.filename}`;
+          return res.json({
+            objectPath,
+            url: objectPath,
+          });
+        }
+      } catch (error) {
+        console.error("Cloudinary upload error:", error);
+        // Fallback to local storage on error
+        const objectPath = `/uploads/${req.file.filename}`;
+        return res.json({
+          objectPath,
+          url: objectPath,
+        });
+      }
     });
   });
 

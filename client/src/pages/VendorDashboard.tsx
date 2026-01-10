@@ -518,56 +518,95 @@ export default function VendorDashboard() {
     );
   }
 
+  const navItems = [
+    {
+      value: "products",
+      icon: Package,
+      label: t("vendor.dashboard.tabProducts"),
+    },
+    {
+      value: "shop",
+      icon: Store,
+      label: t("vendor.dashboard.tabShop"),
+    },
+    {
+      value: "orders",
+      icon: ShoppingCart,
+      label: t("vendor.dashboard.tabOrders"),
+    },
+    {
+      value: "wallet",
+      icon: Wallet,
+      label: t("wallet.title"),
+      isLink: true,
+      href: "/vendor/wallet",
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-muted/30 font-body">
       <Navbar />
-      <div className="container mx-auto px-4 py-6 lg:py-8">
-            {/* Header */}
-            <div className="mb-8">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                {isRTL ? (
-                  <>
-                    <div className="flex gap-2 items-center justify-start">
-                      <Link href="/vendor/wallet">
-                        <Button variant="outline" className="gap-2">
-                          <Wallet className="w-4 h-4" />
-                          {t("wallet.title")}
-                        </Button>
-                      </Link>
-            {!vendorProfile.isApproved && (
-                        <Badge variant="secondary" className="text-sm px-3 py-1">{t("vendor.dashboard.pendingApproval")}</Badge>
-            )}
-                    </div>
-                    <div className="text-right">
-                      <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
-                        {t("vendor.dashboard.title")}
-                      </h1>
-                      <p className="text-muted-foreground text-base md:text-lg">{vendorProfile.storeName}</p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="text-left">
-                      <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
-                        {t("vendor.dashboard.title")}
-                      </h1>
-                      <p className="text-muted-foreground text-base md:text-lg">{vendorProfile.storeName}</p>
-                    </div>
-                    <div className="flex gap-2 items-center justify-center md:justify-end">
-            <Link href="/vendor/wallet">
-                        <Button variant="outline" className="gap-2">
-                          <Wallet className="w-4 h-4" />
-                          {t("wallet.title")}
-              </Button>
-            </Link>
-                      {!vendorProfile.isApproved && (
-                        <Badge variant="secondary" className="text-sm px-3 py-1">{t("vendor.dashboard.pendingApproval")}</Badge>
-                      )}
-                    </div>
-                  </>
-                )}
+      <div className="flex pt-16">
+        {/* Left Sidebar Navigation */}
+        <aside
+          className={`hidden lg:block w-64 bg-card border-r shadow-sm sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto ${
+            isRTL ? "border-l border-r-0" : ""
+          }`}
+        >
+          <div className="p-4">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = item.isLink ? false : activeTab === item.value;
+              if (item.isLink) {
+                return (
+                  <Link
+                    key={item.value}
+                    href={item.href}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground`}
+                    data-testid={`nav-${item.value}`}
+                  >
+                    <Icon className="w-5 h-5 flex-shrink-0" />
+                    <span className="font-medium text-sm">{item.label}</span>
+                  </Link>
+                );
+              }
+              return (
+                <button
+                  key={item.value}
+                  onClick={() => {
+                    setActiveTab(item.value);
+                    window.location.hash = item.value;
+                  }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                  data-testid={`nav-${item.value}`}
+                >
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  <span className="font-medium text-sm">{item.label}</span>
+                </button>
+              );
+            })}
           </div>
-        </div>
+        </aside>
+
+        {/* Main Content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="container mx-auto px-4 py-6 lg:py-8">
+            {/* Header */}
+            <div className={`mb-8 ${isRTL ? "text-right" : "text-left"}`}>
+              <div className="flex items-center gap-4 mb-4">
+                <h1 className="text-3xl md:text-4xl font-display font-bold">
+                  {t("vendor.dashboard.title")}
+                </h1>
+                {!vendorProfile.isApproved && (
+                  <Badge variant="secondary" className="text-sm px-3 py-1">{t("vendor.dashboard.pendingApproval")}</Badge>
+                )}
+              </div>
+              <p className="text-muted-foreground text-base md:text-lg">{vendorProfile.storeName}</p>
+            </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200 dark:border-blue-800">
@@ -739,24 +778,30 @@ export default function VendorDashboard() {
           </Card>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value); window.location.hash = value; }} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6 h-auto">
-            <TabsTrigger value="products" className="py-3" data-testid="tab-products">
-              <Package className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
-              {t("vendor.dashboard.tabProducts")}
-            </TabsTrigger>
-            <TabsTrigger value="shop" className="py-3" data-testid="tab-shop">
-              <Store className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
-              {t("vendor.dashboard.tabShop")}
-            </TabsTrigger>
-            <TabsTrigger value="orders" className="py-3" data-testid="tab-orders">
-              <ShoppingCart className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
-              {t("vendor.dashboard.tabOrders")}
-            </TabsTrigger>
-          </TabsList>
+            {/* Mobile Tabs */}
+            <div className="lg:hidden mb-6">
+              <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value); window.location.hash = value; }} className="w-full">
+                <TabsList className="grid w-full grid-cols-3 h-auto">
+                  <TabsTrigger value="products" className="py-3" data-testid="tab-products">
+                    <Package className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+                    {t("vendor.dashboard.tabProducts")}
+                  </TabsTrigger>
+                  <TabsTrigger value="shop" className="py-3" data-testid="tab-shop">
+                    <Store className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+                    {t("vendor.dashboard.tabShop")}
+                  </TabsTrigger>
+                  <TabsTrigger value="orders" className="py-3" data-testid="tab-orders">
+                    <ShoppingCart className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+                    {t("vendor.dashboard.tabOrders")}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
 
-          <TabsContent value="shop">
-            <div className="grid lg:grid-cols-2 gap-6">
+            {/* Content based on active tab */}
+            {activeTab === "shop" && (
+              <div>
+                <div className="grid lg:grid-cols-2 gap-6">
               <Card className="border shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-xl font-semibold">
@@ -876,10 +921,12 @@ export default function VendorDashboard() {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
+              </div>
+            )}
 
-          <TabsContent value="orders">
-            <Card className="border shadow-sm">
+            {activeTab === "orders" && (
+              <div>
+                <Card className="border shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-xl font-semibold">{t("vendor.dashboard.recentOrders")}</CardTitle>
                 <div className="w-[200px]">
@@ -981,10 +1028,12 @@ export default function VendorDashboard() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
+              </div>
+            )}
 
-          <TabsContent value="products">
-            <div className="grid lg:grid-cols-2 gap-6">
+            {activeTab === "products" && (
+              <div>
+                <div className="grid lg:grid-cols-2 gap-6">
               <Card className="border shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-xl font-semibold">
@@ -1103,9 +1152,10 @@ export default function VendorDashboard() {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+              </div>
+            )}
+          </div>
+        </div>
 
       {/* Dialogs */}
       {/* Edit Product Dialog */}
