@@ -143,8 +143,36 @@ export default function AdminDashboard() {
           </div>
         </aside>
 
+        {/* Mobile Bottom Navigation */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 overflow-x-auto scrollbar-hide">
+          <div className="flex min-w-max px-2 h-16">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.value;
+              return (
+                <button
+                  key={item.value}
+                  onClick={() => {
+                    setActiveTab(item.value);
+                    window.location.hash = item.value;
+                  }}
+                  className={`flex flex-col items-center justify-center min-w-[70px] px-2 h-full space-y-1 transition-colors ${
+                    isActive
+                      ? "text-primary font-medium"
+                      : "text-gray-500 hover:text-gray-900"
+                  }`}
+                  data-testid={`nav-mobile-${item.value}`}
+                >
+                  <Icon className={`w-5 h-5 ${isActive ? "text-primary" : ""}`} />
+                  <span className="text-[10px] whitespace-nowrap">{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Main Content */}
-        <div className="flex-1 overflow-y-auto pb-16 lg:pb-0 lg:pt-0">
+        <div className="flex-1 overflow-y-auto pb-20 lg:pb-0 lg:pt-0">
           <div className="container mx-auto px-4 py-4 lg:py-6">
             {/* Header */}
             <div className={`mb-4 ${isRTL ? "text-right" : "text-left"}`}>
