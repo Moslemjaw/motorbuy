@@ -1073,8 +1073,6 @@ export default function VendorDashboard() {
             </div>
           </TabsContent>
         </Tabs>
-          </div>
-        </main>
       </div>
 
       {/* Dialogs */}
