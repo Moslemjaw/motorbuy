@@ -34,6 +34,7 @@ import {
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useProducts, useCategories, useVendors } from "@/hooks/use-motorbuy";
+import { useMemo, useState, useRef, useEffect } from "react";
 
 export default function Home() {
   const { t, isRTL } = useLanguage();
@@ -41,19 +42,146 @@ export default function Home() {
   const { data: vendors } = useVendors();
   const { data: products } = useProducts();
 
-  const stats = [
-    { label: t("stats.products"), value: products?.length || 0, icon: Package },
-    {
-      label: t("stats.vendors"),
-      value: vendors?.filter((v) => v.isApproved).length || 0,
-      icon: Users,
-    },
-    {
-      label: t("stats.categories"),
-      value: categories?.length || 0,
-      icon: Wrench,
-    },
-  ];
+  // Categories carousel pause/resume logic with manual scroll support
+  const categoriesCarouselRef = useRef<HTMLDivElement>(null);
+  const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const isPausedRef = useRef(false);
+  const isUserScrollingRef = useRef(false);
+  const scrollPositionRef = useRef(0);
+
+  const pauseAutoScroll = () => {
+    isPausedRef.current = true;
+    if (pauseTimeoutRef.current) {
+      clearTimeout(pauseTimeoutRef.current);
+    }
+    pauseTimeoutRef.current = setTimeout(() => {
+      isPausedRef.current = false;
+      // Sync scroll position when resuming
+      if (categoriesCarouselRef.current) {
+        scrollPositionRef.current = isRTL
+          ? -categoriesCarouselRef.current.scrollLeft
+          : categoriesCarouselRef.current.scrollLeft;
+      }
+    }, 2000);
+  };
+
+  useEffect(() => {
+    const carousel = categoriesCarouselRef.current;
+    if (!carousel || !categories || categories.length === 0) return;
+
+    const scrollSpeed = isRTL ? -0.3 : 0.3;
+    const maxScroll = carousel.scrollWidth / 3; // Since we tripled items
+
+    const autoScroll = () => {
+      if (isPausedRef.current || isUserScrollingRef.current) {
+        animationFrameRef.current = requestAnimationFrame(autoScroll);
+        return;
+      }
+
+      scrollPositionRef.current += scrollSpeed;
+
+      if (isRTL) {
+        if (Math.abs(scrollPositionRef.current) >= maxScroll) {
+          scrollPositionRef.current = 0;
+        }
+        carousel.scrollLeft = -scrollPositionRef.current;
+      } else {
+        if (scrollPositionRef.current >= maxScroll) {
+          scrollPositionRef.current = 0;
+        }
+        carousel.scrollLeft = scrollPositionRef.current;
+      }
+
+      animationFrameRef.current = requestAnimationFrame(autoScroll);
+    };
+
+    let scrollTimeout: NodeJS.Timeout;
+
+    const handleTouchStart = () => {
+      isUserScrollingRef.current = true;
+      pauseAutoScroll();
+    };
+
+    const handleTouchEnd = () => {
+      scrollTimeout = setTimeout(() => {
+        isUserScrollingRef.current = false;
+        if (carousel) {
+          scrollPositionRef.current = isRTL
+            ? -carousel.scrollLeft
+            : carousel.scrollLeft;
+        }
+      }, 150);
+    };
+
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest("a")) {
+        pauseAutoScroll();
+      }
+    };
+
+    const handleScroll = () => {
+      isUserScrollingRef.current = true;
+      pauseAutoScroll();
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isUserScrollingRef.current = false;
+        if (carousel) {
+          scrollPositionRef.current = isRTL
+            ? -carousel.scrollLeft
+            : carousel.scrollLeft;
+        }
+      }, 150);
+    };
+
+    carousel.addEventListener("touchstart", handleTouchStart, {
+      passive: true,
+    });
+    carousel.addEventListener("touchend", handleTouchEnd, { passive: true });
+    carousel.addEventListener("click", handleClick);
+    carousel.addEventListener("scroll", handleScroll, { passive: true });
+
+    // Start auto-scroll
+    animationFrameRef.current = requestAnimationFrame(autoScroll);
+
+    return () => {
+      carousel.removeEventListener("touchstart", handleTouchStart);
+      carousel.removeEventListener("touchend", handleTouchEnd);
+      carousel.removeEventListener("click", handleClick);
+      carousel.removeEventListener("scroll", handleScroll);
+      if (pauseTimeoutRef.current) {
+        clearTimeout(pauseTimeoutRef.current);
+      }
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [categories, isRTL]);
+
+  const stats = useMemo(
+    () => [
+      {
+        label: t("stats.products"),
+        value: products?.length || 0,
+        icon: Package,
+      },
+      {
+        label: t("stats.vendors"),
+        value: vendors?.filter((v) => v.isApproved).length || 0,
+        icon: Users,
+      },
+      {
+        label: t("stats.categories"),
+        value: categories?.length || 0,
+        icon: Wrench,
+      },
+    ],
+    [products, vendors, categories, t]
+  );
 
   const features = [
     {
@@ -114,14 +242,14 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="max-w-4xl mx-auto"
+            className="max-w-6xl mx-auto"
           >
             {/* Pill Badge */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="inline-flex items-center gap-2 rounded-full border bg-white/80 dark:bg-background/80 backdrop-blur-sm px-3 py-1 text-sm font-medium text-foreground transition-colors hover:bg-white/90 mb-6 shadow-sm"
+              className="inline-flex items-center gap-2 rounded-full border bg-white/80 dark:bg-background/80 backdrop-blur-sm px-3 py-1 text-sm font-medium text-foreground transition-colors hover:bg-white/90 mb-4 shadow-sm"
             >
               <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
               {t("hero.badge")}
@@ -131,9 +259,9 @@ export default function Home() {
             <h1
               className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight text-foreground ${
                 isRTL ? "leading-tight" : "leading-[1.1]"
-              } mb-6`}
+              } mb-4`}
             >
-              <span className="inline-block mr-2">{t("hero.title")}</span>
+              <span className="inline mr-2">{t("hero.title")}</span>
               <span className="inline-block text-primary relative">
                 {t("hero.title.highlight")}
                 {/* Underline decoration */}
@@ -160,11 +288,14 @@ export default function Home() {
             </p>
 
             {/* Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-12">
-              <Link href="/products">
+            <div className="flex flex-row items-center justify-center gap-3 mb-12">
+              <Link
+                href="/products"
+                className="flex-1 sm:flex-initial max-w-[200px] sm:max-w-none"
+              >
                 <Button
                   size="lg"
-                  className="w-full sm:w-auto h-12 px-8 text-base rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 bg-primary text-primary-foreground"
+                  className="w-full sm:w-auto h-12 px-4 sm:px-8 text-sm sm:text-base rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 bg-primary text-primary-foreground"
                 >
                   {t("hero.shopParts")}{" "}
                   <ArrowRight
@@ -172,11 +303,14 @@ export default function Home() {
                   />
                 </Button>
               </Link>
-              <Link href="/vendors">
+              <Link
+                href="/vendors"
+                className="flex-1 sm:flex-initial max-w-[200px] sm:max-w-none"
+              >
                 <Button
                   size="lg"
                   variant="outline"
-                  className="w-full sm:w-auto h-12 px-8 text-base rounded-full border-2 bg-background/50 hover:bg-background transition-all duration-300"
+                  className="w-full sm:w-auto h-12 px-4 sm:px-8 text-sm sm:text-base rounded-full border-2 bg-background/50 hover:bg-background transition-all duration-300"
                 >
                   {t("hero.browseVendors")}
                 </Button>
@@ -208,73 +342,6 @@ export default function Home() {
               </div>
             </div>
           </motion.div>
-        </div>
-      </section>
-
-      {/* Why Us Section moved here */}
-      <section className="py-16 md:py-24 bg-muted/30">
-        <div className="container px-4 mx-auto">
-          <div className="mb-12 text-center max-w-3xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-display font-bold mb-4">
-              {t("section.whyUs")}
-            </h2>
-            <p className="text-muted-foreground">
-              {t("section.whyUs.subtitle")}
-            </p>
-          </div>
-
-          {/* Desktop: Grid Layout */}
-          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 15 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="bg-card border rounded-2xl p-6 text-center hover:shadow-lg transition-shadow"
-              >
-                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4 text-primary">
-                  <item.icon className="w-7 h-7" />
-                </div>
-                <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {item.desc}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Mobile: Horizontal Scrollable Row (Auto-scrolling) */}
-          <div className="md:hidden relative -mx-4 px-4 overflow-hidden">
-            <div className="flex gap-4 animate-scroll-features-auto w-max hover:[animation-play-state:paused] py-4">
-              {[...features, ...features, ...features].map(
-                (
-                  item,
-                  i // Tripled for smoother loop
-                ) => (
-                  <div
-                    key={i}
-                    className="w-[280px] flex-shrink-0 bg-card border rounded-2xl p-6 text-center shadow-sm"
-                  >
-                    <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4 text-primary">
-                      <item.icon className="w-7 h-7" />
-                    </div>
-                    <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {item.desc}
-                    </p>
-                  </div>
-                )
-              )}
-            </div>
-            {/* Dots indicator */}
-            <div className="flex justify-center gap-1.5 mt-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary/50" />
-              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
-              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
-            </div>
-          </div>
         </div>
       </section>
 
@@ -357,7 +424,10 @@ export default function Home() {
           {/* Mobile: Auto-scrolling Carousel (All 10 categories) */}
           {categories && categories.length > 0 ? (
             <div className="md:hidden relative -mx-4 px-4 overflow-hidden">
-              <div className="flex gap-3 animate-scroll-categories-auto w-max hover:[animation-play-state:paused] py-2">
+              <div
+                ref={categoriesCarouselRef}
+                className="flex gap-3 w-max py-2 overflow-x-auto scrollbar-hide"
+              >
                 {[
                   ...categories.slice(0, 10),
                   ...categories.slice(0, 10),
@@ -554,6 +624,73 @@ export default function Home() {
                   </Link>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Us Section */}
+      <section className="py-16 md:py-24 bg-muted/30">
+        <div className="container px-4 mx-auto">
+          <div className="mb-12 text-center max-w-3xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-display font-bold mb-4">
+              {t("section.whyUs")}
+            </h2>
+            <p className="text-muted-foreground">
+              {t("section.whyUs.subtitle")}
+            </p>
+          </div>
+
+          {/* Desktop: Grid Layout */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 15 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-card border rounded-2xl p-6 text-center hover:shadow-lg transition-shadow"
+              >
+                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4 text-primary">
+                  <item.icon className="w-7 h-7" />
+                </div>
+                <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {item.desc}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Mobile: Horizontal Scrollable Row (Auto-scrolling) */}
+          <div className="md:hidden relative -mx-4 px-4 overflow-hidden">
+            <div className="flex gap-4 animate-scroll-features-auto w-max hover:[animation-play-state:paused] py-4">
+              {[...features, ...features, ...features].map(
+                (
+                  item,
+                  i // Tripled for smoother loop
+                ) => (
+                  <div
+                    key={i}
+                    className="w-[280px] flex-shrink-0 bg-card border rounded-2xl p-6 text-center shadow-sm"
+                  >
+                    <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4 text-primary">
+                      <item.icon className="w-7 h-7" />
+                    </div>
+                    <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {item.desc}
+                    </p>
+                  </div>
+                )
+              )}
+            </div>
+            {/* Dots indicator */}
+            <div className="flex justify-center gap-1.5 mt-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary/50" />
+              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
+              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
             </div>
           </div>
         </div>
