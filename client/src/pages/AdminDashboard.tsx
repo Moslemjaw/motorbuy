@@ -1,5 +1,5 @@
-import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -151,36 +151,129 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 font-body flex">
-      <DashboardSidebar type="admin" />
+    <div className="min-h-screen bg-muted/30 font-body">
+      <div className="container mx-auto px-4 py-6 lg:py-8">
+        {/* Header */}
+        <div className={`mb-8 ${isRTL ? "text-right" : "text-left"}`}>
+          <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
+            {t("admin.dashboard.title")}
+          </h1>
+          <p className="text-muted-foreground text-base md:text-lg">
+            {t("admin.dashboard.manage")}
+          </p>
+        </div>
 
-      <div className="flex-1 flex flex-col lg:ml-0">
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto pt-16 lg:pt-0 bg-background">
-          <div className="container mx-auto px-4 py-6 lg:py-8 max-w-7xl">
-            {/* Header */}
-            <div className={`mb-8 ${isRTL ? "text-right" : "text-left"}`}>
-              <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
-                {t("admin.dashboard.title")}
-              </h1>
-              <p className="text-muted-foreground text-base md:text-lg">
-                {t("admin.dashboard.manage")}
-              </p>
-            </div>
+        <TopSummaryCards />
 
-            <TopSummaryCards />
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => {
+            setActiveTab(value);
+            window.location.hash = value;
+          }}
+          className="space-y-6 mt-6"
+        >
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 gap-1 h-auto p-1">
+            <TabsTrigger
+              value="analytics"
+              className="gap-2 py-2"
+              data-testid="tab-analytics"
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">
+                {t("admin.dashboard.tabAnalytics")}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="vendors"
+              className="gap-2 py-2"
+              data-testid="tab-vendors"
+            >
+              <Store className="w-4 h-4" />
+              <span className="hidden sm:inline">
+                {t("admin.dashboard.tabVendors")}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="users"
+              className="gap-2 py-2"
+              data-testid="tab-users"
+            >
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">
+                {t("admin.dashboard.tabUsers")}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="categories"
+              className="gap-2 py-2"
+              data-testid="tab-categories"
+            >
+              <FolderOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">
+                {t("admin.dashboard.tabCategories")}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="ads"
+              className="gap-2 py-2"
+              data-testid="tab-ads"
+            >
+              <BookOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">
+                {t("admin.dashboard.tabAds")}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="orders"
+              className="gap-2 py-2"
+              data-testid="tab-orders"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              <span className="hidden sm:inline">
+                {t("admin.dashboard.tabOrders")}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="payouts"
+              className="gap-2 py-2"
+              data-testid="tab-payouts"
+            >
+              <DollarSign className="w-4 h-4" />
+              <span className="hidden sm:inline">
+                {t("admin.dashboard.tabPayouts")}
+              </span>
+            </TabsTrigger>
+          </TabsList>
 
-            <div className="mt-10 space-y-6">
-              {activeTab === "analytics" && <AnalyticsSection />}
-              {activeTab === "vendors" && <VendorSection />}
-              {activeTab === "users" && <UsersSection />}
-              {activeTab === "categories" && <CategoriesSection />}
-              {activeTab === "ads" && <AdsSection />}
-              {activeTab === "orders" && <OrdersSection />}
-              {activeTab === "payouts" && <PayoutsSection />}
-            </div>
-          </div>
-        </main>
+          <TabsContent value="analytics">
+            <AnalyticsSection />
+          </TabsContent>
+
+          <TabsContent value="vendors">
+            <VendorSection />
+          </TabsContent>
+
+          <TabsContent value="users">
+            <UsersSection />
+          </TabsContent>
+
+          <TabsContent value="categories">
+            <CategoriesSection />
+          </TabsContent>
+
+          <TabsContent value="ads">
+            <AdsSection />
+          </TabsContent>
+
+          <TabsContent value="orders">
+            <OrdersSection />
+          </TabsContent>
+
+          <TabsContent value="payouts">
+            <PayoutsSection />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

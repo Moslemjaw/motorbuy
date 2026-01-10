@@ -1,8 +1,8 @@
 import { LoadingPage } from "@/components/LoadingPage";
-import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole, useProducts, useCategories, useDeleteProduct } from "@/hooks/use-motorbuy";
 import { useLanguage } from "@/lib/i18n";
@@ -318,9 +318,8 @@ export default function VendorDashboard() {
 
   if (roleData?.role !== "vendor") {
     return (
-      <div className="min-h-screen bg-background font-body flex">
-        <DashboardSidebar type="vendor" />
-        <div className="flex-1 flex items-center justify-center">
+      <div className="min-h-screen bg-background font-body">
+        <div className="flex items-center justify-center">
           <div className="container mx-auto px-4 py-16 text-center">
             <Store className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
             <h1 className="text-2xl font-bold mb-2">{t("vendor.dashboard.vendorAccess")}</h1>
@@ -457,9 +456,8 @@ export default function VendorDashboard() {
   // Show profile creation form if vendor profile doesn't exist
   if (!vendorProfile && !isProfileLoading) {
     return (
-      <div className="min-h-screen bg-muted/30 font-body flex">
-        <DashboardSidebar type="vendor" />
-        <div className="flex-1 flex items-center justify-center">
+      <div className="min-h-screen bg-muted/30 font-body">
+        <div className="flex items-center justify-center">
           <div className="container mx-auto px-4 py-12 max-w-lg">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -520,13 +518,8 @@ export default function VendorDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 font-body flex">
-      <DashboardSidebar type="vendor" />
-      
-      <div className="flex-1 flex flex-col lg:ml-0">
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto pt-16 lg:pt-0 bg-background">
-          <div className="container mx-auto px-4 py-6 lg:py-8 max-w-7xl">
+    <div className="min-h-screen bg-muted/30 font-body">
+      <div className="container mx-auto px-4 py-6 lg:py-8">
             {/* Header */}
             <div className={`mb-8 ${isRTL ? 'text-right' : 'text-left'}`}>
               <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 ${isRTL ? 'md:flex-row-reverse' : ''}`}>
@@ -714,8 +707,23 @@ export default function VendorDashboard() {
           </Card>
         </div>
 
-        <div className="w-full">
-          {activeTab === "shop" && (
+        <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value); window.location.hash = value; }} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6 h-auto">
+            <TabsTrigger value="products" className="py-3" data-testid="tab-products">
+              <Package className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+              {t("vendor.dashboard.tabProducts")}
+            </TabsTrigger>
+            <TabsTrigger value="shop" className="py-3" data-testid="tab-shop">
+              <Store className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+              {t("vendor.dashboard.tabShop")}
+            </TabsTrigger>
+            <TabsTrigger value="orders" className="py-3" data-testid="tab-orders">
+              <ShoppingCart className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+              {t("vendor.dashboard.tabOrders")}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="shop">
             <div className="grid lg:grid-cols-2 gap-6">
               <Card className="border shadow-sm">
                 <CardHeader>
@@ -836,9 +844,9 @@ export default function VendorDashboard() {
                 </CardContent>
               </Card>
             </div>
-          )}
+          </TabsContent>
 
-          {activeTab === "orders" && (
+          <TabsContent value="orders">
             <Card className="border shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-xl font-semibold">{t("vendor.dashboard.recentOrders")}</CardTitle>
@@ -941,9 +949,9 @@ export default function VendorDashboard() {
                 )}
               </CardContent>
             </Card>
-          )}
+          </TabsContent>
 
-          {activeTab === "products" && (
+          <TabsContent value="products">
             <div className="grid lg:grid-cols-2 gap-6">
               <Card className="border shadow-sm">
                 <CardHeader>
@@ -1063,8 +1071,8 @@ export default function VendorDashboard() {
                 </CardContent>
               </Card>
             </div>
-          )}
-        </div>
+          </TabsContent>
+        </Tabs>
           </div>
         </main>
       </div>
