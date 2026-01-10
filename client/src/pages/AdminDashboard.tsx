@@ -36,6 +36,8 @@ import {
   BookOpen,
   FileText,
 } from "lucide-react";
+import { Link } from "wouter";
+import carLogo from "@assets/image_2026-01-09_142631252-removebg-preview_1767958016384.png";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
@@ -189,10 +191,28 @@ export default function AdminDashboard() {
       <div className="flex">
         {/* Left Sidebar Navigation */}
         <aside
-          className={`hidden lg:block w-64 bg-card border-r shadow-sm sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto ${
+          className={`hidden lg:block w-64 bg-card border-r shadow-sm sticky top-0 h-screen overflow-y-auto ${
             isRTL ? "border-l border-r-0" : ""
           }`}
         >
+          {/* Logo at top of sidebar */}
+          <div className="p-4 border-b">
+            <Link href="/" className="font-display font-bold text-lg md:text-xl flex items-center gap-2">
+              <img src={carLogo} alt="MotorBuy" className="w-10 h-10 md:w-12 md:h-12 object-contain" />
+              {language === "ar" ? (
+                <span>
+                  <span className="text-[hsl(var(--logo-accent))]">موتور</span>
+                  <span className="text-primary">باي</span>
+                </span>
+              ) : (
+                <span>
+                  <span className="text-primary">motor</span>
+                  <span className="text-[hsl(var(--logo-accent))]">buy</span>
+                </span>
+              )}
+            </Link>
+          </div>
+          
           <div className="p-4">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -220,7 +240,7 @@ export default function AdminDashboard() {
         </aside>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+        <div className="flex-1 overflow-y-auto pb-20 lg:pb-0 lg:pt-16">
           <div className="container mx-auto px-4 py-6 lg:py-8">
             {/* Header */}
             <div className={`mb-8 ${isRTL ? "text-right" : "text-left"}`}>
@@ -232,11 +252,14 @@ export default function AdminDashboard() {
               </p>
             </div>
 
-            <TopSummaryCards />
-
             {/* Content Sections */}
             <div className="mt-6 lg:mt-10 space-y-6">
-              {activeTab === "analytics" && <AnalyticsSection />}
+              {activeTab === "analytics" && (
+                <>
+                  <TopSummaryCards />
+                  <AnalyticsSection />
+                </>
+              )}
               {activeTab === "vendors" && <VendorSection />}
               {activeTab === "users" && <UsersSection />}
               {activeTab === "categories" && <CategoriesSection />}

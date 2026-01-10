@@ -47,40 +47,48 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className={`${isDashboardPage ? "lg:pl-64 lg:mx-0" : ""} container mx-auto px-4 h-14 md:h-16 flex items-center justify-between gap-2`}>
         <div className="flex items-center gap-4 md:gap-8">
-          <Link href="/" className="font-display font-bold text-lg md:text-xl flex items-center gap-2">
-            <img src={carLogo} alt="MotorBuy" className="w-10 h-10 md:w-12 md:h-12 object-contain" />
-            {language === "ar" ? (
-              <span>
-                <span className="text-[hsl(var(--logo-accent))]">موتور</span>
-                <span className="text-primary">باي</span>
-              </span>
-            ) : (
-              <span>
-                <span className="text-primary">motor</span>
-                <span className="text-[hsl(var(--logo-accent))]">buy</span>
-              </span>
-            )}
-          </Link>
+          {!isDashboardPage && (
+            <Link href="/" className="font-display font-bold text-lg md:text-xl flex items-center gap-2">
+              <img src={carLogo} alt="MotorBuy" className="w-10 h-10 md:w-12 md:h-12 object-contain" />
+              {language === "ar" ? (
+                <span>
+                  <span className="text-[hsl(var(--logo-accent))]">موتور</span>
+                  <span className="text-primary">باي</span>
+                </span>
+              ) : (
+                <span>
+                  <span className="text-primary">motor</span>
+                  <span className="text-[hsl(var(--logo-accent))]">buy</span>
+                </span>
+              )}
+            </Link>
+          )}
           
-          <div className="hidden md:flex gap-6 items-center">
-            {navLinks.slice(1).map((link) => (
-              <Link 
-                key={link.href}
-                href={link.href} 
-                className={`text-sm font-medium transition-colors ${location === link.href ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-              >
-                {link.label}
-              </Link>
-            ))}
-            {(!isAuthenticated || (role !== 'vendor' && role !== 'admin')) && (
-              <Link href="/become-vendor">
-                <Button size="sm" variant="outline" className="gap-2">
-                  <Store className="h-4 w-4" />
+          {!isDashboardPage && (
+            <div className="hidden md:flex gap-6 items-center">
+              {navLinks.slice(1).map((link) => (
+                <Link 
+                  key={link.href}
+                  href={link.href} 
+                  className={`text-sm font-medium transition-colors ${location === link.href ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              {(!isAuthenticated || (role !== 'vendor' && role !== 'admin')) && (
+                <Link 
+                  href="/become-vendor"
+                  className={`text-sm font-medium transition-colors ${location === '/become-vendor' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                >
                   {t("account.becomeVendor")}
-                </Button>
-              </Link>
-            )}
-          </div>
+                </Link>
+              )}
+            </div>
+          )}
+          
+          {isDashboardPage && (
+            <div className="flex-1" />
+          )}
         </div>
 
         <div className="flex items-center gap-1 md:gap-2">
@@ -213,7 +221,7 @@ export function Navbar() {
                       ))}
                       {(!isAuthenticated || (role !== 'vendor' && role !== 'admin')) && (
                         <Link href="/become-vendor" onClick={closeSheet}>
-                          <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted">
+                          <div className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${location === '/become-vendor' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`}>
                             <Store className="w-5 h-5" />
                             <span className="font-medium">{t("account.becomeVendor")}</span>
                           </div>
