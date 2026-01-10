@@ -9,7 +9,7 @@ import { useRole, useProducts, useCategories, useDeleteProduct } from "@/hooks/u
 import { useLanguage } from "@/lib/i18n";
 import { 
   Package, ShoppingCart, Loader2, Plus, Image, Trash2, BookOpen, 
-  Store, TrendingUp, DollarSign, Clock, Wallet, Send, Camera, Save, Edit, AlertTriangle, X
+  Store, TrendingUp, DollarSign, Clock, Wallet, Send, Camera, Save, Edit, AlertTriangle, X, QrCode
 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -50,7 +50,7 @@ export default function VendorDashboard() {
   // Get active tab from URL hash or default to "products"
   const getActiveTab = () => {
     const hash = window.location.hash.replace("#", "");
-    if (hash && ["products", "shop", "orders"].includes(hash)) {
+    if (hash && ["products", "shop", "orders", "create-order"].includes(hash)) {
       return hash;
     }
     return "products";
@@ -145,6 +145,15 @@ export default function VendorDashboard() {
   const [deletingProduct, setDeletingProduct] = useState<any | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
+  // Create Order state
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [selectedProductId, setSelectedProductId] = useState("");
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
+  const [orderItems, setOrderItems] = useState<Array<{ productId: string; productName: string; price: string; quantity: number }>>([]);
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+
   const [storyContent, setStoryContent] = useState("");
   const [storyImage, setStoryImage] = useState<string | null>(null);
 
@@ -154,6 +163,15 @@ export default function VendorDashboard() {
   const [storeLogoUrl, setStoreLogoUrl] = useState<string | null>(null);
   const [storeCoverImageUrl, setStoreCoverImageUrl] = useState<string | null>(null);
   const [orderStatusFilter, setOrderStatusFilter] = useState("all");
+
+  // Create Order state
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [selectedProductId, setSelectedProductId] = useState("");
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
+  const [orderItems, setOrderItems] = useState<Array<{ productId: string; productName: string; price: string; quantity: number }>>([]);
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
 
   const productImageRef = useRef<HTMLInputElement>(null);
   const storyImageRef = useRef<HTMLInputElement>(null);
@@ -291,6 +309,42 @@ export default function VendorDashboard() {
       toast({ title: "Shop Updated", description: "Your shop details have been saved." });
     },
     onError: () => toast({ title: "Error", description: "Failed to update shop.", variant: "destructive" }),
+  });
+
+  const createOrderMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest("POST", "/api/vendor/orders", data);
+      return res.json();
+    },
+    onSuccess: (order: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vendor/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/vendor/analytics"] });
+      toast({ 
+        title: t("vendor.dashboard.orderCreated"), 
+        description: t("vendor.dashboard.orderCreatedDesc") 
+      });
+      // Reset form
+      setCustomerName("");
+      setCustomerPhone("");
+      setOrderItems([]);
+      setSelectedProductId("");
+      setSelectedQuantity(1);
+      setPaymentMethod("cash");
+      
+      // If payment gateway, show QR code
+      if (order.qrCodeUrl) {
+        setQrCodeUrl(order.qrCodeUrl);
+      } else {
+        setQrCodeUrl(null);
+      }
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to create order", 
+        variant: "destructive" 
+      });
+    },
   });
 
   useEffect(() => {
@@ -454,6 +508,73 @@ export default function VendorDashboard() {
     });
   };
 
+  const handleAddProductToOrder = () => {
+    if (!selectedProductId || !selectedQuantity || selectedQuantity < 1) return;
+    
+    const product = myProducts.find(p => p.id === selectedProductId);
+    if (!product) return;
+
+    // Check if product already in order
+    const existingIndex = orderItems.findIndex(item => item.productId === selectedProductId);
+    if (existingIndex >= 0) {
+      // Update quantity
+      const updated = [...orderItems];
+      updated[existingIndex].quantity += selectedQuantity;
+      setOrderItems(updated);
+    } else {
+      // Add new item
+      setOrderItems([...orderItems, {
+        productId: product.id,
+        productName: product.name,
+        price: product.price,
+        quantity: selectedQuantity,
+      }]);
+    }
+
+    setSelectedProductId("");
+    setSelectedQuantity(1);
+  };
+
+  const handleRemoveOrderItem = (index: number) => {
+    setOrderItems(orderItems.filter((_, i) => i !== index));
+  };
+
+  const orderTotal = orderItems.reduce((sum, item) => {
+    return sum + (parseFloat(item.price) * item.quantity);
+  }, 0);
+
+  const handleCreateOrder = () => {
+    if (orderItems.length === 0) {
+      toast({ 
+        title: t("vendor.dashboard.noProductsSelected"), 
+        description: t("vendor.dashboard.selectAtLeastOne"),
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    if (!customerName || !customerPhone) {
+      toast({ 
+        title: "Missing Information", 
+        description: "Please enter customer name and phone",
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    createOrderMutation.mutate({
+      customerName,
+      customerPhone,
+      items: orderItems.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      total: orderTotal.toFixed(3),
+      paymentMethod,
+    });
+  };
+
   // Show profile creation form if vendor profile doesn't exist
   if (!vendorProfile && !isProfileLoading) {
     return (
@@ -533,6 +654,11 @@ export default function VendorDashboard() {
       value: "orders",
       icon: ShoppingCart,
       label: t("vendor.dashboard.tabOrders"),
+    },
+    {
+      value: "create-order",
+      icon: Plus,
+      label: t("vendor.dashboard.tabCreateOrder"),
     },
     {
       value: "wallet",
@@ -776,7 +902,7 @@ export default function VendorDashboard() {
             {/* Mobile Tabs */}
             <div className="lg:hidden mb-6">
               <Tabs value={activeTab} onValueChange={(value) => { setActiveTab(value); window.location.hash = value; }} className="w-full">
-                <TabsList className="grid w-full grid-cols-3 h-auto">
+                <TabsList className="grid w-full grid-cols-4 h-auto">
                   <TabsTrigger value="products" className="py-3" data-testid="tab-products">
                     <Package className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
                     {t("vendor.dashboard.tabProducts")}
@@ -788,6 +914,10 @@ export default function VendorDashboard() {
                   <TabsTrigger value="orders" className="py-3" data-testid="tab-orders">
                     <ShoppingCart className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
                     {t("vendor.dashboard.tabOrders")}
+                  </TabsTrigger>
+                  <TabsTrigger value="create-order" className="py-3" data-testid="tab-create-order">
+                    <Plus className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+                    {t("vendor.dashboard.tabCreateOrder")}
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -1023,6 +1153,146 @@ export default function VendorDashboard() {
                 )}
               </CardContent>
             </Card>
+              </div>
+            )}
+
+            {activeTab === "create-order" && (
+              <div>
+                <Card className="border shadow-sm mb-6">
+                  <CardHeader>
+                    <CardTitle>{t("vendor.dashboard.createOrder")}</CardTitle>
+                    <CardDescription>{t("vendor.dashboard.createOrderDesc")}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Customer Information */}
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>{t("vendor.dashboard.customerName")} *</Label>
+                        <Input
+                          placeholder={isRTL ? "اسم العميل" : "Customer Name"}
+                          value={customerName}
+                          onChange={(e) => setCustomerName(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>{t("vendor.dashboard.customerPhone")} *</Label>
+                        <Input
+                          placeholder="+965 XXXX XXXX"
+                          value={customerPhone}
+                          onChange={(e) => setCustomerPhone(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Product Selection */}
+                    <div className="space-y-2">
+                      <Label>{t("vendor.dashboard.selectProducts")}</Label>
+                      <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t("vendor.dashboard.selectProducts")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {myProducts.map((product) => (
+                            <SelectItem key={product.id} value={product.id}>
+                              {product.name} - {formatKWD(product.price)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {selectedProductId && (
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            min="1"
+                            placeholder="Quantity"
+                            value={selectedQuantity}
+                            onChange={(e) => setSelectedQuantity(parseInt(e.target.value) || 1)}
+                            className="w-32"
+                          />
+                          <Button
+                            onClick={handleAddProductToOrder}
+                            disabled={!selectedProductId || !selectedQuantity || selectedQuantity < 1}
+                          >
+                            <Plus className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+                            {t("vendor.dashboard.addProductToOrder")}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Order Items */}
+                    {orderItems.length > 0 && (
+                      <div className="space-y-2">
+                        <Label>{t("vendor.dashboard.orderItems")}</Label>
+                        <div className="border rounded-lg divide-y">
+                          {orderItems.map((item, index) => (
+                            <div key={index} className="p-4 flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="font-medium">{item.productName}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {formatKWD(item.price)} × {item.quantity} = {formatKWD((parseFloat(item.price) * item.quantity).toFixed(3))}
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoveOrderItem(index)}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex justify-end pt-2">
+                          <div className="text-lg font-bold">
+                            {t("vendor.dashboard.orderTotal")}: {formatKWD(orderTotal.toFixed(3))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Payment Method */}
+                    <div className="space-y-2">
+                      <Label>{t("vendor.dashboard.paymentMethod")} *</Label>
+                      <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="knet">{t("vendor.dashboard.paymentKnet")}</SelectItem>
+                          <SelectItem value="cash">{t("vendor.dashboard.paymentCash")}</SelectItem>
+                          <SelectItem value="gateway">{t("vendor.dashboard.paymentGateway")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* QR Code Display */}
+                    {qrCodeUrl && (
+                      <div className="border rounded-lg p-6 text-center space-y-4">
+                        <QrCode className="w-8 h-8 mx-auto text-primary" />
+                        <p className="font-medium">{t("vendor.dashboard.qrCode")}</p>
+                        <img src={qrCodeUrl} alt="QR Code" className="mx-auto w-48 h-48" />
+                        <p className="text-sm text-muted-foreground">{t("vendor.dashboard.scanToPay")}</p>
+                      </div>
+                    )}
+
+                    {/* Create Order Button */}
+                    <Button
+                      className="w-full"
+                      onClick={handleCreateOrder}
+                      disabled={createOrderMutation.isPending || orderItems.length === 0 || !customerName || !customerPhone}
+                    >
+                      {createOrderMutation.isPending ? (
+                        <>
+                          <Loader2 className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"} animate-spin`} />
+                          {t("vendor.dashboard.creatingOrder")}
+                        </>
+                      ) : (
+                        t("vendor.dashboard.createOrderBtn")
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
               </div>
             )}
 

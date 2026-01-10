@@ -644,6 +644,85 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/vendor/orders", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "vendor") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const vendors = await storage.getVendors();
+      const vendor = vendors.find((v) => v.userId === req.session.userId);
+      if (!vendor) {
+        return res.status(404).json({ message: "Vendor not found" });
+      }
+
+      const { customerName, customerPhone, items, total, paymentMethod } =
+        req.body;
+
+      if (!customerName || !customerPhone || !items || items.length === 0) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // Verify all products belong to this vendor
+      for (const item of items) {
+        const product = await storage.getProduct(item.productId);
+        if (!product || product.vendorId.toString() !== vendor.id.toString()) {
+          return res
+            .status(403)
+            .json({ message: "Product does not belong to vendor" });
+        }
+      }
+
+      // Create order
+      const order = await storage.createOrder(
+        req.session.userId,
+        total,
+        items,
+        {
+          name: customerName,
+          phone: customerPhone,
+        },
+        paymentMethod || "cash"
+      );
+
+      let qrCodeUrl = null;
+
+      // Generate QR code if payment method is gateway
+      if (paymentMethod === "gateway") {
+        try {
+          const QRCode = (await import("qrcode")).default;
+          const paymentData = {
+            orderId: order.id,
+            amount: total,
+            vendorId: vendor.id,
+            customerName,
+            customerPhone,
+            timestamp: new Date().toISOString(),
+          };
+
+          // Generate QR code as data URL
+          qrCodeUrl = await QRCode.toDataURL(JSON.stringify(paymentData), {
+            errorCorrectionLevel: "M",
+            margin: 1,
+            width: 300,
+          });
+        } catch (qrError) {
+          console.error("Error generating QR code:", qrError);
+          // Continue without QR code
+        }
+      }
+
+      res.status(201).json({
+        ...order,
+        qrCodeUrl,
+      });
+    } catch (e: any) {
+      console.error("Error creating vendor order:", e);
+      res.status(500).json({ message: e.message || "Failed to create order" });
+    }
+  });
+
   app.get("/api/vendor/profile", isAuthenticated, async (req: any, res) => {
     try {
       const role = await storage.getUserRole(req.session.userId);
