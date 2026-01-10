@@ -8,67 +8,76 @@ interface LoadingPageProps {
 
 export function LoadingPage({ message = "Loading...", fullScreen = true }: LoadingPageProps) {
   const containerClass = fullScreen 
-    ? "min-h-screen flex items-center justify-center bg-background"
+    ? "min-h-screen flex items-center justify-center bg-background/50 backdrop-blur-sm"
     : "flex items-center justify-center py-12";
 
   return (
     <div className={containerClass}>
-      <div className="flex flex-col items-center gap-6">
-        {/* Shaking Car Logo */}
-        <motion.div
-          animate={{
-            x: [0, -10, 10, -10, 10, -5, 5, 0],
-            rotate: [0, -5, 5, -5, 5, -2, 2, 0],
-          }}
-          transition={{
-            duration: 0.6,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="relative"
-        >
-          <div className="w-24 h-24 md:w-32 md:h-32 bg-primary/10 rounded-full flex items-center justify-center p-4">
+      <div className="flex flex-col items-center justify-center relative">
+        {/* Rotating Rings */}
+        <div className="relative w-32 h-32 md:w-40 md:h-40 flex items-center justify-center">
+          {/* Outer Ring */}
+          <motion.div
+            className="absolute inset-0 rounded-full border-t-2 border-r-2 border-primary/20"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          />
+          {/* Middle Ring */}
+          <motion.div
+            className="absolute inset-2 rounded-full border-b-2 border-l-2 border-primary/40"
+            animate={{ rotate: -360 }}
+            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+          />
+           {/* Inner Ring */}
+           <motion.div
+            className="absolute inset-4 rounded-full border-t-2 border-primary/60"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+          />
+          
+          {/* Center Logo with Pulse */}
+          <motion.div
+            className="w-16 h-16 md:w-20 md:h-20 bg-background rounded-full flex items-center justify-center z-10 shadow-sm"
+            animate={{ 
+              scale: [1, 1.05, 1],
+              opacity: [0.8, 1, 0.8]
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          >
             <img 
               src={carLogo} 
               alt="MotorBuy" 
-              className="w-full h-full object-contain"
+              className="w-12 h-12 md:w-16 md:h-16 object-contain"
             />
-          </div>
-        </motion.div>
-
-        {/* Loading Dots */}
-        <div className="flex items-center gap-2">
-          {[0, 1, 2].map((index) => (
-            <motion.div
-              key={index}
-              className="w-3 h-3 bg-primary rounded-full"
-              animate={{
-                y: [0, -10, 0],
-                opacity: [0.5, 1, 0.5],
-              }}
-              transition={{
-                duration: 0.8,
-                repeat: Infinity,
-                delay: index * 0.2,
-                ease: "easeInOut",
-              }}
-            />
-          ))}
+          </motion.div>
         </div>
 
-        {/* Optional Message */}
+        {/* Message */}
         {message && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="text-sm text-muted-foreground font-medium"
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mt-6 flex flex-col items-center gap-2"
           >
-            {message}
-          </motion.p>
+            <span className="text-sm md:text-base font-medium text-muted-foreground tracking-wide uppercase">
+              {message}
+            </span>
+            {/* Simple progress bar line */}
+            <div className="h-0.5 w-24 bg-muted overflow-hidden rounded-full">
+              <motion.div
+                className="h-full bg-primary"
+                animate={{ x: ["-100%", "100%"] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              />
+            </div>
+          </motion.div>
         )}
       </div>
     </div>
   );
 }
-

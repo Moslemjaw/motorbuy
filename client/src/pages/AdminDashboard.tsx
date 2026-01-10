@@ -222,20 +222,22 @@ export default function AdminDashboard() {
         </aside>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-y-auto pb-16 lg:pb-0 lg:pt-16">
+        <div className="flex-1 overflow-y-auto pb-16 lg:pb-0 lg:pt-0">
           <div className="container mx-auto px-4 py-4 lg:py-6">
             {/* Header */}
-            <div className={`mb-6 ${isRTL ? "text-right" : "text-left"}`}>
-              <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
-                {t("admin.dashboard.title")}
+            <div className={`mb-4 ${isRTL ? "text-right" : "text-left"}`}>
+              <h1 className="text-2xl md:text-3xl font-display font-bold mb-1">
+                {activeTab === "analytics" ? t("admin.dashboard.title") : navItems.find(i => i.value === activeTab)?.label}
               </h1>
-              <p className="text-muted-foreground text-base md:text-lg">
-                {t("admin.dashboard.manage")}
-              </p>
-        </div>
+              {activeTab === "analytics" && (
+                <p className="text-muted-foreground text-sm md:text-base">
+                  {t("admin.dashboard.manage")}
+                </p>
+              )}
+            </div>
 
             {/* Content Sections */}
-            <div className="mt-5 lg:mt-8 space-y-5">
+            <div className="mt-4 lg:mt-6 space-y-4">
               {activeTab === "analytics" && (
                 <>
         <TopSummaryCards />

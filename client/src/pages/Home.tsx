@@ -1,80 +1,65 @@
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
-import { Button } from "@/components/ui/button";
-import { useCategories, useStories, useProducts, useVendors } from "@/hooks/use-motorbuy";
-import { useLanguage } from "@/lib/i18n";
-import { ProductCard } from "@/components/ProductCard";
-import { ArrowRight, Shield, ChevronRight, Users, Package, TrendingUp, Cog, Settings, CircleStop, Gauge, Zap, Thermometer, Fuel, Wind, Car, Armchair, Circle, Lightbulb, Droplets, Wrench, Truck, Headphones, CreditCard, Megaphone, ChevronLeft, type LucideIcon } from "lucide-react";
-import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
-
-const iconMap: Record<string, LucideIcon> = {
-  Cog, Settings, CircleStop, Gauge, Zap, Thermometer, Fuel, Wind, Car, Armchair, Circle, Lightbulb, Droplets, Wrench
-};
+import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/i18n";
+import { ArrowRight, ChevronRight, ChevronLeft, Package, Users, ShoppingCart, Wrench, Battery, Disc, Zap, Cog, AlertTriangle, ShieldCheck, Truck, Clock, CreditCard } from "lucide-react";
+import { Navbar } from "@/components/Navbar";
+import { useProducts, useCategories, useVendors } from "@/hooks/use-motorbuy";
+import { useState, useRef, useEffect } from "react";
+import carEngineImage from "@assets/stock_images/car_engine_parts_aut_6393f4c6.jpg";
 
 export default function Home() {
-  const { t, isRTL, language } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { data: categories } = useCategories();
-  const { data: products } = useProducts({ sortBy: 'newest' });
-  const { data: stories } = useStories();
   const { data: vendors } = useVendors();
+  const { data: products } = useProducts();
 
-  const featuredProducts = products?.slice(0, 4);
-
-  const stats = [
-    { icon: Package, label: t("stats.products"), value: products?.length || 0 },
-    { icon: Users, label: t("stats.vendors"), value: vendors?.length || 0 },
-    { icon: TrendingUp, label: t("stats.categories"), value: categories?.length || 0 },
-  ];
-
-  const features = [
-    { icon: Shield, title: t("feature.quality"), desc: t("feature.quality.desc") },
-    { icon: Truck, title: t("feature.delivery"), desc: t("feature.delivery.desc") },
-    { icon: Headphones, title: t("feature.support"), desc: t("feature.support.desc") },
-    { icon: CreditCard, title: t("feature.secure"), desc: t("feature.secure.desc") },
-  ];
-
-  const categoriesTrackRef = useRef<HTMLDivElement | null>(null);
-  const isInteractingRef = useRef(false);
-  const interactionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [isInteracting, setIsInteracting] = useState(false);
-
+  // Scroll ref for categories
+  const categoriesTrackRef = useRef<HTMLDivElement>(null);
+  const [isHovering, setIsHovering] = useState(false);
+  const interactionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   const handleInteractionStart = () => {
-    setIsInteracting(true);
-    isInteractingRef.current = true;
+    setIsHovering(true);
     if (interactionTimeoutRef.current) {
       clearTimeout(interactionTimeoutRef.current);
-      interactionTimeoutRef.current = null;
     }
   };
 
   const handleInteractionEnd = () => {
-    if (interactionTimeoutRef.current) {
-      clearTimeout(interactionTimeoutRef.current);
-    }
     interactionTimeoutRef.current = setTimeout(() => {
-      setIsInteracting(false);
-      isInteractingRef.current = false;
-    }, 1200);
+      setIsHovering(false);
+    }, 1000); // Resume after 1 second of inactivity
   };
 
+  // Auto-scroll logic using requestAnimationFrame
   useEffect(() => {
-    const el = categoriesTrackRef.current;
-    if (!el || !categories?.length) return;
+    const track = categoriesTrackRef.current;
+    if (!track || !categories || categories.length === 0) return;
+
+    let scrollPos = track.scrollLeft;
+    const speed = isRTL ? -0.5 : 0.5; // Adjust speed as needed
     let frame: number;
 
     const step = () => {
-      if (!el) return;
-      if (!isInteractingRef.current) {
-        const maxScroll = el.scrollWidth / 2;
-        const delta = isRTL ? -0.6 : 0.6;
-        el.scrollLeft += delta;
-        if (!isRTL && el.scrollLeft >= maxScroll) {
-          el.scrollLeft -= maxScroll;
-        } else if (isRTL && el.scrollLeft <= 0) {
-          el.scrollLeft += maxScroll;
+      if (!isHovering) {
+        scrollPos += speed;
+        
+        // Loop logic
+        // We have duplicated the items, so when we reach halfway (or the end of the first set), we jump back
+        const maxScroll = track.scrollWidth / 2; // Approximate halfway point due to duplication
+        
+        if (isRTL) {
+           if (Math.abs(scrollPos) >= maxScroll) {
+             scrollPos = 0;
+           }
+        } else {
+           if (scrollPos >= maxScroll) {
+             scrollPos = 0;
+           }
         }
+        
+        track.scrollLeft = scrollPos;
       }
       frame = requestAnimationFrame(step);
     };
@@ -87,34 +72,70 @@ export default function Home() {
         interactionTimeoutRef.current = null;
       }
     };
-  }, [categories, isRTL]);
+  }, [categories, isRTL, isHovering]);
+
+
+  const stats = [
+    { label: t("stats.products"), value: products?.length || 0, icon: Package },
+    { label: t("stats.vendors"), value: vendors?.filter(v => v.isApproved).length || 0, icon: Users },
+    { label: t("stats.categories"), value: categories?.length || 0, icon: Wrench },
+  ];
+
+  const features = [
+    { icon: ShieldCheck, title: t("feature.quality"), desc: t("feature.quality.desc") },
+    { icon: Truck, title: t("feature.delivery"), desc: t("feature.delivery.desc") },
+    { icon: Clock, title: t("feature.support"), desc: t("feature.support.desc") },
+    { icon: CreditCard, title: t("feature.secure"), desc: t("feature.secure.desc") },
+  ];
+  
+  const iconMap: any = {
+    "engine": Cog,
+    "brakes": Disc,
+    "suspension": AlertTriangle,
+    "electrical": Zap,
+    "batteries": Battery,
+    "filters": Package,
+  };
 
   return (
     <div className="min-h-screen bg-background font-body">
       <Navbar />
 
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white py-12 md:py-20 lg:py-28">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/10 to-transparent" />
-          <div className="absolute bottom-0 left-0 w-1/3 h-1/2 bg-gradient-to-tr from-primary/5 to-transparent rounded-full blur-3xl" />
+      <section className="relative overflow-hidden bg-slate-900 text-white min-h-[600px] flex items-center">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 z-0">
+          <motion.div 
+            initial={{ scale: 1.1 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
+            className="w-full h-full"
+          >
+            <img 
+              src={carEngineImage} 
+              alt="Background" 
+              className="w-full h-full object-cover opacity-40"
+            />
+          </motion.div>
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-900/60" />
+          <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-background to-transparent" />
         </div>
         
-        <div className="container relative z-10 px-4 mx-auto">
+        <div className="container relative z-10 px-4 mx-auto py-12 md:py-20">
           <div className={`max-w-2xl mx-auto md:mx-0 text-center ${isRTL ? 'md:text-right' : 'md:text-left'}`}>
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-bold tracking-tight ${isRTL ? 'leading-[1.8] mb-4 md:mb-6' : 'leading-tight mb-4 md:mb-6'}`}
+              className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-bold tracking-tight ${isRTL ? 'leading-normal mb-6' : 'leading-tight mb-6'}`}
             >
-              {t("hero.title")} <span className="text-primary">{t("hero.title.highlight")}</span>
+              {t("hero.title")} <span className="text-primary block mt-2">{t("hero.title.highlight")}</span>
             </motion.h1>
             
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className={`text-base md:text-lg text-white/70 mb-8 max-w-lg mx-auto md:mx-0 mt-4 md:mt-6 ${isRTL ? 'leading-loose' : 'leading-relaxed'}`}
+              className={`text-base md:text-lg text-slate-300 mb-8 max-w-lg mx-auto md:mx-0 ${isRTL ? 'leading-relaxed' : 'leading-relaxed'}`}
             >
               {t("hero.subtitle")}
             </motion.p>
@@ -123,15 +144,15 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="flex flex-wrap gap-3 justify-center md:justify-start"
+              className="flex flex-wrap gap-4 justify-center md:justify-start"
             >
               <Link href="/products">
-                <Button size="lg" className="rounded-full px-6 md:px-8 shadow-lg" data-testid="button-shop-parts">
+                <Button size="lg" className="rounded-full px-8 h-12 text-base font-semibold shadow-xl hover:scale-105 transition-transform" data-testid="button-shop-parts">
                   {t("hero.shopParts")} <ArrowRight className={`w-4 h-4 ${isRTL ? 'mr-2 rotate-180' : 'ml-2'}`} />
                 </Button>
               </Link>
               <Link href="/vendors">
-                <Button size="lg" variant="outline" className="rounded-full px-6 md:px-8 border-white/20 text-white bg-white/5 hover:bg-white/10" data-testid="button-browse-vendors">
+                <Button size="lg" variant="outline" className="rounded-full px-8 h-12 text-base font-semibold border-white/20 text-white bg-white/5 hover:bg-white/10 hover:text-white backdrop-blur-sm" data-testid="button-browse-vendors">
                   {t("hero.browseVendors")}
                 </Button>
               </Link>
@@ -141,16 +162,16 @@ export default function Home() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex flex-wrap gap-6 md:gap-10 mt-10 pt-8 border-t border-white/10 justify-center md:justify-start"
+              className="flex flex-wrap gap-8 md:gap-12 mt-12 pt-8 border-t border-white/10 justify-center md:justify-start"
             >
               {stats.map((stat, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-                    <stat.icon className="w-5 h-5 text-primary" />
+                  <div className="w-12 h-12 rounded-xl bg-primary/20 backdrop-blur-md flex items-center justify-center border border-primary/20">
+                    <stat.icon className="w-6 h-6 text-primary" />
                   </div>
-                  <div>
-                    <div className="text-xl md:text-2xl font-bold">{stat.value}+</div>
-                    <div className="text-xs text-white/60">{stat.label}</div>
+                  <div className={`text-${isRTL ? 'right' : 'left'}`}>
+                    <div className="text-2xl font-bold font-display">{stat.value}+</div>
+                    <div className="text-xs text-slate-400 font-medium uppercase tracking-wider">{stat.label}</div>
                   </div>
                 </div>
               ))}
@@ -159,58 +180,55 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-16 md:py-24 bg-muted/50">
+      {/* Why Us Section moved here */}
+      <section className="py-16 md:py-24 bg-muted/30">
         <div className="container px-4 mx-auto">
-          <div className="mb-12 text-center">
-            <h2 className="text-2xl md:text-3xl font-display font-bold mb-2">{t("section.whyUs")}</h2>
+          <div className="mb-12 text-center max-w-3xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-display font-bold mb-4">{t("section.whyUs")}</h2>
             <p className="text-muted-foreground">{t("section.whyUs.subtitle")}</p>
           </div>
           
           {/* Desktop: Grid Layout */}
-          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((item, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="text-center"
+                className="bg-card border rounded-2xl p-6 text-center hover:shadow-lg transition-shadow"
               >
-                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <item.icon className="w-8 h-8 text-primary" />
+                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4 text-primary">
+                  <item.icon className="w-7 h-7" />
                 </div>
                 <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
-                <p className="text-sm text-muted-foreground">{item.desc}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
               </motion.div>
             ))}
           </div>
 
-          {/* Mobile: Horizontal Scrollable Row */}
-          <div className="md:hidden relative -mx-4 px-4">
-            <div className="overflow-x-auto scrollbar-hide scroll-smooth">
-              <div className="flex gap-4 min-w-max pb-2">
-                {features.map((item, i) => (
+          {/* Mobile: Horizontal Scrollable Row (Auto-scrolling) */}
+          <div className="md:hidden relative -mx-4 px-4 overflow-hidden">
+             <div className="flex gap-4 animate-scroll-features-auto w-max hover:[animation-play-state:paused] py-4">
+                {[...features, ...features, ...features].map((item, i) => ( // Tripled for smoother loop
                   <div
                     key={i}
-                    className="flex-shrink-0 w-[calc(100vw-2rem)] text-center px-4"
+                    className="w-[280px] flex-shrink-0 bg-card border rounded-2xl p-6 text-center shadow-sm"
                   >
-                    <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <item.icon className="w-8 h-8 text-primary" />
+                    <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4 text-primary">
+                      <item.icon className="w-7 h-7" />
                     </div>
                     <h3 className="font-semibold text-lg mb-2">{item.title}</h3>
-                    <p className="text-sm text-muted-foreground">{item.desc}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
                   </div>
                 ))}
-              </div>
             </div>
-            {/* Scroll Indicator */}
-            <div className="flex justify-center gap-1.5 mt-4">
-              {features.map((_, i) => (
-                <div
-                  key={i}
-                  className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30"
-                />
-              ))}
+             {/* Dots indicator */}
+            <div className="flex justify-center gap-1.5 mt-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary/50" />
+              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
+              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
             </div>
           </div>
         </div>
@@ -221,13 +239,13 @@ export default function Home() {
           <div className="flex flex-col items-center md:flex-row md:justify-between md:items-center gap-4 mb-8">
             {isRTL ? (
               <>
-                <Link href="/products" className="text-primary text-sm font-medium flex items-center gap-1 group justify-center md:justify-start">
-                  {t("common.viewAll")} <ChevronRight className="w-4 h-4 transition-transform rotate-180 group-hover:-translate-x-1" />
-                </Link>
                 <div className="max-w-2xl md:max-w-none text-center md:text-right">
                   <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">{t("section.categories")}</h2>
                   <p className="text-muted-foreground text-sm md:text-base">{t("section.categories.subtitle")}</p>
                 </div>
+                <Link href="/products" className="text-primary text-sm font-medium flex items-center gap-1 group justify-center md:justify-start">
+                  {t("common.viewAll")} <ChevronRight className="w-4 h-4 transition-transform rotate-180 group-hover:-translate-x-1" />
+                </Link>
               </>
             ) : (
               <>
@@ -251,7 +269,8 @@ export default function Home() {
                 <motion.div
                   key={cat.id}
                   initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
                   transition={{ delay: index * 0.03 }}
                   className="h-full"
                 >
@@ -270,47 +289,35 @@ export default function Home() {
 
           {/* Mobile: Auto-scrolling Carousel (All 10 categories) */}
           {categories && categories.length > 0 ? (
-            <div className="md:hidden relative -mx-4 px-4">
-              <div
-                className="overflow-x-auto scrollbar-hide scroll-smooth"
-                ref={categoriesTrackRef}
-                onMouseEnter={handleInteractionStart}
-                onMouseLeave={handleInteractionEnd}
-                onTouchStart={handleInteractionStart}
-                onTouchEnd={handleInteractionEnd}
-              >
-                <div className="scroll-loop-track">
-                  {[...categories.slice(0, 10), ...categories.slice(0, 10)].map((cat, index) => {
+            <div className="md:hidden relative -mx-4 px-4 overflow-hidden">
+               <div className="flex gap-3 animate-scroll-categories-auto w-max hover:[animation-play-state:paused] py-2">
+                  {[...categories.slice(0, 10), ...categories.slice(0, 10), ...categories.slice(0, 10)].map((cat, index) => {
                     const IconComponent = cat.icon ? iconMap[cat.icon] : Wrench;
                     const translatedName = t(`cat.${cat.slug}`) !== `cat.${cat.slug}` ? t(`cat.${cat.slug}`) : cat.name;
                     return (
                       <div
                         key={`${cat.id}-${index}`}
-                        className="flex-shrink-0 w-[calc((100vw-2rem-0.75rem*2)/3)]"
+                        className="w-[120px] flex-shrink-0"
                       >
                         <Link href={`/products?categoryId=${cat.id}`}>
-                          <div className="group cursor-pointer bg-card rounded-xl p-4 border hover:border-primary/30 hover:shadow-md transition-all text-center h-full flex flex-col items-center justify-center">
-                            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
-                              {IconComponent && <IconComponent className="w-6 h-6 text-primary" />}
+                          <div className="group cursor-pointer bg-card rounded-xl p-3 border hover:border-primary/30 hover:shadow-md transition-all text-center h-full flex flex-col items-center justify-center aspect-square">
+                            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center mb-2 group-hover:bg-primary/20 transition-colors">
+                              {IconComponent && <IconComponent className="w-5 h-5 text-primary" />}
                             </div>
-                            <h3 className="font-medium text-xs group-hover:text-primary transition-colors line-clamp-2 min-h-[2.5rem] flex items-center justify-center">{translatedName}</h3>
+                            <h3 className="font-medium text-xs group-hover:text-primary transition-colors line-clamp-2 flex items-center justify-center text-center leading-tight">{translatedName}</h3>
                           </div>
                         </Link>
                       </div>
                     );
                   })}
-                </div>
               </div>
               {/* Scroll Indicator */}
               <div className="flex items-center justify-center gap-2 mt-4">
                 <ChevronLeft className={`w-4 h-4 text-muted-foreground ${isRTL ? 'rotate-180' : ''}`} />
                 <div className="flex gap-1.5">
-                  {categories.slice(0, 10).map((_, i) => (
-                    <div
-                      key={i}
-                      className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30 animate-scroll-dot"
-                    />
-                  ))}
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
                 </div>
                 <ChevronRight className={`w-4 h-4 text-muted-foreground ${isRTL ? 'rotate-180' : ''}`} />
               </div>
@@ -334,13 +341,13 @@ export default function Home() {
           <div className="flex flex-col items-center md:flex-row md:justify-between md:items-center gap-4 mb-8">
             {isRTL ? (
               <>
-                <Link href="/products" className="text-primary text-sm font-medium flex items-center gap-1 group justify-center md:justify-start">
-                  {t("common.viewAll")} <ChevronRight className="w-4 h-4 transition-transform rotate-180 group-hover:-translate-x-1" />
-                </Link>
                 <div className="max-w-2xl md:max-w-none text-center md:text-right">
                   <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">{t("section.newArrivals")}</h2>
                   <p className="text-muted-foreground text-sm md:text-base">{t("section.newArrivals.subtitle")}</p>
                 </div>
+                <Link href="/products" className="text-primary text-sm font-medium flex items-center gap-1 group justify-center md:justify-start">
+                  {t("common.viewAll")} <ChevronRight className="w-4 h-4 transition-transform rotate-180 group-hover:-translate-x-1" />
+                </Link>
               </>
             ) : (
               <>
@@ -354,101 +361,75 @@ export default function Home() {
               </>
             )}
           </div>
-          
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
-            {featuredProducts?.map((product, index) => (
-              <motion.div
+
+          {/* Desktop Grid */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {products?.slice(0, 4).map((product, i) => (
+               <motion.div
                 key={product.id}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
               >
-                <ProductCard product={product} />
+                <Link href={`/products/${product.id}`}>
+                  <div className="group bg-card rounded-2xl overflow-hidden border hover:border-primary/50 hover:shadow-lg transition-all h-full flex flex-col">
+                    <div className="aspect-[4/3] overflow-hidden bg-muted relative">
+                      <img 
+                        src={product.images?.[0] || "https://placehold.co/400x300?text=MotorBuy"} 
+                        alt={product.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Button variant="secondary" size="sm" className="rounded-full">
+                          {t("common.viewAll")}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="p-4 flex flex-col flex-1">
+                      <h3 className="font-semibold mb-1 line-clamp-1 group-hover:text-primary transition-colors">{product.name}</h3>
+                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2 flex-1">{product.description}</p>
+                      <div className="flex items-center justify-between mt-auto">
+                        <span className="font-bold text-lg">{product.price} KWD</span>
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                          <ArrowRight className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
               </motion.div>
             ))}
           </div>
-          {(!featuredProducts || featuredProducts.length === 0) && (
-            <div className="text-center py-12 text-muted-foreground">
-              {t("common.noResults")}
-            </div>
-          )}
-        </div>
-      </section>
 
-      <section className="py-12 md:py-20">
-        <div className="container px-4 mx-auto">
-          <div className="flex flex-col items-center md:flex-row md:justify-between md:items-center gap-4 mb-8">
-            {isRTL ? (
-              <>
-                <Link href="/stories" className="text-primary text-sm font-medium flex items-center gap-1 group justify-center md:justify-start">
-                  {t("common.viewAll")} <ChevronRight className="w-4 h-4 transition-transform rotate-180 group-hover:-translate-x-1" />
-                </Link>
-                <div className="max-w-2xl md:max-w-none text-center md:text-right">
-                  <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">{t("section.featuredAds")}</h2>
-                  <p className="text-muted-foreground text-sm md:text-base">{t("section.featuredAds.subtitle")}</p>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="max-w-2xl md:max-w-none text-center md:text-left">
-                  <h2 className="text-2xl md:text-3xl font-display font-bold mb-2 md:mb-1">{t("section.featuredAds")}</h2>
-                  <p className="text-muted-foreground text-sm md:text-base">{t("section.featuredAds.subtitle")}</p>
-                </div>
-                <Link href="/stories" className="text-primary text-sm font-medium flex items-center gap-1 group justify-center md:justify-start">
-                  {t("common.viewAll")} <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </>
-            )}
-          </div>
-          
-          {stories && stories.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {stories.slice(0, 6).map((story, index) => (
-                <motion.div
-                  key={story.id}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.03 }}
-                  className="bg-card rounded-xl border overflow-hidden group hover:shadow-md transition-shadow"
-                >
-                  {story.imageUrl && (
-                    <div className="aspect-video overflow-hidden bg-muted">
-                      <img 
-                        src={story.imageUrl} 
-                        alt="" 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                  )}
-                  <div className="p-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center font-semibold text-primary text-sm">
-                        {story.vendor?.storeName?.[0] || "V"}
+          {/* Mobile Scroll */}
+          <div className="md:hidden relative -mx-4 px-4 overflow-x-auto scrollbar-hide pb-4">
+            <div className="flex gap-4 w-max">
+              {products?.slice(0, 4).map((product) => (
+                <div key={product.id} className="w-[280px] flex-shrink-0">
+                  <Link href={`/products/${product.id}`}>
+                    <div className="bg-card rounded-2xl overflow-hidden border shadow-sm h-full flex flex-col">
+                      <div className="aspect-video bg-muted relative">
+                         <img 
+                          src={product.images?.[0] || "https://placehold.co/400x300?text=MotorBuy"} 
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm truncate">{story.vendor?.storeName || "Vendor"}</h4>
-                        <p className="text-xs text-muted-foreground">
-                          {story.createdAt ? new Date(story.createdAt).toLocaleDateString(language === "ar" ? "ar-KW" : "en-US") : ""}
-                        </p>
+                      <div className="p-4 flex flex-col flex-1">
+                        <h3 className="font-semibold mb-1 line-clamp-1">{product.name}</h3>
+                        <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{product.description}</p>
+                        <div className="mt-auto font-bold text-primary">{product.price} KWD</div>
                       </div>
                     </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2">{story.content}</p>
-                  </div>
-                </motion.div>
+                  </Link>
+                </div>
               ))}
             </div>
-          ) : (
-            <div className="text-center py-12 bg-card rounded-xl border">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                <Megaphone className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <p className="text-muted-foreground">{t("section.noAds")}</p>
-            </div>
-          )}
+          </div>
         </div>
       </section>
 
-      <Footer />
     </div>
   );
 }

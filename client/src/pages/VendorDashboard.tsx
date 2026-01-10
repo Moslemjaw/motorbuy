@@ -717,21 +717,23 @@ export default function VendorDashboard() {
         </aside>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-y-auto pb-16 lg:pb-0 lg:pt-16">
+        <div className="flex-1 overflow-y-auto pb-16 lg:pb-0 lg:pt-0">
           <div className="container mx-auto px-4 py-4 lg:py-6">
             {/* Header */}
-            <div className={`mb-6 ${isRTL ? "text-right" : "text-left"}`}>
-              <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
-                {t("vendor.dashboard.title")}
+            <div className={`mb-4 ${isRTL ? "text-right" : "text-left"}`}>
+              <h1 className="text-2xl md:text-3xl font-display font-bold mb-1">
+                {activeTab === "overview" ? t("vendor.dashboard.title") : navItems.find(i => i.value === activeTab)?.label}
               </h1>
-              <p className="text-muted-foreground text-base md:text-lg">{vendorProfile?.storeName || ""}</p>
+              {activeTab === "overview" && (
+                <p className="text-muted-foreground text-sm md:text-base">{vendorProfile?.storeName || ""}</p>
+              )}
             </div>
 
             {/* Overview Section */}
             {activeTab === "overview" && (
               <>
                 {/* Analytics Cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <Card className="border shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10 border-blue-200 dark:border-blue-800">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -789,7 +791,7 @@ export default function VendorDashboard() {
           </Card>
         </div>
 
-                <div className="grid lg:grid-cols-3 gap-6 mb-6">
+                <div className="grid lg:grid-cols-3 gap-4 mb-4">
           <Card className="lg:col-span-2 border shadow-sm">
             <CardHeader className="pb-4">
               <CardTitle className="text-xl font-semibold">{t("vendor.dashboard.createAd")}</CardTitle>
@@ -906,7 +908,7 @@ export default function VendorDashboard() {
 
             {/* Spotlight Section */}
             {activeTab === "spotlight" && (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {/* Create Spotlight Button */}
                 <div className="flex justify-end">
                   <Button onClick={() => { setStoryContent(""); setStoryImage(null); }} className="gap-2">
@@ -1409,7 +1411,7 @@ export default function VendorDashboard() {
             )}
 
             {activeTab === "products" && (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {/* Create Product Button */}
                 <div className="flex justify-end">
                   <Button onClick={() => setIsCreateProductDialogOpen(true)} className="gap-2">
