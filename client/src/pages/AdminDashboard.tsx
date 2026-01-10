@@ -156,11 +156,11 @@ export default function AdminDashboard() {
 
       <div className="flex-1 flex flex-col lg:ml-0">
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto pt-16 lg:pt-0 bg-gradient-to-b from-background to-muted/20">
+        <main className="flex-1 overflow-y-auto pt-16 lg:pt-0 bg-background">
           <div className="container mx-auto px-4 py-6 lg:py-8 max-w-7xl">
             {/* Header */}
             <div className={`mb-8 ${isRTL ? "text-right" : "text-left"}`}>
-              <h1 className="text-3xl md:text-4xl font-display font-bold mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
                 {t("admin.dashboard.title")}
               </h1>
               <p className="text-muted-foreground text-base md:text-lg">
@@ -210,59 +210,59 @@ function TopSummaryCards() {
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900 border-amber-200 dark:border-amber-800">
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-2 bg-amber-500 rounded-lg">
-              <Store className="w-5 h-5 text-white" />
+      <Card className="border shadow-sm hover:shadow-md transition-shadow">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2.5 bg-primary/10 rounded-lg">
+              <Store className="w-5 h-5 text-primary" />
             </div>
           </div>
           <p
-            className="text-2xl md:text-3xl font-bold text-amber-700 dark:text-amber-300"
+            className="text-3xl font-bold mb-1"
             data-testid="text-total-vendors"
           >
             {totalVendors}
           </p>
-          <p className="text-sm text-amber-600 dark:text-amber-400">
+          <p className="text-sm text-muted-foreground">
             {t("admin.dashboard.totalVendors")} ({approvedVendors}{" "}
             {t("admin.dashboard.approved")})
           </p>
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950 dark:to-red-900 border-red-200 dark:border-red-800">
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-2 bg-red-500 rounded-lg">
-              <Bell className="w-5 h-5 text-white" />
+      <Card className="border shadow-sm hover:shadow-md transition-shadow">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2.5 bg-primary/10 rounded-lg">
+              <Bell className="w-5 h-5 text-primary" />
             </div>
           </div>
           <p
-            className="text-2xl md:text-3xl font-bold text-red-700 dark:text-red-300"
+            className="text-3xl font-bold mb-1"
             data-testid="text-payout-requests"
           >
             {pendingPayouts}
           </p>
-          <p className="text-sm text-red-600 dark:text-red-400">
+          <p className="text-sm text-muted-foreground">
             {t("admin.dashboard.payoutRequests")}
           </p>
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800">
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-2 bg-green-500 rounded-lg">
-              <DollarSign className="w-5 h-5 text-white" />
+      <Card className="border shadow-sm hover:shadow-md transition-shadow">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2.5 bg-primary/10 rounded-lg">
+              <DollarSign className="w-5 h-5 text-primary" />
             </div>
           </div>
           <p
-            className="text-2xl md:text-3xl font-bold text-green-700 dark:text-green-300"
+            className="text-3xl font-bold mb-1"
             data-testid="text-pending-payouts"
           >
             {totalPendingAmount.toFixed(3)}
           </p>
-          <p className="text-sm text-green-600 dark:text-green-400">
+          <p className="text-sm text-muted-foreground">
             {t("admin.dashboard.pendingPayout")} (KWD)
           </p>
         </CardContent>
@@ -315,11 +315,11 @@ function AnalyticsSection() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Card>
+        <Card className="border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+              <div className="p-2 rounded-lg bg-primary/10">
+                <TrendingUp className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">
@@ -333,11 +333,11 @@ function AnalyticsSection() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                <ShoppingCart className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <div className="p-2 rounded-lg bg-primary/10">
+                <ShoppingCart className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">
@@ -349,11 +349,11 @@ function AnalyticsSection() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                <Package className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Package className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">
@@ -365,11 +365,11 @@ function AnalyticsSection() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
-                <Store className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Store className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">
@@ -381,11 +381,11 @@ function AnalyticsSection() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
-                <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Users className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">
@@ -397,11 +397,11 @@ function AnalyticsSection() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-pink-100 dark:bg-pink-900/30">
-                <FolderOpen className="w-5 h-5 text-pink-600 dark:text-pink-400" />
+              <div className="p-2 rounded-lg bg-primary/10">
+                <FolderOpen className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">
