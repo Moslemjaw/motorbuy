@@ -180,7 +180,7 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-muted/30 font-body">
       <Navbar />
-      <div className="flex pt-16">
+      <div className="flex">
         {/* Left Sidebar Navigation */}
         <aside
           className={`hidden lg:block w-64 bg-card border-r shadow-sm sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto ${

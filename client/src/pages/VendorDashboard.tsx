@@ -546,7 +546,7 @@ export default function VendorDashboard() {
   return (
     <div className="min-h-screen bg-muted/30 font-body">
       <Navbar />
-      <div className="flex pt-16">
+      <div className="flex">
         {/* Left Sidebar Navigation */}
         <aside
           className={`hidden lg:block w-64 bg-card border-r shadow-sm sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto ${
@@ -597,14 +597,9 @@ export default function VendorDashboard() {
           <div className="container mx-auto px-4 py-6 lg:py-8">
             {/* Header */}
             <div className={`mb-8 ${isRTL ? "text-right" : "text-left"}`}>
-              <div className="flex items-center gap-4 mb-4">
-                <h1 className="text-3xl md:text-4xl font-display font-bold">
-                  {t("vendor.dashboard.title")}
-                </h1>
-                {vendorProfile && !vendorProfile.isApproved && (
-                  <Badge variant="secondary" className="text-sm px-3 py-1">{t("vendor.dashboard.pendingApproval")}</Badge>
-                )}
-              </div>
+              <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">
+                {t("vendor.dashboard.title")}
+              </h1>
               <p className="text-muted-foreground text-base md:text-lg">{vendorProfile?.storeName || ""}</p>
             </div>
 
