@@ -330,7 +330,7 @@ export default function Home() {
             <div className="md:hidden relative -mx-4 px-4">
               <div
                 ref={categoriesCarouselRef}
-                className="flex gap-3 w-max py-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory"
+                className="flex gap-3 py-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory"
                 style={{
                   WebkitOverflowScrolling: "touch",
                   scrollBehavior: "smooth",
