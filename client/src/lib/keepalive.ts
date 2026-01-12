@@ -30,7 +30,10 @@ async function pingServer(): Promise<void> {
     if (response.ok) {
       console.log("[Keepalive] Server ping successful");
     } else {
-      console.warn("[Keepalive] Server ping failed with status:", response.status);
+      console.warn(
+        "[Keepalive] Server ping failed with status:",
+        response.status
+      );
     }
   } catch (error) {
     // Silently fail - don't spam console if server is down
@@ -49,7 +52,7 @@ export function startKeepalive(): void {
   }
 
   isActive = true;
-  
+
   // Ping immediately on start
   pingServer();
 
@@ -58,7 +61,11 @@ export function startKeepalive(): void {
     pingServer();
   }, PING_INTERVAL);
 
-  console.log("[Keepalive] Service started - pinging every", PING_INTERVAL / 1000, "seconds");
+  console.log(
+    "[Keepalive] Service started - pinging every",
+    PING_INTERVAL / 1000,
+    "seconds"
+  );
 }
 
 /**
@@ -85,8 +92,7 @@ export function stopKeepalive(): void {
 export function initKeepalive(): void {
   // Always start keepalive
   startKeepalive();
-  
+
   // Clean up on page unload
   window.addEventListener("beforeunload", stopKeepalive);
 }
-
