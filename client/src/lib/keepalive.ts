@@ -80,29 +80,12 @@ export function stopKeepalive(): void {
 }
 
 /**
- * Handle page visibility changes
- * Pause keepalive when page is hidden, resume when visible
- */
-function handleVisibilityChange(): void {
-  if (document.hidden) {
-    stopKeepalive();
-  } else {
-    startKeepalive();
-  }
-}
-
-/**
- * Initialize keepalive with visibility handling
+ * Initialize keepalive service
  */
 export function initKeepalive(): void {
-  // Start keepalive when page is visible
-  if (!document.hidden) {
-    startKeepalive();
-  }
-
-  // Handle visibility changes
-  document.addEventListener("visibilitychange", handleVisibilityChange);
-
+  // Always start keepalive
+  startKeepalive();
+  
   // Clean up on page unload
   window.addEventListener("beforeunload", stopKeepalive);
 }
