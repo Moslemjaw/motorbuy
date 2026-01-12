@@ -77,12 +77,22 @@ export default function Home() {
   const vendorsWithAds = useMemo(() => {
     // Show all vendors (not just approved) for now
     const allVendors = vendors || [];
-    const vendorIdsWithAds = new Set(ads?.map((ad) => ad.vendorId) || []);
+
+    // Filter ads to only include those created in the last 24 hours
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    const activeAdVendorIds = new Set(
+      ads
+        ?.filter((ad) => {
+          if (!ad.createdAt) return false;
+          return new Date(ad.createdAt).getTime() > oneDayAgo;
+        })
+        .map((ad) => ad.vendorId) || []
+    );
 
     return allVendors
       .map((vendor) => ({
         ...vendor,
-        hasAd: vendorIdsWithAds.has(vendor.id),
+        hasAd: activeAdVendorIds.has(vendor.id),
       }))
       .slice(0, 8); // Show up to 8 vendors
   }, [vendors, ads]);
