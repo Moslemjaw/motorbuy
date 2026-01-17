@@ -104,6 +104,7 @@ export default function AdminDashboard() {
     { value: "orders", label: t("admin.dashboard.tabOrders"), icon: ShoppingBag },
     { value: "categories", label: t("admin.dashboard.tabCategories"), icon: FolderOpen },
     { value: "bundles", label: t("admin.dashboard.tabBundles") || "Bundles", icon: Package },
+    { value: "warranties", label: t("admin.dashboard.tabWarranties") || "Warranties", icon: FileText },
     { value: "ads", label: t("admin.dashboard.tabAds"), icon: FileText },
     { value: "payouts", label: t("admin.dashboard.tabPayouts"), icon: DollarSign },
   ];
@@ -208,6 +209,7 @@ export default function AdminDashboard() {
               {activeTab === "orders" && <OrdersSection />}
               {activeTab === "categories" && <CategoriesSection />}
               {activeTab === "bundles" && <BundlesSection />}
+              {activeTab === "warranties" && <WarrantiesSection />}
               {activeTab === "ads" && <AdsSection />}
               {activeTab === "payouts" && <PayoutsSection />}
             </div>
@@ -1958,6 +1960,285 @@ function CategoriesSection() {
             </div>
         </div>
     );
+}
+
+function WarrantiesSection() {
+  const { t, isRTL } = useLanguage();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingWarranty, setEditingWarranty] = useState<any>(null);
+  const [warrantyName, setWarrantyName] = useState("");
+  const [warrantyPeriod, setWarrantyPeriod] = useState("");
+  const [warrantyPrice, setWarrantyPrice] = useState("");
+  const [warrantyActive, setWarrantyActive] = useState(true);
+
+  const { data: warranties, isLoading } = useQuery({
+    queryKey: ["/api/admin/warranties"],
+    queryFn: async () => {
+      const res = await fetch(buildApiUrl("/api/admin/warranties"), {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch warranties");
+      return res.json();
+    },
+  });
+
+  const createWarrantyMutation = useMutation({
+    mutationFn: async (data: { name: string; periodMonths: number; price: string; isActive: boolean }) => {
+      const res = await apiRequest("POST", "/api/admin/warranties", data);
+      if (!res.ok) throw new Error("Failed to create warranty");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/warranties"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/warranties"] });
+      setIsCreateDialogOpen(false);
+      setWarrantyName("");
+      setWarrantyPeriod("");
+      setWarrantyPrice("");
+      setWarrantyActive(true);
+      toast({ title: "Success", description: t("admin.dashboard.warrantyCreated") || "Warranty created successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: t("admin.dashboard.warrantyCreateError") || "Failed to create warranty", variant: "destructive" });
+    },
+  });
+
+  const updateWarrantyMutation = useMutation({
+    mutationFn: async (data: { id: string; name?: string; periodMonths?: number; price?: string; isActive?: boolean }) => {
+      const res = await apiRequest("PATCH", `/api/admin/warranties/${data.id}`, {
+        name: data.name,
+        periodMonths: data.periodMonths,
+        price: data.price,
+        isActive: data.isActive,
+      });
+      if (!res.ok) throw new Error("Failed to update warranty");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/warranties"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/warranties"] });
+      setEditingWarranty(null);
+      toast({ title: "Success", description: t("admin.dashboard.warrantyUpdated") || "Warranty updated successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: t("admin.dashboard.warrantyUpdateError") || "Failed to update warranty", variant: "destructive" });
+    },
+  });
+
+  const deleteWarrantyMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("DELETE", `/api/admin/warranties/${id}`);
+      if (!res.ok) throw new Error("Failed to delete warranty");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/warranties"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/warranties"] });
+      toast({ title: "Success", description: t("admin.dashboard.warrantyDeleted") || "Warranty deleted successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: t("admin.dashboard.warrantyDeleteError") || "Failed to delete warranty", variant: "destructive" });
+    },
+  });
+
+  const handleCreate = () => {
+    if (!warrantyName || !warrantyPeriod || !warrantyPrice) {
+      toast({ title: "Error", description: t("admin.dashboard.fillAllFields") || "Please fill all fields", variant: "destructive" });
+      return;
+    }
+    createWarrantyMutation.mutate({
+      name: warrantyName,
+      periodMonths: parseInt(warrantyPeriod),
+      price: warrantyPrice,
+      isActive: warrantyActive,
+    });
+  };
+
+  const handleEdit = (warranty: any) => {
+    setEditingWarranty(warranty);
+    setWarrantyName(warranty.name);
+    setWarrantyPeriod(warranty.periodMonths.toString());
+    setWarrantyPrice(warranty.price);
+    setWarrantyActive(warranty.isActive);
+    setIsCreateDialogOpen(true);
+  };
+
+  const handleUpdate = () => {
+    if (!editingWarranty || !warrantyName || !warrantyPeriod || !warrantyPrice) {
+      toast({ title: "Error", description: t("admin.dashboard.fillAllFields") || "Please fill all fields", variant: "destructive" });
+      return;
+    }
+    updateWarrantyMutation.mutate({
+      id: editingWarranty.id,
+      name: warrantyName,
+      periodMonths: parseInt(warrantyPeriod),
+      price: warrantyPrice,
+      isActive: warrantyActive,
+    });
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm(t("admin.dashboard.deleteWarrantyConfirm") || "Are you sure you want to delete this warranty?")) {
+      deleteWarrantyMutation.mutate(id);
+    }
+  };
+
+  if (isLoading) return <LoadingPage message="Loading..." fullScreen={false} />;
+
+  return (
+    <div className="space-y-6">
+      <div className={`flex items-center justify-between ${isRTL ? "flex-row-reverse" : ""}`}>
+        <h2 className="text-xl font-semibold">{t("admin.dashboard.tabWarranties") || "Warranties"}</h2>
+        <Button onClick={() => {
+          setEditingWarranty(null);
+          setWarrantyName("");
+          setWarrantyPeriod("");
+          setWarrantyPrice("");
+          setWarrantyActive(true);
+          setIsCreateDialogOpen(true);
+        }} className="gap-2">
+          <Plus className="w-4 h-4" />
+          {t("admin.dashboard.addWarranty") || "Add Warranty"}
+        </Button>
+      </div>
+
+      <Card className="border shadow-sm">
+        <CardHeader>
+          <CardTitle>{t("admin.dashboard.warrantiesList") || "Warranties List"}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {warranties && warranties.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("admin.dashboard.warrantyName") || "Name"}</TableHead>
+                    <TableHead>{t("admin.dashboard.warrantyPeriod") || "Period (Months)"}</TableHead>
+                    <TableHead>{t("common.price")}</TableHead>
+                    <TableHead>{t("common.status")}</TableHead>
+                    <TableHead className={`${isRTL ? "text-left" : "text-right"}`}>{t("admin.dashboard.actions") || "Actions"}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {warranties.map((warranty: any) => (
+                    <TableRow key={warranty.id}>
+                      <TableCell className="font-medium">{warranty.name}</TableCell>
+                      <TableCell>{warranty.periodMonths}</TableCell>
+                      <TableCell>{formatKWD(warranty.price)}</TableCell>
+                      <TableCell>
+                        <Badge variant={warranty.isActive ? "default" : "secondary"}>
+                          {warranty.isActive ? (t("common.active") || "Active") : (t("common.inactive") || "Inactive")}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className={`${isRTL ? "text-left" : "text-right"}`}>
+                        <div className={`flex gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => handleEdit(warranty)}
+                            className="h-8 w-8"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => handleDelete(warranty.id)}
+                            className="h-8 w-8 text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-muted-foreground text-center py-8">{t("admin.dashboard.noWarranties") || "No warranties found"}</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className={isRTL ? "text-right" : "text-left"}>
+          <DialogHeader>
+            <DialogTitle>
+              {editingWarranty
+                ? t("admin.dashboard.editWarranty") || "Edit Warranty"
+                : t("admin.dashboard.addWarranty") || "Add Warranty"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingWarranty
+                ? t("admin.dashboard.editWarrantyDesc") || "Update warranty details"
+                : t("admin.dashboard.addWarrantyDesc") || "Create a new warranty option"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{t("admin.dashboard.warrantyName") || "Warranty Name"} *</Label>
+              <Input
+                value={warrantyName}
+                onChange={(e) => setWarrantyName(e.target.value)}
+                placeholder={t("admin.dashboard.warrantyNamePlaceholder") || "e.g., 3 Months, 1 Year"}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t("admin.dashboard.warrantyPeriod") || "Period (Months)"} *</Label>
+              <Input
+                type="number"
+                value={warrantyPeriod}
+                onChange={(e) => setWarrantyPeriod(e.target.value)}
+                placeholder={t("admin.dashboard.warrantyPeriodPlaceholder") || "e.g., 3, 6, 12, 24, 36"}
+                min="1"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t("admin.dashboard.warrantyPrice") || "Price (KWD)"} *</Label>
+              <Input
+                type="number"
+                step="0.001"
+                value={warrantyPrice}
+                onChange={(e) => setWarrantyPrice(e.target.value)}
+                placeholder={t("admin.dashboard.warrantyPricePlaceholder") || "0.000"}
+                min="0"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t("common.status")}</Label>
+              <Select value={warrantyActive ? "active" : "inactive"} onValueChange={(value) => setWarrantyActive(value === "active")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">{t("common.active") || "Active"}</SelectItem>
+                  <SelectItem value="inactive">{t("common.inactive") || "Inactive"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              {t("common.cancel") || "Cancel"}
+            </Button>
+            <Button
+              onClick={editingWarranty ? handleUpdate : handleCreate}
+              disabled={createWarrantyMutation.isPending || updateWarrantyMutation.isPending}
+            >
+              {(createWarrantyMutation.isPending || updateWarrantyMutation.isPending) && (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              )}
+              {editingWarranty
+                ? t("common.save") || "Save"
+                : t("admin.dashboard.addWarranty") || "Add Warranty"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 }
 
 function AdsSection() {

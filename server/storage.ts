@@ -1,5 +1,5 @@
 import { 
-  User, Vendor, Category, Product, Order, OrderItem, VendorStory, CartItem, PaymentRequest, VendorRequest 
+  User, Vendor, Category, Product, Order, OrderItem, VendorStory, CartItem, PaymentRequest, VendorRequest, Warranty, WarrantyPurchase
 } from "./mongodb";
 import mongoose from "mongoose";
 
@@ -46,6 +46,13 @@ export interface IStorage {
   getVendorOrders(vendorId: string): Promise<any[]>;
   createVendorRequest(userId: string | null, companyName: string, phone: string, email: string): Promise<any>;
   getVendorRequests(): Promise<any[]>;
+  getWarranties(): Promise<any[]>;
+  getWarranty(id: string): Promise<any | undefined>;
+  createWarranty(warranty: any): Promise<any>;
+  updateWarranty(id: string, updates: any): Promise<any>;
+  deleteWarranty(id: string): Promise<void>;
+  getWarrantyPurchases(userId: string): Promise<any[]>;
+  createWarrantyPurchase(purchase: any): Promise<any>;
 }
 
 function toPlainObject(doc: any): any {
@@ -69,6 +76,7 @@ function toPlainObject(doc: any): any {
   if (obj.categoryId) obj.categoryId = safeIdToString(obj.categoryId);
   if (obj.productId) obj.productId = safeIdToString(obj.productId);
   if (obj.orderId) obj.orderId = safeIdToString(obj.orderId);
+  if (obj.warrantyId) obj.warrantyId = safeIdToString(obj.warrantyId);
   
   return obj;
 }
@@ -891,6 +899,107 @@ export class MongoStorage implements IStorage {
   async getVendorRequests(): Promise<any[]> {
     const requests = await VendorRequest.find({}).sort({ createdAt: -1 });
     return requests.map(toPlainObject);
+  }
+
+  async getWarranties(): Promise<any[]> {
+    const warranties = await Warranty.find({}).sort({ periodMonths: 1 });
+    return warranties.map(toPlainObject);
+  }
+
+  async getWarranty(id: string): Promise<any | undefined> {
+    if (!mongoose.Types.ObjectId.isValid(id)) return undefined;
+    const warranty = await Warranty.findById(id);
+    return warranty ? toPlainObject(warranty) : undefined;
+  }
+
+  async createWarranty(warranty: any): Promise<any> {
+    const newWarranty = await Warranty.create({
+      ...warranty,
+      updatedAt: new Date(),
+    });
+    return toPlainObject(newWarranty);
+  }
+
+  async updateWarranty(id: string, updates: any): Promise<any> {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error("Invalid warranty ID");
+    }
+    const updated = await Warranty.findByIdAndUpdate(
+      id,
+      { ...updates, updatedAt: new Date() },
+      { new: true }
+    );
+    if (!updated) {
+      throw new Error("Warranty not found");
+    }
+    return toPlainObject(updated);
+  }
+
+  async deleteWarranty(id: string): Promise<void> {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error("Invalid warranty ID");
+    }
+    await Warranty.findByIdAndDelete(id);
+  }
+
+  async getWarrantyPurchases(userId: string): Promise<any[]> {
+    const purchases = await WarrantyPurchase.find({ userId })
+      .populate('productId')
+      .populate('warrantyId')
+      .sort({ createdAt: -1 });
+    return purchases.map(purchase => {
+      const obj = toPlainObject(purchase);
+      if (obj.productId && typeof obj.productId === 'object') {
+        obj.product = toPlainObject(obj.productId);
+        obj.productId = obj.product.id;
+      }
+      if (obj.warrantyId && typeof obj.warrantyId === 'object') {
+        obj.warranty = toPlainObject(obj.warrantyId);
+        obj.warrantyId = obj.warranty.id;
+      }
+      return obj;
+    });
+  }
+
+  async createWarrantyPurchase(purchase: any): Promise<any> {
+    const purchaseData = { ...purchase };
+    if (purchaseData.productId && typeof purchaseData.productId === 'string') {
+      purchaseData.productId = new mongoose.Types.ObjectId(purchaseData.productId);
+    }
+    if (purchaseData.warrantyId && typeof purchaseData.warrantyId === 'string') {
+      purchaseData.warrantyId = new mongoose.Types.ObjectId(purchaseData.warrantyId);
+    }
+    if (purchaseData.orderId && typeof purchaseData.orderId === 'string') {
+      purchaseData.orderId = new mongoose.Types.ObjectId(purchaseData.orderId);
+    }
+    
+    // Calculate end date from warranty period
+    const warranty = await Warranty.findById(purchaseData.warrantyId);
+    if (!warranty) {
+      throw new Error("Warranty not found");
+    }
+    
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + warranty.periodMonths);
+    purchaseData.startDate = startDate;
+    purchaseData.endDate = endDate;
+    
+    const newPurchase = await WarrantyPurchase.create(purchaseData);
+    const populated = await WarrantyPurchase.findById(newPurchase._id)
+      .populate('productId')
+      .populate('warrantyId');
+    
+    const obj = toPlainObject(populated);
+    if (obj.productId && typeof obj.productId === 'object') {
+      obj.product = toPlainObject(obj.productId);
+      obj.productId = obj.product.id;
+    }
+    if (obj.warrantyId && typeof obj.warrantyId === 'object') {
+      obj.warranty = toPlainObject(obj.warrantyId);
+      obj.warrantyId = obj.warranty.id;
+    }
+    return obj;
   }
 }
 

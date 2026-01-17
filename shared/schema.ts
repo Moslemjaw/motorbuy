@@ -124,6 +124,29 @@ export interface PaymentRequest {
   processedAt?: Date | null;
 }
 
+export interface Warranty {
+  id: string;
+  name: string;
+  periodMonths: number;
+  price: string;
+  isActive: boolean;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
+}
+
+export interface WarrantyPurchase {
+  id: string;
+  userId: string;
+  productId: string;
+  warrantyId: string;
+  orderId?: string | null;
+  price: string;
+  startDate: Date;
+  endDate: Date;
+  status: "active" | "expired" | "cancelled";
+  createdAt?: Date | null;
+}
+
 export const insertRoleSchema = z.object({
   userId: z.string(),
   role: z.enum(["customer", "vendor", "admin"]).default("customer"),
@@ -189,6 +212,13 @@ export const insertPaymentRequestSchema = z.object({
   amount: z.string(),
 });
 
+export const insertWarrantySchema = z.object({
+  name: z.string().min(1),
+  periodMonths: z.number().min(1),
+  price: z.string().min(1),
+  isActive: z.boolean().default(true),
+});
+
 export type InsertUser = Partial<User> & { id: string };
 export type InsertRole = z.infer<typeof insertRoleSchema>;
 export type InsertVendor = z.infer<typeof insertVendorSchema>;
@@ -199,3 +229,4 @@ export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type InsertStory = z.infer<typeof insertStorySchema>;
 export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 export type InsertPaymentRequest = z.infer<typeof insertPaymentRequestSchema>;
+export type InsertWarranty = z.infer<typeof insertWarrantySchema>;

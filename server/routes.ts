@@ -1313,6 +1313,114 @@ export async function registerRoutes(
     }
   );
 
+  // Warranty Management Endpoints
+  app.get("/api/warranties", async (req: any, res) => {
+    try {
+      const warranties = await storage.getWarranties();
+      res.json(warranties.filter((w: any) => w.isActive));
+    } catch (e) {
+      console.error("Error fetching warranties:", e);
+      res.status(500).json({ message: "Failed to fetch warranties" });
+    }
+  });
+
+  app.get("/api/admin/warranties", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "admin")
+        return res.status(403).json({ message: "Forbidden" });
+      const warranties = await storage.getWarranties();
+      res.json(warranties);
+    } catch (e) {
+      console.error("Error fetching warranties:", e);
+      res.status(500).json({ message: "Failed to fetch warranties" });
+    }
+  });
+
+  app.post("/api/admin/warranties", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "admin")
+        return res.status(403).json({ message: "Forbidden" });
+      const { name, periodMonths, price, isActive } = req.body;
+      if (!name || !periodMonths || !price)
+        return res.status(400).json({ message: "Name, periodMonths, and price are required" });
+      const warranty = await storage.createWarranty({
+        name,
+        periodMonths: parseInt(periodMonths),
+        price,
+        isActive: isActive !== undefined ? isActive : true,
+      });
+      res.status(201).json(warranty);
+    } catch (e) {
+      console.error("Error creating warranty:", e);
+      res.status(500).json({ message: "Failed to create warranty" });
+    }
+  });
+
+  app.patch("/api/admin/warranties/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "admin")
+        return res.status(403).json({ message: "Forbidden" });
+      const updates: any = {};
+      if (req.body.name) updates.name = req.body.name;
+      if (req.body.periodMonths !== undefined) updates.periodMonths = parseInt(req.body.periodMonths);
+      if (req.body.price) updates.price = req.body.price;
+      if (req.body.isActive !== undefined) updates.isActive = req.body.isActive;
+      const updated = await storage.updateWarranty(req.params.id, updates);
+      if (!updated)
+        return res.status(404).json({ message: "Warranty not found" });
+      res.json(updated);
+    } catch (e) {
+      console.error("Error updating warranty:", e);
+      res.status(500).json({ message: "Failed to update warranty" });
+    }
+  });
+
+  app.delete("/api/admin/warranties/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "admin")
+        return res.status(403).json({ message: "Forbidden" });
+      await storage.deleteWarranty(req.params.id);
+      res.json({ message: "Warranty deleted" });
+    } catch (e) {
+      console.error("Error deleting warranty:", e);
+      res.status(500).json({ message: "Failed to delete warranty" });
+    }
+  });
+
+  // Warranty Purchase Endpoints
+  app.get("/api/warranty-purchases", isAuthenticated, async (req: any, res) => {
+    try {
+      const purchases = await storage.getWarrantyPurchases(req.session.userId);
+      res.json(purchases);
+    } catch (e) {
+      console.error("Error fetching warranty purchases:", e);
+      res.status(500).json({ message: "Failed to fetch warranty purchases" });
+    }
+  });
+
+  app.post("/api/warranty-purchases", isAuthenticated, async (req: any, res) => {
+    try {
+      const { productId, warrantyId, orderId, price } = req.body;
+      if (!productId || !warrantyId || !price)
+        return res.status(400).json({ message: "Product ID, warranty ID, and price are required" });
+      const purchase = await storage.createWarrantyPurchase({
+        userId: req.session.userId,
+        productId,
+        warrantyId,
+        orderId: orderId || null,
+        price,
+      });
+      res.status(201).json(purchase);
+    } catch (e) {
+      console.error("Error creating warranty purchase:", e);
+      res.status(500).json({ message: "Failed to create warranty purchase" });
+    }
+  });
+
   // Vendor Requests Management
   app.get("/api/admin/vendor-requests", isAuthenticated, async (req: any, res) => {
     try {

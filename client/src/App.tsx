@@ -28,6 +28,7 @@ import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import ContactUs from "@/pages/ContactUs";
 import FAQ from "@/pages/FAQ";
 import BecomeVendor from "@/pages/BecomeVendor";
+import Warranties from "@/pages/Warranties";
 
 function Router() {
   return (
@@ -39,6 +40,7 @@ function Router() {
       <Route path="/cart" component={Cart} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/stories" component={Stories} />
+      <Route path="/warranties" component={Warranties} />
       
       {/* Legal & Support routes */}
       <Route path="/terms" component={TermsOfService} />

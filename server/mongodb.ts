@@ -136,6 +136,27 @@ const vendorRequestSchema = new mongoose.Schema({
   processedAt: Date,
 });
 
+const warrantySchema = new mongoose.Schema({
+  name: { type: String, required: true }, // e.g., "3 Months", "6 Months", "1 Year"
+  periodMonths: { type: Number, required: true }, // Duration in months
+  price: { type: String, required: true }, // Price in KWD
+  isActive: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+});
+
+const warrantyPurchaseSchema = new mongoose.Schema({
+  userId: { type: String, required: true },
+  productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
+  warrantyId: { type: mongoose.Schema.Types.ObjectId, ref: "Warranty", required: true },
+  orderId: { type: mongoose.Schema.Types.ObjectId, ref: "Order" }, // Link to order if purchased
+  price: { type: String, required: true },
+  startDate: { type: Date, default: Date.now },
+  endDate: { type: Date, required: true },
+  status: { type: String, enum: ["active", "expired", "cancelled"], default: "active" },
+  createdAt: { type: Date, default: Date.now },
+});
+
 const sessionSchema = new mongoose.Schema({
   sid: { type: String, required: true, unique: true },
   sess: { type: Object, required: true },
@@ -152,4 +173,6 @@ export const VendorStory = mongoose.models.VendorStory || mongoose.model("Vendor
 export const CartItem = mongoose.models.CartItem || mongoose.model("CartItem", cartItemSchema);
 export const PaymentRequest = mongoose.models.PaymentRequest || mongoose.model("PaymentRequest", paymentRequestSchema);
 export const VendorRequest = mongoose.models.VendorRequest || mongoose.model("VendorRequest", vendorRequestSchema);
+export const Warranty = mongoose.models.Warranty || mongoose.model("Warranty", warrantySchema);
+export const WarrantyPurchase = mongoose.models.WarrantyPurchase || mongoose.model("WarrantyPurchase", warrantyPurchaseSchema);
 export const Session = mongoose.models.Session || mongoose.model("Session", sessionSchema);
