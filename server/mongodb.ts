@@ -71,6 +71,7 @@ const productSchema = new mongoose.Schema({
     productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
     quantity: { type: Number, default: 1 }
   }],
+  warrantyEligible: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 });
 

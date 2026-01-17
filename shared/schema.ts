@@ -76,6 +76,7 @@ export interface Product {
   createdAt?: Date | null;
   isBundle?: boolean;
   bundleItems?: { productId: string; quantity: number; product?: Product }[];
+  warrantyEligible?: boolean;
 }
 
 export interface Order {
@@ -183,6 +184,7 @@ export const insertProductSchema = z.object({
     productId: z.string(),
     quantity: z.number().default(1)
   })).optional(),
+  warrantyEligible: z.boolean().default(false).optional(),
 });
 
 export const insertOrderSchema = z.object({

@@ -32,6 +32,7 @@ export function Navbar() {
     { href: "/products", label: t("nav.products"), icon: Package },
     { href: "/vendors", label: t("nav.vendors"), icon: Users },
     { href: "/stories", label: t("section.ads"), icon: BookOpen },
+    { href: "/warranties", label: t("nav.warranties") || "Warranties", icon: ShieldCheck },
   ];
 
   const closeSheet = () => setIsOpen(false);

@@ -22,6 +22,7 @@ const en: Translations = {
   "nav.account": "Account",
   "nav.wallet": "Wallet",
   "nav.admin": "Admin",
+  "nav.warranties": "Warranties",
   "nav.searchMenu": "Search menu...",
   
   // Hero
@@ -518,6 +519,7 @@ const en: Translations = {
   "admin.dashboard.warrantyDeleteError": "Failed to delete warranty",
   "admin.dashboard.deleteWarrantyConfirm": "Are you sure you want to delete this warranty?",
   "admin.dashboard.fillAllFields": "Please fill all fields",
+  "admin.dashboard.warrantyEligible": "Eligible for Warranty Purchase",
   "common.active": "Active",
   "common.inactive": "Inactive",
   
@@ -872,6 +874,7 @@ const ar: Translations = {
   "nav.account": "حسابي",
   "nav.wallet": "المحفظة",
   "nav.admin": "الإدارة",
+  "nav.warranties": "الضمانات",
   
   // Hero
   "hero.title": "اعثر على قطع الغيار المثالية",
@@ -1347,6 +1350,7 @@ const ar: Translations = {
   "admin.dashboard.warrantyDeleteError": "فشل حذف الضمان",
   "admin.dashboard.deleteWarrantyConfirm": "هل أنت متأكد أنك تريد حذف هذا الضمان؟",
   "admin.dashboard.fillAllFields": "يرجى ملء جميع الحقول",
+  "admin.dashboard.warrantyEligible": "مؤهل لشراء الضمان",
   "common.active": "نشط",
   "common.inactive": "غير نشط",
   

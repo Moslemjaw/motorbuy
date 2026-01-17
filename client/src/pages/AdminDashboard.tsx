@@ -2436,6 +2436,7 @@ function ProductsSection() {
   const [productVendor, setProductVendor] = useState("");
   const [productImages, setProductImages] = useState<string[]>([]);
   const [productWarranty, setProductWarranty] = useState("");
+  const [productWarrantyEligible, setProductWarrantyEligible] = useState(false);
   
   const productImageRef = useRef<HTMLInputElement>(null);
   
@@ -2505,6 +2506,7 @@ function ProductsSection() {
     setProductVendor("");
     setProductImages([]);
     setProductWarranty("");
+    setProductWarrantyEligible(false);
   };
 
   const handleCreateProduct = () => {
@@ -2523,6 +2525,7 @@ function ProductsSection() {
       brand: productBrand,
       images: productImages.length > 0 ? productImages : ["https://placehold.co/400x300?text=Product"],
       warrantyInfo: productWarranty || null,
+      warrantyEligible: productWarrantyEligible,
     });
   };
 
@@ -2538,6 +2541,7 @@ function ProductsSection() {
     setProductVendor(product.vendorId || "");
     setProductImages(product.images || []);
     setProductWarranty(product.warrantyInfo || "");
+    setProductWarrantyEligible(product.warrantyEligible || false);
     setIsEditDialogOpen(true);
   };
 
@@ -2559,6 +2563,7 @@ function ProductsSection() {
         brand: productBrand,
         images: productImages.length > 0 ? productImages : ["https://placehold.co/400x300?text=Product"],
         warrantyInfo: productWarranty || null,
+        warrantyEligible: productWarrantyEligible,
       },
     });
   };
@@ -2734,6 +2739,18 @@ function ProductsSection() {
               <Label>{t("admin.dashboard.warranty") || "Warranty Info"}</Label>
               <Input value={productWarranty} onChange={(e) => setProductWarranty(e.target.value)} />
             </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="warrantyEligible"
+                checked={productWarrantyEligible}
+                onChange={(e) => setProductWarrantyEligible(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="warrantyEligible" className="font-normal cursor-pointer">
+                {t("admin.dashboard.warrantyEligible") || "Eligible for Warranty Purchase"}
+              </Label>
+            </div>
             <div className="space-y-2">
               <Label>{t("common.image")}</Label>
               <div className="flex gap-2">
@@ -2845,6 +2862,18 @@ function ProductsSection() {
             <div className="space-y-2">
               <Label>{t("admin.dashboard.warranty")}</Label>
               <Input value={productWarranty} onChange={(e) => setProductWarranty(e.target.value)} />
+            </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="warrantyEligibleEdit"
+                checked={productWarrantyEligible}
+                onChange={(e) => setProductWarrantyEligible(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="warrantyEligibleEdit" className="font-normal cursor-pointer">
+                {t("admin.dashboard.warrantyEligible") || "Eligible for Warranty Purchase"}
+              </Label>
             </div>
             <div className="space-y-2">
               <Label>{t("common.image")}</Label>

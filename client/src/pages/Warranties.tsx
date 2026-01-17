@@ -26,7 +26,8 @@ export default function Warranties() {
   const [selectedProductId, setSelectedProductId] = useState("");
   const [selectedWarrantyId, setSelectedWarrantyId] = useState("");
 
-  const { data: products, isLoading: isProductsLoading } = useProducts();
+  const { data: allProducts, isLoading: isProductsLoading } = useProducts();
+  const products = allProducts?.filter((p: any) => p.warrantyEligible) || [];
   const { data: warranties, isLoading: isWarrantiesLoading } = useQuery({
     queryKey: ["/api/warranties"],
     queryFn: async () => {
