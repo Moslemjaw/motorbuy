@@ -66,6 +66,11 @@ const productSchema = new mongoose.Schema({
   brand: { type: String, required: true },
   images: { type: [String], default: [] },
   warrantyInfo: String,
+  isBundle: { type: Boolean, default: false },
+  bundleItems: [{
+    productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+    quantity: { type: Number, default: 1 }
+  }],
   createdAt: { type: Date, default: Date.now },
 });
 

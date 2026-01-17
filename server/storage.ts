@@ -372,20 +372,63 @@ export class MongoStorage implements IStorage {
     if (filters?.vendorId && mongoose.Types.ObjectId.isValid(filters.vendorId)) {
       query.vendorId = new mongoose.Types.ObjectId(filters.vendorId);
     }
+    
+    // Add text search if provided
+    if (filters?.search) {
+       query.$or = [
+         { name: { $regex: filters.search, $options: 'i' } },
+         { description: { $regex: filters.search, $options: 'i' } }
+       ];
+    }
 
     let sortOption: any = {};
     if (filters?.sortBy === 'price_asc') sortOption = { price: 1 };
     else if (filters?.sortBy === 'price_desc') sortOption = { price: -1 };
     else if (filters?.sortBy === 'newest') sortOption = { createdAt: -1 };
 
-    const products = await Product.find(query).sort(sortOption);
-    return products.map(toPlainObject);
+    const products = await Product.find(query)
+      .sort(sortOption)
+      .populate('bundleItems.productId');
+
+    return products.map(product => {
+      const obj = toPlainObject(product);
+      
+      // Transform populated bundleItems
+      if (obj.isBundle && obj.bundleItems) {
+        obj.bundleItems = obj.bundleItems.map((item: any) => {
+          const itemObj = toPlainObject(item);
+          if (itemObj.productId && typeof itemObj.productId === 'object') {
+             itemObj.product = toPlainObject(itemObj.productId);
+             itemObj.productId = itemObj.product.id;
+          }
+          return itemObj;
+        });
+      }
+      return obj;
+    });
   }
 
   async getProduct(id: string): Promise<any | undefined> {
     if (!mongoose.Types.ObjectId.isValid(id)) return undefined;
-    const product = await Product.findById(id);
-    return product ? toPlainObject(product) : undefined;
+    const product = await Product.findById(id).populate('bundleItems.productId');
+    
+    if (!product) return undefined;
+
+    const obj = toPlainObject(product);
+    
+    // Transform populated bundleItems
+    if (obj.isBundle && obj.bundleItems) {
+      obj.bundleItems = obj.bundleItems.map((item: any) => {
+        const itemObj = toPlainObject(item);
+        if (itemObj.productId && typeof itemObj.productId === 'object') {
+           itemObj.product = toPlainObject(itemObj.productId);
+           itemObj.productId = itemObj.product.id;
+        }
+        return itemObj;
+      });
+    }
+    
+    return obj;
   }
 
   async createProduct(product: any): Promise<any> {
@@ -396,7 +439,26 @@ export class MongoStorage implements IStorage {
     if (productData.categoryId && typeof productData.categoryId === 'string') {
       productData.categoryId = new mongoose.Types.ObjectId(productData.categoryId);
     }
+
+    // Handle bundleItems
+    if (productData.bundleItems && Array.isArray(productData.bundleItems)) {
+      productData.bundleItems = productData.bundleItems.map((item: any) => ({
+        ...item,
+        productId: new mongoose.Types.ObjectId(item.productId)
+      }));
+    }
+
     const newProduct = await Product.create(productData);
+    
+    // If it's a bundle, we might want to populate it for the return value, 
+    // but typically creation just returns the object. 
+    // For consistency with getProduct, we can return as is or populate.
+    // Let's populate if it is a bundle.
+    if (newProduct.isBundle && newProduct.bundleItems?.length > 0) {
+      const populated = await Product.findById(newProduct._id).populate('bundleItems.productId');
+      return toPlainObject(populated);
+    }
+    
     return toPlainObject(newProduct);
   }
 
@@ -411,10 +473,25 @@ export class MongoStorage implements IStorage {
     if (updateData.categoryId && typeof updateData.categoryId === 'string') {
       updateData.categoryId = new mongoose.Types.ObjectId(updateData.categoryId);
     }
+
+    // Handle bundleItems if present
+    if (updateData.bundleItems && Array.isArray(updateData.bundleItems)) {
+      updateData.bundleItems = updateData.bundleItems.map((item: any) => ({
+        ...item,
+        productId: new mongoose.Types.ObjectId(item.productId)
+      }));
+    }
+
     const updated = await Product.findByIdAndUpdate(id, updateData, { new: true });
     if (!updated) {
       throw new Error("Product not found");
     }
+    
+    if (updated.isBundle) {
+       const populated = await Product.findById(updated._id).populate('bundleItems.productId');
+       return toPlainObject(populated);
+    }
+
     return toPlainObject(updated);
   }
 

@@ -30,6 +30,7 @@ import {
   Circle,
   Lightbulb,
   Droplets,
+  CheckCircle,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -48,6 +49,11 @@ export default function Home() {
   const { data: vendors } = useVendors();
   const { data: products } = useProducts();
   const { data: ads } = useStories();
+
+  const bundles = useMemo(
+    () => products?.filter((p) => p.isBundle) || [],
+    [products]
+  );
 
   // Categories carousel ref for mobile scrolling
   const categoriesCarouselRef = useRef<HTMLDivElement>(null);
@@ -405,6 +411,158 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {/* Exclusive Bundles Section */}
+      {bundles.length > 0 && (
+        <section className="py-12 md:py-20 bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 text-white relative overflow-hidden">
+          {/* Ambient Background */}
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+            <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-3xl" />
+            <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-3xl" />
+          </div>
+
+          <div className="container px-4 mx-auto relative z-10">
+            <div className="flex flex-col items-center mb-12 text-center">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white/90 text-sm font-medium mb-4 backdrop-blur-sm shadow-sm">
+                <Sparkles className="w-4 h-4 text-yellow-400" />
+                <span>
+                  {t("section.bundles.badge") || "Limited Time Offers"}
+                </span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
+                {t("section.bundles.title") || "Exclusive Bundles"}
+              </h2>
+              <p className="text-indigo-200 max-w-2xl text-lg leading-relaxed">
+                {t("section.bundles.subtitle") ||
+                  "Get more for less with our curated packages. Expertly combined parts for complete solutions."}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+              {bundles.map((bundle, i) => {
+                let originalPrice = 0;
+                if (bundle.bundleItems) {
+                  originalPrice = bundle.bundleItems.reduce(
+                    (acc: number, item: any) => {
+                      // Handle both populated product object and fallback
+                      const price = item.product?.price || "0";
+                      return acc + parseFloat(price) * (item.quantity || 1);
+                    },
+                    0
+                  );
+                }
+
+                const currentPrice = parseFloat(bundle.price);
+                const hasSavings = originalPrice > currentPrice;
+
+                return (
+                  <motion.div
+                    key={bundle.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.1 }}
+                  >
+                    <Link href={`/products/${bundle.id}`}>
+                      <div className="group relative bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:bg-white/10 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20 h-full flex flex-col cursor-pointer">
+                        {/* Image */}
+                        <div className="aspect-[16/9] relative overflow-hidden bg-black/20">
+                          {bundle.images?.[0] ? (
+                            <img
+                              src={bundle.images[0]}
+                              alt={bundle.name}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-white/20">
+                              <Package className="w-16 h-16" />
+                            </div>
+                          )}
+
+                          {/* Savings Badge */}
+                          {hasSavings && (
+                            <div className="absolute top-4 right-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                              SAVE{" "}
+                              {originalPrice > 0
+                                ? (
+                                    (1 - currentPrice / originalPrice) *
+                                    100
+                                  ).toFixed(0)
+                                : 0}
+                              %
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-6 flex flex-col flex-1">
+                          <h3 className="text-xl font-bold mb-2 group-hover:text-purple-300 transition-colors line-clamp-1">
+                            {bundle.name}
+                          </h3>
+                          <p className="text-indigo-200/70 text-sm mb-6 line-clamp-2 min-h-[2.5rem]">
+                            {bundle.description}
+                          </p>
+
+                          {/* Bundle Items Preview */}
+                          {bundle.bundleItems &&
+                            bundle.bundleItems.length > 0 && (
+                              <div className="mb-6 space-y-2 bg-black/20 p-3 rounded-lg border border-white/5">
+                                {bundle.bundleItems
+                                  .slice(0, 3)
+                                  .map((item: any, idx: number) => (
+                                    <div
+                                      key={idx}
+                                      className="flex items-center gap-2 text-xs text-indigo-200/80"
+                                    >
+                                      <CheckCircle className="w-3 h-3 text-green-400 flex-shrink-0" />
+                                      <span className="truncate">
+                                        {item.product?.name || "Product"}
+                                      </span>
+                                      <span className="text-white/40 ml-auto flex-shrink-0">
+                                        x{item.quantity}
+                                      </span>
+                                    </div>
+                                  ))}
+                                {bundle.bundleItems.length > 3 && (
+                                  <div className="text-xs text-indigo-200/40 pl-5 pt-1 border-t border-white/5 mt-2">
+                                    +{bundle.bundleItems.length - 3} more items
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                          <div className="mt-auto flex items-end justify-between pt-4 border-t border-white/10">
+                            <div>
+                              {hasSavings && (
+                                <div className="text-sm text-indigo-300/60 line-through mb-1">
+                                  {originalPrice.toFixed(3)} KWD
+                                </div>
+                              )}
+                              <div className="text-2xl font-bold text-white leading-none">
+                                {bundle.price}{" "}
+                                <span className="text-sm font-normal text-indigo-300">
+                                  KWD
+                                </span>
+                              </div>
+                            </div>
+                            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-purple-500 text-white transition-all">
+                              <ArrowRight
+                                className={`w-5 h-5 ${
+                                  isRTL ? "rotate-180" : ""
+                                }`}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="py-12 md:py-20 bg-muted/30">
         <div className="container px-4 mx-auto">
