@@ -2563,6 +2563,21 @@ function BundlesSection() {
     onError: (error) => toast({ title: "Upload Failed", description: error.message, variant: "destructive" }),
   });
 
+  // Pre-select default vendor and category if available
+  useEffect(() => {
+    if (isCreateDialogOpen) {
+      if (vendors) {
+        const defaultVendor = vendors.find(v => v.storeName?.toLowerCase().includes("motorbuy"));
+        if (defaultVendor) setBundleVendor(defaultVendor.id);
+      }
+      
+      if (categories) {
+        const defaultCategory = categories.find(c => c.name?.toLowerCase().includes("bundles"));
+        if (defaultCategory) setBundleCategory(defaultCategory.id);
+      }
+    }
+  }, [isCreateDialogOpen, vendors, categories]);
+
   const bundles = products?.filter(p => p.isBundle) || [];
   const regularProducts = products?.filter(p => !p.isBundle) || [];
 
