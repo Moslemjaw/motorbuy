@@ -74,8 +74,24 @@ export default function ProductDetail() {
 
   const mainImage = product.images?.[0] || "https://placehold.co/800x600?text=No+Image";
 
+  const isBundle = product.isBundle;
+  const bundleItems = product.bundleItems || [];
+  
+  // Calculate original price for bundle
+  let bundleOriginalPrice = 0;
+  if (isBundle && bundleItems.length > 0) {
+    bundleOriginalPrice = bundleItems.reduce((acc: number, item: any) => {
+      const price = parseFloat(item.product?.price || "0");
+      return acc + (price * (item.quantity || 1));
+    }, 0);
+  }
+
   const currentPrice = parseFloat(product.price) || 0;
-  const comparePrice = product.compareAtPrice ? parseFloat(product.compareAtPrice) : null;
+  // Use bundle original price for comparison if it's a bundle, otherwise use compareAtPrice
+  const comparePrice = isBundle 
+    ? bundleOriginalPrice 
+    : (product.compareAtPrice ? parseFloat(product.compareAtPrice) : null);
+    
   const hasDiscount = comparePrice !== null && !isNaN(comparePrice) && comparePrice > currentPrice && currentPrice > 0;
   const discountPercent = hasDiscount ? Math.round(((comparePrice - currentPrice) / comparePrice) * 100) : 0;
   const savings = hasDiscount ? (comparePrice - currentPrice).toFixed(3) : "0";
@@ -120,6 +136,9 @@ export default function ProductDetail() {
             transition={{ delay: 0.1 }}
           >
             <div className="flex flex-wrap items-center gap-2 mb-4">
+              {isBundle && (
+                <Badge className="bg-purple-600 text-white border-purple-700 hover:bg-purple-700">Bundle</Badge>
+              )}
               {hasDiscount && (
                 <Badge className="bg-red-500 text-white border-0 gap-1">
                   <Percent className="w-3 h-3" />
@@ -161,6 +180,44 @@ export default function ProductDetail() {
             <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
               {product.description}
             </p>
+
+            {isBundle && bundleItems.length > 0 && (
+              <div className="mb-8 p-6 bg-muted/30 rounded-2xl border border-border/50">
+                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                  <Package className="w-5 h-5 text-primary" />
+                  Included in this Bundle
+                </h3>
+                <div className="space-y-3">
+                  {bundleItems.map((item: any, idx: number) => (
+                    <Link key={idx} href={`/products/${item.product?.id}`}>
+                      <div className="flex items-center gap-4 p-3 rounded-xl border bg-background hover:border-primary/50 transition-all cursor-pointer group">
+                        <div className="w-16 h-16 bg-muted rounded-lg overflow-hidden shrink-0 border border-border">
+                          {item.product?.images?.[0] ? (
+                            <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-muted-foreground"><Package className="w-6 h-6" /></div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate group-hover:text-primary transition-colors">{item.product?.name || "Product"}</div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
+                            <Badge variant="secondary" className="text-[10px] h-5 px-1.5 bg-muted-foreground/10">Qty: {item.quantity}</Badge>
+                            <span>Original: {formatKWD(item.product?.price || "0")}</span>
+                          </div>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <ArrowLeft className="w-4 h-4 rotate-180 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+                <div className="mt-4 pt-4 border-t border-border/50 flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Original Total Value:</span>
+                  <span className="font-semibold line-through text-muted-foreground">{formatKWD(bundleOriginalPrice)}</span>
+                </div>
+              </div>
+            )}
 
             <div className="hidden md:flex gap-4 mb-8">
               <Button 
@@ -226,7 +283,7 @@ export default function ProductDetail() {
           <div className="flex-1 min-w-0">
             <div className="text-lg font-bold text-primary">{formatKWD(product.price)}</div>
             {hasDiscount && (
-              <div className="text-xs text-muted-foreground line-through">{formatKWD(product.compareAtPrice!)}</div>
+              <div className="text-xs text-muted-foreground line-through">{formatKWD(comparePrice!)}</div>
             )}
           </div>
           <Button 
