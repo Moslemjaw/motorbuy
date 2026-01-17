@@ -1777,6 +1777,40 @@ export async function registerRoutes(
 
       const { clearFirst } = req.body;
 
+      // Check if MotorBuy vendor exists, if not create it
+      const existingVendor = await storage.getVendorByUserId("motorbuy-system");
+      if (!existingVendor) {
+        // Create system user first
+        const { User, Vendor } = await import("./mongodb");
+        
+        let systemUser = await User.findOne({ email: "system@motorbuy.com" });
+        if (!systemUser) {
+           const { hash } = await import("bcryptjs");
+           const passwordHash = await hash("system123", 12);
+           systemUser = await User.create({
+             email: "system@motorbuy.com",
+             passwordHash,
+             firstName: "MotorBuy",
+             lastName: "System",
+             role: "vendor",
+             createdAt: new Date(),
+             updatedAt: new Date(),
+           });
+        }
+        
+        await Vendor.create({
+           userId: "motorbuy-system", // using the string ID as identifier for now
+           storeName: "MotorBuy",
+           description: "Official MotorBuy Bundles and Offers",
+           logoUrl: "https://placehold.co/150x150?text=MB",
+           coverImageUrl: "https://placehold.co/1200x400?text=MotorBuy",
+           bio: "Official MotorBuy Store",
+           isApproved: true,
+           commissionType: "percentage",
+           commissionValue: "0",
+        });
+      }
+
       // Optionally clear existing data if requested
       if (clearFirst) {
         const {

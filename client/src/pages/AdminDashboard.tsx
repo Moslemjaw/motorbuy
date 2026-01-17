@@ -2567,13 +2567,20 @@ function BundlesSection() {
   useEffect(() => {
     if (isCreateDialogOpen) {
       if (vendors) {
-        const defaultVendor = vendors.find(v => v.storeName?.toLowerCase().includes("motorbuy"));
-        if (defaultVendor) setBundleVendor(defaultVendor.id);
+        // Look for existing MotorBuy vendor
+        const motorbuyVendor = vendors.find(v => v.storeName === "MotorBuy");
+        if (motorbuyVendor) {
+          setBundleVendor(motorbuyVendor.id);
+        } else {
+          // If MotorBuy vendor doesn't exist in the list, we'll handle it in the create handler
+          // or we can select a default one for now
+          setBundleVendor("motorbuy-system"); 
+        }
       }
       
       if (categories) {
-        const defaultCategory = categories.find(c => c.name?.toLowerCase().includes("bundles"));
-        if (defaultCategory) setBundleCategory(defaultCategory.id);
+        const bundlesCategory = categories.find(c => c.slug === "bundles");
+        if (bundlesCategory) setBundleCategory(bundlesCategory.id);
       }
     }
   }, [isCreateDialogOpen, vendors, categories]);
@@ -2597,19 +2604,46 @@ function BundlesSection() {
     }, 0).toFixed(3);
   };
 
-  const handleCreateBundle = () => {
-    if (!bundleName || !bundlePrice || !bundleVendor || !bundleCategory || selectedProducts.length === 0) {
+  const handleCreateBundle = async () => {
+    if (!bundleName || !bundlePrice || selectedProducts.length === 0) {
       toast({ title: "Error", description: "Please fill all required fields", variant: "destructive" });
       return;
+    }
+
+    let finalVendorId = bundleVendor;
+
+    // Check if we need to use/create the system MotorBuy vendor
+    if (finalVendorId === "motorbuy-system" || !finalVendorId) {
+       const existingMotorBuy = vendors?.find(v => v.storeName === "MotorBuy");
+       if (existingMotorBuy) {
+         finalVendorId = existingMotorBuy.id;
+       } else {
+         // Create a new MotorBuy vendor if it doesn't exist
+         // We'll do this via the existing createVendor logic or assume it exists
+         // For now, let's just warn if it doesn't exist, or select the first available admin vendor?
+         // Ideally, the backend should seed this, but we can try to find it.
+         toast({ title: "Error", description: "System vendor 'MotorBuy' not found. Please contact support.", variant: "destructive" });
+         return;
+       }
+    }
+    
+    // Ensure category is Bundles
+    let finalCategoryId = bundleCategory;
+    const bundlesCategory = categories?.find(c => c.slug === "bundles");
+    if (bundlesCategory) {
+        finalCategoryId = bundlesCategory.id;
+    } else if (!finalCategoryId) {
+         toast({ title: "Error", description: "Bundles category not found.", variant: "destructive" });
+         return;
     }
 
     createProductMutation.mutate({
       name: bundleName,
       description: bundleDesc || "Bundle Special",
       price: bundlePrice,
-      vendorId: bundleVendor,
-      categoryId: bundleCategory,
-      brand: "Bundle",
+      vendorId: finalVendorId,
+      categoryId: finalCategoryId,
+      brand: "MotorBuy",
       stock: 100, // Default stock for bundle
       images: bundleImage ? [bundleImage] : [],
       isBundle: true,
@@ -2718,25 +2752,27 @@ function BundlesSection() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Vendor</Label>
-                <Select value={bundleVendor} onValueChange={setBundleVendor}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Vendor" />
+                <Select value={bundleVendor} onValueChange={setBundleVendor} disabled>
+                   <SelectTrigger>
+                    <SelectValue placeholder="MotorBuy (System)" />
                   </SelectTrigger>
                   <SelectContent>
-                    {vendors?.map(v => (
-                      <SelectItem key={v.id} value={v.id}>{v.storeName}</SelectItem>
-                    ))}
+                     {/* Show only MotorBuy or system option */}
+                     <SelectItem value="motorbuy-system">MotorBuy</SelectItem>
+                     {vendors?.filter(v => v.storeName === "MotorBuy").map(v => (
+                        <SelectItem key={v.id} value={v.id}>{v.storeName}</SelectItem>
+                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Select value={bundleCategory} onValueChange={setBundleCategory}>
+                <Select value={bundleCategory} onValueChange={setBundleCategory} disabled>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select Category" />
+                    <SelectValue placeholder="Bundles" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories?.map(c => (
+                    {categories?.filter(c => c.slug === "bundles").map(c => (
                       <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                     ))}
                   </SelectContent>

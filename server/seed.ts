@@ -47,6 +47,17 @@ const demoVendors = [
     commissionType: "fixed",
     commissionValue: "2",
   },
+  {
+    userId: "motorbuy-system",
+    storeName: "MotorBuy",
+    description: "Official MotorBuy Bundles and Offers",
+    logoUrl: "https://placehold.co/150x150?text=MB",
+    coverImageUrl: "https://placehold.co/1200x400?text=MotorBuy",
+    bio: "Official MotorBuy Store",
+    isApproved: true,
+    commissionType: "percentage",
+    commissionValue: "0",
+  },
 ];
 
 const demoUsers = [
@@ -73,6 +84,12 @@ const demoUsers = [
     email: "customer1@demo.com",
     firstName: "Yusuf",
     lastName: "Ibrahim",
+  },
+  {
+    id: "motorbuy-system",
+    email: "system@motorbuy.com",
+    firstName: "MotorBuy",
+    lastName: "System",
   },
 ];
 
