@@ -166,7 +166,7 @@ export default function ProductDetail() {
                 </span>
                 {hasDiscount && (
                   <span className="text-xl text-muted-foreground line-through">
-                    {formatKWD(product.compareAtPrice!)}
+                    {formatKWD(comparePrice!)}
                   </span>
                 )}
               </div>
