@@ -410,6 +410,9 @@ export async function registerRoutes(
         vendors = await Vendor.find({}) || [];
       }
       
+      // Get sales chart data for graphs
+      const salesChartData = await storage.getSalesChartData("month");
+      
       const analytics = {
         totalOrders: orders.length,
         totalRevenue: orders.reduce((sum: number, o: any) => sum + parseFloat(o.total || "0"), 0),
@@ -427,75 +430,373 @@ export async function registerRoutes(
           status: o.status,
           createdAt: o.createdAt,
         })),
+        salesChartData,
       };
       
       if (format === "excel") {
-        const XLSX = await import("xlsx");
-        const workbook = XLSX.utils.book_new();
+        const ExcelJS = await import("exceljs");
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = "MotorBuy";
+        workbook.created = new Date();
+        workbook.modified = new Date();
         
-        // Summary Sheet
-        const summaryData = [
-          ["Metric", "Value"],
+        // Summary Sheet with Professional Formatting
+        const summarySheet = workbook.addWorksheet("Summary");
+        summarySheet.columns = [
+          { width: 30 },
+          { width: 20 },
+        ];
+        
+        // Header
+        const headerRow = summarySheet.addRow(["MotorBuy Analytics Report", ""]);
+        headerRow.font = { bold: true, size: 16, color: { argb: "FFFFFFFF" } };
+        headerRow.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FF1E40AF" },
+        };
+        headerRow.alignment = { horizontal: "center", vertical: "middle" };
+        summarySheet.mergeCells("A1:B1");
+        summarySheet.addRow([]);
+        
+        // Report Date
+        const dateRow = summarySheet.addRow(["Report Generated", new Date().toLocaleString()]);
+        dateRow.getCell(1).font = { bold: true };
+        summarySheet.addRow([]);
+        
+        // Metrics with styling
+        const metrics = [
           ["Total Orders", analytics.totalOrders],
           ["Total Revenue (KWD)", analytics.totalRevenue.toFixed(3)],
           ["Total Products", analytics.totalProducts],
           ["Total Vendors", analytics.totalVendors],
         ];
-        const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-        XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
         
-        // Vendors Sheet
+        metrics.forEach(([label, value], index) => {
+          const row = summarySheet.addRow([label, value]);
+          if (index === 0) {
+            row.getCell(1).font = { bold: true, size: 12 };
+            row.getCell(2).font = { bold: true, size: 12 };
+            row.fill = {
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: "FFE5E7EB" },
+            };
+          }
+          row.getCell(2).numFmt = index === 1 ? "#,##0.000" : "#,##0";
+          row.height = 25;
+        });
+        
+        // Sales Chart Data Sheet
+        if (analytics.salesChartData && analytics.salesChartData.length > 0) {
+          const chartSheet = workbook.addWorksheet("Sales Trend");
+          chartSheet.columns = [
+            { width: 20 },
+            { width: 20 },
+          ];
+          
+          const chartHeader = chartSheet.addRow(["Month", "Sales (KWD)"]);
+          chartHeader.font = { bold: true, color: { argb: "FFFFFFFF" } };
+          chartHeader.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FF059669" },
+          };
+          chartHeader.alignment = { horizontal: "center", vertical: "middle" };
+          chartHeader.height = 30;
+          
+          analytics.salesChartData.forEach((item: any) => {
+            const row = chartSheet.addRow([item.label, item.sales]);
+            row.getCell(2).numFmt = "#,##0.000";
+            row.height = 20;
+          });
+          
+          // Add borders
+          chartSheet.eachRow((row, rowNumber) => {
+            row.eachCell((cell) => {
+              cell.border = {
+                top: { style: "thin" },
+                left: { style: "thin" },
+                bottom: { style: "thin" },
+                right: { style: "thin" },
+              };
+            });
+          });
+          
+          // Try to add chart (ExcelJS chart support)
+          try {
+            chartSheet.addChart({
+              type: "line",
+              name: "Sales Trend",
+              title: "Monthly Sales Performance",
+              position: { type: "absolute", x: 0, y: analytics.salesChartData.length + 3 },
+              width: 10,
+              height: 8,
+              series: [
+                {
+                  name: "Sales",
+                  categories: { worksheet: chartSheet, from: { row: 2, col: 1 }, to: { row: analytics.salesChartData.length + 1, col: 1 } },
+                  values: { worksheet: chartSheet, from: { row: 2, col: 2 }, to: { row: analytics.salesChartData.length + 1, col: 2 } },
+                },
+              ],
+            });
+          } catch (chartError) {
+            console.log("Chart not added (ExcelJS chart support may vary):", chartError);
+            // Chart data is still available for manual chart creation in Excel
+          }
+        }
+        
+        // Vendors Sheet with Professional Formatting
         if (analytics.vendors.length > 0) {
-          const vendorsData = [
-            ["Vendor Name", "Total Sales (KWD)", "Pending Payout (KWD)", "Lifetime Payouts (KWD)"],
-            ...analytics.vendors.map((v: any) => [v.name, v.totalSales.toFixed(3), v.pendingPayout.toFixed(3), v.lifetimePayouts.toFixed(3)]),
+          const vendorsSheet = workbook.addWorksheet("Vendors");
+          vendorsSheet.columns = [
+            { width: 30 },
+            { width: 20 },
+            { width: 20 },
+            { width: 20 },
           ];
-          const vendorsSheet = XLSX.utils.aoa_to_sheet(vendorsData);
-          XLSX.utils.book_append_sheet(workbook, vendorsSheet, "Vendors");
+          
+          const vendorHeader = vendorsSheet.addRow([
+            "Vendor Name",
+            "Total Sales (KWD)",
+            "Pending Payout (KWD)",
+            "Lifetime Payouts (KWD)",
+          ]);
+          vendorHeader.font = { bold: true, color: { argb: "FFFFFFFF" } };
+          vendorHeader.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FF7C3AED" },
+          };
+          vendorHeader.alignment = { horizontal: "center", vertical: "middle" };
+          vendorHeader.height = 30;
+          
+          analytics.vendors.forEach((v: any) => {
+            const row = vendorsSheet.addRow([
+              v.name,
+              parseFloat(v.totalSales.toFixed(3)),
+              parseFloat(v.pendingPayout.toFixed(3)),
+              parseFloat(v.lifetimePayouts.toFixed(3)),
+            ]);
+            row.getCell(2).numFmt = "#,##0.000";
+            row.getCell(3).numFmt = "#,##0.000";
+            row.getCell(4).numFmt = "#,##0.000";
+            row.height = 20;
+          });
+          
+          // Add borders
+          vendorsSheet.eachRow((row, rowNumber) => {
+            row.eachCell((cell) => {
+              cell.border = {
+                top: { style: "thin" },
+                left: { style: "thin" },
+                bottom: { style: "thin" },
+                right: { style: "thin" },
+              };
+            });
+          });
         }
         
-        // Orders Sheet
+        // Orders Sheet with Professional Formatting
         if (analytics.orders.length > 0) {
-          const ordersData = [
-            ["Order ID", "Total (KWD)", "Status", "Date"],
-            ...analytics.orders.map((o: any) => [
-              o.id,
-              o.total.toFixed(3),
-              o.status || "pending",
-              o.createdAt ? new Date(o.createdAt).toLocaleDateString() : "N/A",
-            ]),
+          const ordersSheet = workbook.addWorksheet("Orders");
+          ordersSheet.columns = [
+            { width: 25 },
+            { width: 15 },
+            { width: 15 },
+            { width: 20 },
           ];
-          const ordersSheet = XLSX.utils.aoa_to_sheet(ordersData);
-          XLSX.utils.book_append_sheet(workbook, ordersSheet, "Orders");
+          
+          const orderHeader = ordersSheet.addRow([
+            "Order ID",
+            "Total (KWD)",
+            "Status",
+            "Date",
+          ]);
+          orderHeader.font = { bold: true, color: { argb: "FFFFFFFF" } };
+          orderHeader.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFDC2626" },
+          };
+          orderHeader.alignment = { horizontal: "center", vertical: "middle" };
+          orderHeader.height = 30;
+          
+          analytics.orders.forEach((o: any) => {
+            const row = ordersSheet.addRow([
+              o.id,
+              parseFloat(o.total.toFixed(3)),
+              o.status || "pending",
+              o.createdAt ? new Date(o.createdAt) : "N/A",
+            ]);
+            row.getCell(2).numFmt = "#,##0.000";
+            row.getCell(4).numFmt = "mm/dd/yyyy";
+            row.height = 20;
+          });
+          
+          // Add borders
+          ordersSheet.eachRow((row, rowNumber) => {
+            row.eachCell((cell) => {
+              cell.border = {
+                top: { style: "thin" },
+                left: { style: "thin" },
+                bottom: { style: "thin" },
+                right: { style: "thin" },
+              };
+            });
+          });
         }
         
-        const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+        const buffer = await workbook.xlsx.writeBuffer();
         res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         res.setHeader("Content-Disposition", `attachment; filename=analytics_${Date.now()}.xlsx`);
-        res.send(buffer);
+        res.send(Buffer.from(buffer));
       } else {
-        // PDF export
+        // Enhanced PDF export
         const PDFDocument = await import("pdfkit");
-        const doc = new PDFDocument.default();
+        const { ChartJSNodeCanvas } = await import("chartjs-node-canvas");
+        const doc = new PDFDocument.default({ margin: 50, size: "A4" });
         
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", `attachment; filename=analytics_${Date.now()}.pdf`);
         
         doc.pipe(res);
-        doc.fontSize(20).text("Analytics Report", { align: "center" });
-        doc.moveDown();
-        doc.fontSize(12).text(`Total Orders: ${analytics.totalOrders}`);
-        doc.text(`Total Revenue: ${analytics.totalRevenue.toFixed(3)} KWD`);
-        doc.text(`Total Products: ${analytics.totalProducts}`);
-        doc.text(`Total Vendors: ${analytics.totalVendors}`);
-        doc.moveDown();
         
+        // Header
+        doc.rect(0, 0, doc.page.width, 80).fill("#1E40AF");
+        doc.fillColor("#FFFFFF")
+          .fontSize(24)
+          .font("Helvetica-Bold")
+          .text("MotorBuy Analytics Report", 50, 30, { align: "center" });
+        doc.fontSize(10)
+          .text(`Generated: ${new Date().toLocaleString()}`, 50, 60, { align: "center" });
+        
+        let yPos = 100;
+        doc.fillColor("#000000");
+        
+        // Summary Section
+        doc.fontSize(18).font("Helvetica-Bold").text("Executive Summary", 50, yPos);
+        yPos += 30;
+        
+        const summaryBoxY = yPos;
+        doc.rect(50, yPos, 495, 120)
+          .fillAndStroke("#F3F4F6", "#E5E7EB")
+          .stroke();
+        
+        yPos += 20;
+        const metrics = [
+          ["Total Orders", analytics.totalOrders.toString()],
+          ["Total Revenue", `${analytics.totalRevenue.toFixed(3)} KWD`],
+          ["Total Products", analytics.totalProducts.toString()],
+          ["Total Vendors", analytics.totalVendors.toString()],
+        ];
+        
+        let colX = 70;
+        metrics.forEach(([label, value], index) => {
+          if (index === 2) {
+            colX = 70;
+            yPos += 50;
+          }
+          doc.fontSize(10).font("Helvetica").fillColor("#6B7280").text(label, colX, yPos);
+          doc.fontSize(14).font("Helvetica-Bold").fillColor("#111827").text(value, colX, yPos + 15);
+          colX += 240;
+        });
+        
+        yPos += 80;
+        
+        // Sales Chart
+        if (analytics.salesChartData && analytics.salesChartData.length > 0) {
+          try {
+            const chartJSNodeCanvas = new ChartJSNodeCanvas({ width: 600, height: 300 });
+            const chartConfig = {
+              type: "line" as const,
+              data: {
+                labels: analytics.salesChartData.map((d: any) => d.label),
+                datasets: [{
+                  label: "Sales (KWD)",
+                  data: analytics.salesChartData.map((d: any) => d.sales),
+                  borderColor: "#1E40AF",
+                  backgroundColor: "rgba(30, 64, 175, 0.1)",
+                  tension: 0.4,
+                  fill: true,
+                }],
+              },
+              options: {
+                responsive: true,
+                plugins: {
+                  title: {
+                    display: true,
+                    text: "Monthly Sales Performance",
+                    font: { size: 16 },
+                  },
+                  legend: {
+                    display: true,
+                  },
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      callback: function(value: any) {
+                        return value.toFixed(0) + " KWD";
+                      },
+                    },
+                  },
+                },
+              },
+            };
+            
+            const chartImage = await chartJSNodeCanvas.renderToBuffer(chartConfig);
+            doc.image(chartImage, 50, yPos, { width: 495 });
+            yPos += 320;
+          } catch (chartError) {
+            console.error("Chart generation error:", chartError);
+            doc.fontSize(14).text("Sales Chart", 50, yPos);
+            yPos += 20;
+            analytics.salesChartData.slice(0, 10).forEach((item: any) => {
+              doc.fontSize(10).text(`${item.label}: ${item.sales.toFixed(2)} KWD`, 70, yPos);
+              yPos += 15;
+            });
+            yPos += 10;
+          }
+        }
+        
+        // Vendors Section
         if (analytics.vendors.length > 0) {
-          doc.fontSize(16).text("Vendors", { underline: true });
-          doc.moveDown(0.5);
-          analytics.vendors.forEach((v: any) => {
-            doc.fontSize(12).text(`${v.name}: ${v.totalSales.toFixed(3)} KWD`);
+          if (yPos > 700) {
+            doc.addPage();
+            yPos = 50;
+          }
+          
+          doc.fontSize(18).font("Helvetica-Bold").text("Vendor Performance", 50, yPos);
+          yPos += 25;
+          
+          analytics.vendors.forEach((v: any, index: number) => {
+            if (yPos > 750) {
+              doc.addPage();
+              yPos = 50;
+            }
+            
+            doc.rect(50, yPos, 495, 40)
+              .fillAndStroke(index % 2 === 0 ? "#FFFFFF" : "#F9FAFB", "#E5E7EB")
+              .stroke();
+            
+            doc.fontSize(12).font("Helvetica-Bold").fillColor("#111827")
+              .text(v.name, 60, yPos + 10);
+            doc.fontSize(10).font("Helvetica").fillColor("#6B7280")
+              .text(`Sales: ${v.totalSales.toFixed(3)} KWD | Pending: ${v.pendingPayout.toFixed(3)} KWD | Lifetime: ${v.lifetimePayouts.toFixed(3)} KWD`, 60, yPos + 25);
+            
+            yPos += 45;
           });
+        }
+        
+        // Footer
+        const pageCount = doc.bufferedPageRange();
+        for (let i = 0; i < pageCount.count; i++) {
+          doc.switchToPage(i);
+          doc.fontSize(8).fillColor("#6B7280")
+            .text(`Page ${i + 1} of ${pageCount.count}`, 50, doc.page.height - 30, { align: "center" });
+          doc.text("MotorBuy Marketplace - Confidential", 50, doc.page.height - 20, { align: "center" });
         }
         
         doc.end();
@@ -521,6 +822,10 @@ export async function registerRoutes(
       const orders = await storage.getVendorOrders(vendor.id);
       
       const totalRevenue = orders.reduce((sum: number, o: any) => sum + parseFloat(o.total || "0"), 0);
+      
+      // Get sales chart data for this vendor
+      const salesChartData = await storage.getSalesChartData("month", vendor.id);
+      
       const analytics = {
         vendorName: vendor.storeName,
         totalProducts: products.length,
@@ -536,15 +841,40 @@ export async function registerRoutes(
           status: o.status,
           createdAt: o.createdAt,
         })),
+        salesChartData,
       };
       
       if (format === "excel") {
-        const XLSX = await import("xlsx");
-        const workbook = XLSX.utils.book_new();
+        const ExcelJS = await import("exceljs");
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = "MotorBuy";
+        workbook.created = new Date();
+        workbook.modified = new Date();
         
-        const summaryData = [
-          ["Metric", "Value"],
-          ["Vendor Name", analytics.vendorName],
+        // Summary Sheet
+        const summarySheet = workbook.addWorksheet("Summary");
+        summarySheet.columns = [
+          { width: 30 },
+          { width: 20 },
+        ];
+        
+        // Header
+        const headerRow = summarySheet.addRow([`${analytics.vendorName} - Analytics Report`, ""]);
+        headerRow.font = { bold: true, size: 16, color: { argb: "FFFFFFFF" } };
+        headerRow.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FF059669" },
+        };
+        headerRow.alignment = { horizontal: "center", vertical: "middle" };
+        summarySheet.mergeCells("A1:B1");
+        summarySheet.addRow([]);
+        
+        const dateRow = summarySheet.addRow(["Report Generated", new Date().toLocaleString()]);
+        dateRow.getCell(1).font = { bold: true };
+        summarySheet.addRow([]);
+        
+        const metrics = [
           ["Total Products", analytics.totalProducts],
           ["Total Orders", analytics.totalOrders],
           ["Total Revenue (KWD)", analytics.totalRevenue],
@@ -553,45 +883,279 @@ export async function registerRoutes(
           ["Pending Payout (KWD)", analytics.pendingPayout],
           ["Lifetime Payouts (KWD)", analytics.lifetimePayouts],
         ];
-        const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-        XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
         
-        if (analytics.orders.length > 0) {
-          const ordersData = [
-            ["Order ID", "Total (KWD)", "Status", "Date"],
-            ...analytics.orders.map((o: any) => [
-              o.id,
-              o.total,
-              o.status || "pending",
-              o.createdAt ? new Date(o.createdAt).toLocaleDateString() : "N/A",
-            ]),
+        metrics.forEach(([label, value], index) => {
+          const row = summarySheet.addRow([label, value]);
+          if (index === 0) {
+            row.getCell(1).font = { bold: true, size: 12 };
+            row.getCell(2).font = { bold: true, size: 12 };
+            row.fill = {
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: "FFE5E7EB" },
+            };
+          }
+          row.getCell(2).numFmt = index >= 2 ? "#,##0.000" : "#,##0";
+          row.height = 25;
+        });
+        
+        // Sales Chart Data Sheet
+        if (analytics.salesChartData && analytics.salesChartData.length > 0) {
+          const chartSheet = workbook.addWorksheet("Sales Trend");
+          chartSheet.columns = [
+            { width: 20 },
+            { width: 20 },
           ];
-          const ordersSheet = XLSX.utils.aoa_to_sheet(ordersData);
-          XLSX.utils.book_append_sheet(workbook, ordersSheet, "Orders");
+          
+          const chartHeader = chartSheet.addRow(["Month", "Sales (KWD)"]);
+          chartHeader.font = { bold: true, color: { argb: "FFFFFFFF" } };
+          chartHeader.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FF059669" },
+          };
+          chartHeader.alignment = { horizontal: "center", vertical: "middle" };
+          chartHeader.height = 30;
+          
+          analytics.salesChartData.forEach((item: any) => {
+            const row = chartSheet.addRow([item.label, item.sales]);
+            row.getCell(2).numFmt = "#,##0.000";
+            row.height = 20;
+          });
+          
+          // Add borders
+          chartSheet.eachRow((row, rowNumber) => {
+            row.eachCell((cell) => {
+              cell.border = {
+                top: { style: "thin" },
+                left: { style: "thin" },
+                bottom: { style: "thin" },
+                right: { style: "thin" },
+              };
+            });
+          });
+          
+          // Try to add chart
+          try {
+            chartSheet.addChart({
+              type: "line",
+              name: "Sales Trend",
+              title: "Monthly Sales Performance",
+              position: { type: "absolute", x: 0, y: analytics.salesChartData.length + 3 },
+              width: 10,
+              height: 8,
+              series: [
+                {
+                  name: "Sales",
+                  categories: { worksheet: chartSheet, from: { row: 2, col: 1 }, to: { row: analytics.salesChartData.length + 1, col: 1 } },
+                  values: { worksheet: chartSheet, from: { row: 2, col: 2 }, to: { row: analytics.salesChartData.length + 1, col: 2 } },
+                },
+              ],
+            });
+          } catch (chartError) {
+            console.log("Chart not added (ExcelJS chart support may vary):", chartError);
+          }
         }
         
-        const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+        // Orders Sheet
+        if (analytics.orders.length > 0) {
+          const ordersSheet = workbook.addWorksheet("Orders");
+          ordersSheet.columns = [
+            { width: 25 },
+            { width: 15 },
+            { width: 15 },
+            { width: 20 },
+          ];
+          
+          const orderHeader = ordersSheet.addRow([
+            "Order ID",
+            "Total (KWD)",
+            "Status",
+            "Date",
+          ]);
+          orderHeader.font = { bold: true, color: { argb: "FFFFFFFF" } };
+          orderHeader.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFDC2626" },
+          };
+          orderHeader.alignment = { horizontal: "center", vertical: "middle" };
+          orderHeader.height = 30;
+          
+          analytics.orders.forEach((o: any) => {
+            const row = ordersSheet.addRow([
+              o.id,
+              parseFloat(o.total),
+              o.status || "pending",
+              o.createdAt ? new Date(o.createdAt) : "N/A",
+            ]);
+            row.getCell(2).numFmt = "#,##0.000";
+            row.getCell(4).numFmt = "mm/dd/yyyy";
+            row.height = 20;
+          });
+          
+          ordersSheet.eachRow((row, rowNumber) => {
+            row.eachCell((cell) => {
+              cell.border = {
+                top: { style: "thin" },
+                left: { style: "thin" },
+                bottom: { style: "thin" },
+                right: { style: "thin" },
+              };
+            });
+          });
+        }
+        
+        const buffer = await workbook.xlsx.writeBuffer();
         res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         res.setHeader("Content-Disposition", `attachment; filename=vendor_analytics_${Date.now()}.xlsx`);
-        res.send(buffer);
+        res.send(Buffer.from(buffer));
       } else {
+        // Enhanced PDF export
         const PDFDocument = await import("pdfkit");
-        const doc = new PDFDocument.default();
+        const { ChartJSNodeCanvas } = await import("chartjs-node-canvas");
+        const doc = new PDFDocument.default({ margin: 50, size: "A4" });
         
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", `attachment; filename=vendor_analytics_${Date.now()}.pdf`);
         
         doc.pipe(res);
-        doc.fontSize(20).text("Vendor Analytics Report", { align: "center" });
-        doc.moveDown();
-        doc.fontSize(12).text(`Vendor: ${analytics.vendorName}`);
-        doc.text(`Total Products: ${analytics.totalProducts}`);
-        doc.text(`Total Orders: ${analytics.totalOrders}`);
-        doc.text(`Total Revenue: ${analytics.totalRevenue} KWD`);
-        doc.text(`Total Sales: ${analytics.totalSales} KWD`);
-        doc.text(`Wallet Balance: ${analytics.walletBalance} KWD`);
-        doc.text(`Pending Payout: ${analytics.pendingPayout} KWD`);
-        doc.text(`Lifetime Payouts: ${analytics.lifetimePayouts} KWD`);
+        
+        // Header
+        doc.rect(0, 0, doc.page.width, 80).fill("#059669");
+        doc.fillColor("#FFFFFF")
+          .fontSize(24)
+          .font("Helvetica-Bold")
+          .text(`${analytics.vendorName} - Analytics Report`, 50, 30, { align: "center" });
+        doc.fontSize(10)
+          .text(`Generated: ${new Date().toLocaleString()}`, 50, 60, { align: "center" });
+        
+        let yPos = 100;
+        doc.fillColor("#000000");
+        
+        // Summary Section
+        doc.fontSize(18).font("Helvetica-Bold").text("Performance Summary", 50, yPos);
+        yPos += 30;
+        
+        doc.rect(50, yPos, 495, 180)
+          .fillAndStroke("#F3F4F6", "#E5E7EB")
+          .stroke();
+        
+        yPos += 20;
+        const metrics = [
+          ["Total Products", analytics.totalProducts],
+          ["Total Orders", analytics.totalOrders],
+          ["Total Revenue", `${analytics.totalRevenue} KWD`],
+          ["Total Sales", `${analytics.totalSales} KWD`],
+          ["Wallet Balance", `${analytics.walletBalance} KWD`],
+          ["Pending Payout", `${analytics.pendingPayout} KWD`],
+          ["Lifetime Payouts", `${analytics.lifetimePayouts} KWD`],
+        ];
+        
+        let colX = 70;
+        metrics.forEach(([label, value], index) => {
+          if (index === 3) {
+            colX = 70;
+            yPos += 50;
+          }
+          doc.fontSize(10).font("Helvetica").fillColor("#6B7280").text(label, colX, yPos);
+          doc.fontSize(14).font("Helvetica-Bold").fillColor("#111827").text(value.toString(), colX, yPos + 15);
+          colX += 240;
+        });
+        
+        yPos += 100;
+        
+        // Sales Chart
+        if (analytics.salesChartData && analytics.salesChartData.length > 0) {
+          try {
+            const chartJSNodeCanvas = new ChartJSNodeCanvas({ width: 600, height: 300 });
+            const chartConfig = {
+              type: "line" as const,
+              data: {
+                labels: analytics.salesChartData.map((d: any) => d.label),
+                datasets: [{
+                  label: "Sales (KWD)",
+                  data: analytics.salesChartData.map((d: any) => d.sales),
+                  borderColor: "#059669",
+                  backgroundColor: "rgba(5, 150, 105, 0.1)",
+                  tension: 0.4,
+                  fill: true,
+                }],
+              },
+              options: {
+                responsive: true,
+                plugins: {
+                  title: {
+                    display: true,
+                    text: "Monthly Sales Performance",
+                    font: { size: 16 },
+                  },
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      callback: function(value: any) {
+                        return value.toFixed(0) + " KWD";
+                      },
+                    },
+                  },
+                },
+              },
+            };
+            
+            const chartImage = await chartJSNodeCanvas.renderToBuffer(chartConfig);
+            doc.image(chartImage, 50, yPos, { width: 495 });
+            yPos += 320;
+          } catch (chartError) {
+            console.error("Chart generation error:", chartError);
+            doc.fontSize(14).text("Sales Chart", 50, yPos);
+            yPos += 20;
+            analytics.salesChartData.slice(0, 10).forEach((item: any) => {
+              doc.fontSize(10).text(`${item.label}: ${item.sales.toFixed(2)} KWD`, 70, yPos);
+              yPos += 15;
+            });
+            yPos += 10;
+          }
+        }
+        
+        // Orders Section
+        if (analytics.orders.length > 0) {
+          if (yPos > 650) {
+            doc.addPage();
+            yPos = 50;
+          }
+          
+          doc.fontSize(18).font("Helvetica-Bold").text("Recent Orders", 50, yPos);
+          yPos += 25;
+          
+          analytics.orders.slice(0, 15).forEach((o: any, index: number) => {
+            if (yPos > 750) {
+              doc.addPage();
+              yPos = 50;
+            }
+            
+            doc.rect(50, yPos, 495, 35)
+              .fillAndStroke(index % 2 === 0 ? "#FFFFFF" : "#F9FAFB", "#E5E7EB")
+              .stroke();
+            
+            doc.fontSize(10).font("Helvetica-Bold").fillColor("#111827")
+              .text(`Order ${o.id.slice(-8)}`, 60, yPos + 8);
+            doc.fontSize(9).font("Helvetica").fillColor("#6B7280")
+              .text(`${o.total} KWD | ${o.status || "pending"} | ${o.createdAt ? new Date(o.createdAt).toLocaleDateString() : "N/A"}`, 60, yPos + 20);
+            
+            yPos += 40;
+          });
+        }
+        
+        // Footer
+        const pageCount = doc.bufferedPageRange();
+        for (let i = 0; i < pageCount.count; i++) {
+          doc.switchToPage(i);
+          doc.fontSize(8).fillColor("#6B7280")
+            .text(`Page ${i + 1} of ${pageCount.count}`, 50, doc.page.height - 30, { align: "center" });
+          doc.text("MotorBuy Marketplace - Confidential", 50, doc.page.height - 20, { align: "center" });
+        }
         
         doc.end();
       }
