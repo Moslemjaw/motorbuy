@@ -147,7 +147,7 @@ export default function Warranties() {
                     <SelectContent>
                       {products?.map((product: any) => (
                         <SelectItem key={product.id} value={product.id}>
-                          <div className="flex items-center gap-2">
+                          <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
                             {product.images?.[0] && (
                               <img
                                 src={product.images[0]}
@@ -165,7 +165,7 @@ export default function Warranties() {
 
                 {selectedProduct && (
                   <div className="p-4 bg-muted/50 rounded-lg border">
-                    <div className="flex items-center gap-3">
+                    <div className={`flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
                       {selectedProduct.images?.[0] && (
                         <img
                           src={selectedProduct.images[0]}
@@ -173,7 +173,7 @@ export default function Warranties() {
                           className="w-16 h-16 object-cover rounded"
                         />
                       )}
-                      <div className="flex-1">
+                      <div className={`flex-1 ${isRTL ? "text-right" : "text-left"}`}>
                         <h3 className="font-semibold">{selectedProduct.name}</h3>
                         <p className="text-sm text-muted-foreground">{formatKWD(selectedProduct.price)}</p>
                       </div>
@@ -196,18 +196,18 @@ export default function Warranties() {
                           onClick={() => setSelectedWarrantyId(warranty.id)}
                         >
                           <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                              <div>
+                            <div className={`flex items-center justify-between ${isRTL ? "flex-row-reverse" : ""}`}>
+                              <div className={isRTL ? "text-right" : "text-left"}>
                                 <h4 className="font-semibold">{warranty.name}</h4>
                                 <p className="text-sm text-muted-foreground">
                                   {t("warranties.period") || "Period"}: {warranty.periodMonths}{" "}
                                   {t("warranties.months") || "months"}
                                 </p>
                               </div>
-                              <div className="text-right">
+                              <div className={`${isRTL ? "text-left" : "text-right"}`}>
                                 <p className="text-lg font-bold text-primary">{formatKWD(warranty.price)}</p>
                                 {selectedWarrantyId === warranty.id && (
-                                  <CheckCircle className="w-5 h-5 text-primary mt-1" />
+                                  <CheckCircle className={`w-5 h-5 text-primary mt-1 ${isRTL ? "mr-auto" : "ml-auto"}`} />
                                 )}
                               </div>
                             </div>
@@ -232,12 +232,12 @@ export default function Warranties() {
                 >
                   {purchaseWarrantyMutation.isPending ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <Loader2 className={`w-4 h-4 animate-spin ${isRTL ? "ml-2" : "mr-2"}`} />
                       {t("warranties.processing") || "Processing..."}
                     </>
                   ) : (
                     <>
-                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      <ShoppingCart className={`w-4 h-4 ${isRTL ? "ml-2" : "mr-2"}`} />
                       {t("warranties.purchaseButton") || "Purchase Warranty"}
                     </>
                   )}
@@ -245,11 +245,11 @@ export default function Warranties() {
 
                 {selectedProduct && selectedWarranty && (
                   <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className={`flex items-center justify-between mb-2 ${isRTL ? "flex-row-reverse" : ""}`}>
                       <span className="text-sm font-medium">{t("warranties.total") || "Total"}:</span>
                       <span className="text-xl font-bold text-primary">{formatKWD(selectedWarranty.price)}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className={`text-xs text-muted-foreground ${isRTL ? "text-right" : "text-left"}`}>
                       {t("warranties.coverageInfo") || "Coverage includes repair and replacement services"}
                     </p>
                   </div>
@@ -273,7 +273,7 @@ export default function Warranties() {
                       {t("warranties.loginToView") || "Please login to view your warranties"}
                     </p>
                     <Button onClick={() => setLocation("/auth")}>
-                      {t("common.login") || "Login"}
+                      {t("nav.login") || "Login"}
                     </Button>
                   </div>
                 ) : isMyWarrantiesLoading ? (
@@ -293,8 +293,8 @@ export default function Warranties() {
                           }`}
                         >
                           <CardContent className="p-4">
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex-1">
+                            <div className={`flex items-start justify-between mb-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+                              <div className={`flex-1 ${isRTL ? "text-right" : "text-left"}`}>
                                 <h4 className="font-semibold mb-1">
                                   {purchase.product?.name || t("warranties.unknownProduct") || "Unknown Product"}
                                 </h4>
@@ -308,15 +308,15 @@ export default function Warranties() {
                                   : t("warranties.expired") || "Expired"}
                               </Badge>
                             </div>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex items-center gap-2 text-muted-foreground">
+                            <div className={`space-y-2 text-sm ${isRTL ? "text-right" : "text-left"}`}>
+                              <div className={`flex items-center gap-2 text-muted-foreground ${isRTL ? "flex-row-reverse" : ""}`}>
                                 <Calendar className="w-4 h-4" />
                                 <span>
                                   {t("warranties.startDate") || "Start"}:{" "}
                                   {new Date(purchase.startDate).toLocaleDateString()}
                                 </span>
                               </div>
-                              <div className="flex items-center gap-2 text-muted-foreground">
+                              <div className={`flex items-center gap-2 text-muted-foreground ${isRTL ? "flex-row-reverse" : ""}`}>
                                 <Calendar className="w-4 h-4" />
                                 <span>
                                   {t("warranties.endDate") || "End"}:{" "}

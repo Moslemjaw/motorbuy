@@ -26,7 +26,8 @@ import {
   Wallet,
   Search,
   Filter,
-  Calendar
+  Calendar,
+  ShieldCheck
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -104,7 +105,7 @@ export default function AdminDashboard() {
     { value: "orders", label: t("admin.dashboard.tabOrders"), icon: ShoppingBag },
     { value: "categories", label: t("admin.dashboard.tabCategories"), icon: FolderOpen },
     { value: "bundles", label: t("admin.dashboard.tabBundles") || "Bundles", icon: Package },
-    { value: "warranties", label: t("admin.dashboard.tabWarranties") || "Warranties", icon: FileText },
+    { value: "warranties", label: t("admin.dashboard.tabWarranties") || "Warranties", icon: ShieldCheck },
     { value: "ads", label: t("admin.dashboard.tabAds"), icon: FileText },
     { value: "payouts", label: t("admin.dashboard.tabPayouts"), icon: DollarSign },
   ];
