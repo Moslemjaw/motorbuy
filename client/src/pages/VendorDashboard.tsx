@@ -9,7 +9,7 @@ import { useRole, useProducts, useCategories, useDeleteProduct } from "@/hooks/u
 import { useLanguage } from "@/lib/i18n";
 import { 
   Package, ShoppingCart, Loader2, Plus, Image, Trash2, BookOpen, 
-  Store, TrendingUp, DollarSign, Clock, Wallet, Send, Camera, Save, Edit, AlertTriangle, X, QrCode, BarChart3, LayoutDashboard, CheckCircle, Calendar, AlertCircle
+  Store, TrendingUp, DollarSign, Clock, Wallet, Send, Camera, Save, Edit, AlertTriangle, X, QrCode, BarChart3, LayoutDashboard, CheckCircle, Calendar, AlertCircle, FileText
 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -898,6 +898,64 @@ export default function VendorDashboard() {
             </CardContent>
           </Card>
         </div>
+
+                {/* Export Buttons */}
+                <div className="flex gap-2 mb-4 justify-end">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(buildApiUrl("/api/vendor/export/analytics?format=excel"), {
+                          credentials: "include",
+                        });
+                        if (!res.ok) throw new Error("Export failed");
+                        const blob = await res.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `vendor_analytics_${Date.now()}.xlsx`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        toast({ title: "Success", description: "Analytics exported as Excel" });
+                      } catch (error: any) {
+                        toast({ title: "Error", description: error.message, variant: "destructive" });
+                      }
+                    }}
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    {t("vendor.dashboard.exportExcel") || "Export Excel"}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={async () => {
+                      try {
+                        const res = await fetch(buildApiUrl("/api/vendor/export/analytics?format=pdf"), {
+                          credentials: "include",
+                        });
+                        if (!res.ok) throw new Error("Export failed");
+                        const blob = await res.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `vendor_analytics_${Date.now()}.pdf`;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                        toast({ title: "Success", description: "Analytics exported as PDF" });
+                      } catch (error: any) {
+                        toast({ title: "Error", description: error.message, variant: "destructive" });
+                      }
+                    }}
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    {t("vendor.dashboard.exportPDF") || "Export PDF"}
+                  </Button>
+                </div>
 
                 {/* Sales Chart */}
                 <VendorSalesChart />

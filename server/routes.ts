@@ -346,6 +346,227 @@ export async function registerRoutes(
     }
   });
 
+  // Export Analytics Endpoints
+  app.get("/api/admin/export/analytics", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "admin")
+        return res.status(403).json({ message: "Forbidden" });
+      
+      const format = req.query.format as "excel" | "pdf" || "excel";
+      const vendorIds = req.query.vendorIds ? (Array.isArray(req.query.vendorIds) ? req.query.vendorIds : [req.query.vendorIds]) : [];
+      
+      const { XLSX } = await import("xlsx");
+      const { Order, OrderItem, Vendor, Product } = await import("./mongodb");
+      
+      let orders = await Order.find({}).populate("items");
+      let vendors = await Vendor.find({});
+      
+      // Filter by vendor IDs if provided
+      if (vendorIds.length > 0) {
+        const mongoose = await import("mongoose");
+        const vendorObjectIds = vendorIds.map((id: string) => new mongoose.default.Types.ObjectId(id));
+        orders = orders.filter((o: any) => {
+          const orderItems = o.items || [];
+          return orderItems.some((item: any) => {
+            const product = item.productId;
+            if (!product) return false;
+            return vendorObjectIds.some(vid => product.vendorId?.toString() === vid.toString());
+          });
+        });
+        vendors = vendors.filter((v: any) => vendorObjectIds.some(vid => v._id.toString() === vid.toString()));
+      }
+      
+      const analytics = {
+        totalOrders: orders.length,
+        totalRevenue: orders.reduce((sum: number, o: any) => sum + parseFloat(o.total || "0"), 0),
+        totalProducts: (await Product.find({})).length,
+        totalVendors: vendors.length,
+        vendors: vendors.map((v: any) => ({
+          name: v.storeName,
+          totalSales: parseFloat(v.grossSalesKwd || "0"),
+          pendingPayout: parseFloat(v.pendingPayoutKwd || "0"),
+          lifetimePayouts: parseFloat(v.lifetimePayoutsKwd || "0"),
+        })),
+        orders: orders.map((o: any) => ({
+          id: o._id.toString(),
+          total: parseFloat(o.total || "0"),
+          status: o.status,
+          createdAt: o.createdAt,
+        })),
+      };
+      
+      if (format === "excel") {
+        const workbook = XLSX.utils.book_new();
+        
+        // Summary Sheet
+        const summaryData = [
+          ["Metric", "Value"],
+          ["Total Orders", analytics.totalOrders],
+          ["Total Revenue (KWD)", analytics.totalRevenue.toFixed(3)],
+          ["Total Products", analytics.totalProducts],
+          ["Total Vendors", analytics.totalVendors],
+        ];
+        const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+        XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
+        
+        // Vendors Sheet
+        if (analytics.vendors.length > 0) {
+          const vendorsData = [
+            ["Vendor Name", "Total Sales (KWD)", "Pending Payout (KWD)", "Lifetime Payouts (KWD)"],
+            ...analytics.vendors.map((v: any) => [v.name, v.totalSales.toFixed(3), v.pendingPayout.toFixed(3), v.lifetimePayouts.toFixed(3)]),
+          ];
+          const vendorsSheet = XLSX.utils.aoa_to_sheet(vendorsData);
+          XLSX.utils.book_append_sheet(workbook, vendorsSheet, "Vendors");
+        }
+        
+        // Orders Sheet
+        if (analytics.orders.length > 0) {
+          const ordersData = [
+            ["Order ID", "Total (KWD)", "Status", "Date"],
+            ...analytics.orders.map((o: any) => [
+              o.id,
+              o.total.toFixed(3),
+              o.status,
+              new Date(o.createdAt).toLocaleDateString(),
+            ]),
+          ];
+          const ordersSheet = XLSX.utils.aoa_to_sheet(ordersData);
+          XLSX.utils.book_append_sheet(workbook, ordersSheet, "Orders");
+        }
+        
+        const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        res.setHeader("Content-Disposition", `attachment; filename=analytics_${Date.now()}.xlsx`);
+        res.send(buffer);
+      } else {
+        // PDF export
+        const PDFDocument = (await import("pdfkit")).default;
+        const doc = new PDFDocument();
+        
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename=analytics_${Date.now()}.pdf`);
+        
+        doc.pipe(res);
+        doc.fontSize(20).text("Analytics Report", { align: "center" });
+        doc.moveDown();
+        doc.fontSize(12).text(`Total Orders: ${analytics.totalOrders}`);
+        doc.text(`Total Revenue: ${analytics.totalRevenue.toFixed(3)} KWD`);
+        doc.text(`Total Products: ${analytics.totalProducts}`);
+        doc.text(`Total Vendors: ${analytics.totalVendors}`);
+        doc.moveDown();
+        
+        if (analytics.vendors.length > 0) {
+          doc.fontSize(16).text("Vendors", { underline: true });
+          doc.moveDown(0.5);
+          analytics.vendors.forEach((v: any) => {
+            doc.fontSize(12).text(`${v.name}: ${v.totalSales.toFixed(3)} KWD`);
+          });
+        }
+        
+        doc.end();
+      }
+    } catch (e) {
+      console.error("Error exporting analytics:", e);
+      res.status(500).json({ message: "Failed to export analytics" });
+    }
+  });
+
+  app.get("/api/vendor/export/analytics", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "vendor")
+        return res.status(403).json({ message: "Forbidden" });
+      
+      const format = req.query.format as "excel" | "pdf" || "excel";
+      const vendor = await storage.getVendorByUserId(req.session.userId);
+      if (!vendor)
+        return res.status(404).json({ message: "Vendor not found" });
+      
+      const products = await storage.getProducts({ vendorId: vendor.id });
+      const orders = await storage.getVendorOrders(vendor.id);
+      
+      const totalRevenue = orders.reduce((sum: number, o: any) => sum + parseFloat(o.total || "0"), 0);
+      const analytics = {
+        vendorName: vendor.storeName,
+        totalProducts: products.length,
+        totalOrders: orders.length,
+        totalRevenue: totalRevenue.toFixed(3),
+        totalSales: parseFloat(vendor.grossSalesKwd || "0").toFixed(3),
+        walletBalance: parseFloat(vendor.walletBalanceKwd || "0").toFixed(3),
+        pendingPayout: parseFloat(vendor.pendingPayoutKwd || "0").toFixed(3),
+        lifetimePayouts: parseFloat(vendor.lifetimePayoutsKwd || "0").toFixed(3),
+        orders: orders.map((o: any) => ({
+          id: o.id,
+          total: parseFloat(o.total || "0").toFixed(3),
+          status: o.status,
+          createdAt: o.createdAt,
+        })),
+      };
+      
+      if (format === "excel") {
+        const { XLSX } = await import("xlsx");
+        const workbook = XLSX.utils.book_new();
+        
+        const summaryData = [
+          ["Metric", "Value"],
+          ["Vendor Name", analytics.vendorName],
+          ["Total Products", analytics.totalProducts],
+          ["Total Orders", analytics.totalOrders],
+          ["Total Revenue (KWD)", analytics.totalRevenue],
+          ["Total Sales (KWD)", analytics.totalSales],
+          ["Wallet Balance (KWD)", analytics.walletBalance],
+          ["Pending Payout (KWD)", analytics.pendingPayout],
+          ["Lifetime Payouts (KWD)", analytics.lifetimePayouts],
+        ];
+        const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+        XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
+        
+        if (analytics.orders.length > 0) {
+          const ordersData = [
+            ["Order ID", "Total (KWD)", "Status", "Date"],
+            ...analytics.orders.map((o: any) => [
+              o.id,
+              o.total,
+              o.status,
+              new Date(o.createdAt).toLocaleDateString(),
+            ]),
+          ];
+          const ordersSheet = XLSX.utils.aoa_to_sheet(ordersData);
+          XLSX.utils.book_append_sheet(workbook, ordersSheet, "Orders");
+        }
+        
+        const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        res.setHeader("Content-Disposition", `attachment; filename=vendor_analytics_${Date.now()}.xlsx`);
+        res.send(buffer);
+      } else {
+        const PDFDocument = (await import("pdfkit")).default;
+        const doc = new PDFDocument();
+        
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename=vendor_analytics_${Date.now()}.pdf`);
+        
+        doc.pipe(res);
+        doc.fontSize(20).text("Vendor Analytics Report", { align: "center" });
+        doc.moveDown();
+        doc.fontSize(12).text(`Vendor: ${analytics.vendorName}`);
+        doc.text(`Total Products: ${analytics.totalProducts}`);
+        doc.text(`Total Orders: ${analytics.totalOrders}`);
+        doc.text(`Total Revenue: ${analytics.totalRevenue} KWD`);
+        doc.text(`Total Sales: ${analytics.totalSales} KWD`);
+        doc.text(`Wallet Balance: ${analytics.walletBalance} KWD`);
+        doc.text(`Pending Payout: ${analytics.pendingPayout} KWD`);
+        doc.text(`Lifetime Payouts: ${analytics.lifetimePayouts} KWD`);
+        
+        doc.end();
+      }
+    } catch (e) {
+      console.error("Error exporting vendor analytics:", e);
+      res.status(500).json({ message: "Failed to export analytics" });
+    }
+  });
+
   app.post("/api/admin/categories", isAuthenticated, async (req: any, res) => {
     try {
       const role = await storage.getUserRole(req.session.userId);

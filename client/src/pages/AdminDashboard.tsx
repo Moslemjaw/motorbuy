@@ -331,8 +331,12 @@ function TopSummaryCards() {
 function AnalyticsSection() {
   const { t, isRTL } = useLanguage();
   const { data: vendors } = useVendors();
+  const { toast } = useToast();
   const [timeRange, setTimeRange] = useState<"day" | "month" | "year">("month");
   const [selectedVendor, setSelectedVendor] = useState<string>("all");
+  const [selectedVendorsForExport, setSelectedVendorsForExport] = useState<string[]>([]);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data: salesData, isLoading } = useQuery({
     queryKey: ["/api/admin/sales-chart", timeRange, selectedVendor],
@@ -357,6 +361,37 @@ function AnalyticsSection() {
     },
   };
 
+  const handleExport = async (format: "excel" | "pdf") => {
+    setIsExporting(true);
+    try {
+      const params = new URLSearchParams({
+        format,
+        ...(selectedVendorsForExport.length > 0 && { vendorIds: selectedVendorsForExport }),
+      });
+      const res = await fetch(buildApiUrl(`/api/admin/export/analytics?${params}`), {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Export failed");
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `analytics_${Date.now()}.${format === "excel" ? "xlsx" : "pdf"}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({ title: "Success", description: `Analytics exported as ${format.toUpperCase()}` });
+      setIsExportDialogOpen(false);
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <Card className="border shadow-sm">
@@ -368,42 +403,47 @@ function AnalyticsSection() {
   }
 
   return (
-    <Card className="border shadow-sm">
-      <CardHeader>
-        <div className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${isRTL ? "md:flex-row-reverse" : ""}`}>
-          <div>
-            <CardTitle>{t("admin.dashboard.salesChart") || "Sales Chart"}</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              {t("admin.dashboard.salesChartDesc") || "Sales performance over time"}
-            </p>
+    <>
+      <Card className="border shadow-sm">
+        <CardHeader>
+          <div className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${isRTL ? "md:flex-row-reverse" : ""}`}>
+            <div>
+              <CardTitle>{t("admin.dashboard.salesChart") || "Sales Chart"}</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                {t("admin.dashboard.salesChartDesc") || "Sales performance over time"}
+              </p>
+            </div>
+            <div className={`flex gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+              <Button variant="outline" size="sm" onClick={() => setIsExportDialogOpen(true)}>
+                <FileText className="w-4 h-4 mr-2" />
+                {t("admin.dashboard.export") || "Export"}
+              </Button>
+              <Select value={timeRange} onValueChange={(v: "day" | "month" | "year") => setTimeRange(v)}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="day">{t("admin.dashboard.day") || "Day"}</SelectItem>
+                  <SelectItem value="month">{t("admin.dashboard.month") || "Month"}</SelectItem>
+                  <SelectItem value="year">{t("admin.dashboard.year") || "Year"}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={selectedVendor} onValueChange={setSelectedVendor}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder={t("admin.dashboard.allVendors") || "All Vendors"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("admin.dashboard.allVendors") || "All Vendors"}</SelectItem>
+                  {vendors?.map((vendor) => (
+                    <SelectItem key={vendor.id} value={vendor.id}>
+                      {vendor.storeName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className={`flex gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
-            <Select value={timeRange} onValueChange={(v: "day" | "month" | "year") => setTimeRange(v)}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="day">{t("admin.dashboard.day") || "Day"}</SelectItem>
-                <SelectItem value="month">{t("admin.dashboard.month") || "Month"}</SelectItem>
-                <SelectItem value="year">{t("admin.dashboard.year") || "Year"}</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={selectedVendor} onValueChange={setSelectedVendor}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder={t("admin.dashboard.allVendors") || "All Vendors"} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("admin.dashboard.allVendors") || "All Vendors"}</SelectItem>
-                {vendors?.map((vendor) => (
-                  <SelectItem key={vendor.id} value={vendor.id}>
-                    {vendor.storeName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </CardHeader>
+        </CardHeader>
       <CardContent>
         {chartData.length === 0 ? (
           <div className="flex items-center justify-center h-[300px] text-muted-foreground">
@@ -443,6 +483,55 @@ function AnalyticsSection() {
         )}
       </CardContent>
     </Card>
+
+    <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("admin.dashboard.exportAnalytics") || "Export Analytics"}</DialogTitle>
+          <DialogDescription>
+            {t("admin.dashboard.exportAnalyticsDesc") || "Select vendors and export format"}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>{t("admin.dashboard.selectVendors") || "Select Vendors (leave empty for all)"}</Label>
+            <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-2">
+              {vendors?.map((vendor) => (
+                <div key={vendor.id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`vendor-${vendor.id}`}
+                    checked={selectedVendorsForExport.includes(vendor.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedVendorsForExport([...selectedVendorsForExport, vendor.id]);
+                      } else {
+                        setSelectedVendorsForExport(selectedVendorsForExport.filter(id => id !== vendor.id));
+                      }
+                    }}
+                    className="rounded"
+                  />
+                  <label htmlFor={`vendor-${vendor.id}`} className="text-sm cursor-pointer">
+                    {vendor.storeName}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => handleExport("excel")} disabled={isExporting} className="flex-1">
+              {isExporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+              {t("admin.dashboard.exportExcel") || "Export Excel"}
+            </Button>
+            <Button onClick={() => handleExport("pdf")} disabled={isExporting} variant="outline" className="flex-1">
+              {isExporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+              {t("admin.dashboard.exportPDF") || "Export PDF"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
 
