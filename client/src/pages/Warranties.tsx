@@ -97,11 +97,26 @@ export default function Warranties() {
     const warranty = warranties?.find((w: any) => w.id === selectedWarrantyId);
     if (!warranty) return;
 
-    purchaseWarrantyMutation.mutate({
+    // Check if there's an existing warranty for this product
+    const existingWarranty = myWarranties?.find(
+      (w: any) => w.productId === selectedProductId && w.status === "active" && new Date(w.endDate) > new Date()
+    );
+
+    // Store warranty info in sessionStorage to pass to checkout
+    const warrantyData = {
       productId: selectedProductId,
       warrantyId: selectedWarrantyId,
       price: warranty.price,
-    });
+      productName: selectedProduct?.name,
+      warrantyName: warranty.name,
+      periodMonths: warranty.periodMonths,
+      isExtension: !!existingWarranty,
+    };
+
+    sessionStorage.setItem("pendingWarranty", JSON.stringify(warrantyData));
+    
+    // Redirect to checkout
+    setLocation("/checkout");
   };
 
   const selectedProduct = products?.find((p: any) => p.id === selectedProductId);

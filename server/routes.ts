@@ -2297,10 +2297,12 @@ export async function registerRoutes(
   app.post(api.orders.create.path, isAuthenticated, async (req: any, res) => {
     try {
       const cartItems = await storage.getCartItems(req.session.userId);
-      if (cartItems.length === 0)
+      const warrantyTotal = parseFloat(req.body.warrantyTotal || "0");
+      
+      if (cartItems.length === 0 && warrantyTotal === 0)
         return res.status(400).json({ message: "Cart is empty" });
 
-      let total = 0;
+      let total = warrantyTotal; // Start with warranty total
       const items = cartItems.map((item) => {
         const price = parseFloat(item.product.price);
         total += price * item.quantity;
@@ -2374,6 +2376,26 @@ export async function registerRoutes(
         paymentMethod
       );
       await storage.clearCart(req.session.userId);
+      
+      // Create warranty purchase if provided
+      if (warrantyTotal > 0 && req.body.warrantyData) {
+        try {
+          const warrantyData = typeof req.body.warrantyData === 'string' 
+            ? JSON.parse(req.body.warrantyData) 
+            : req.body.warrantyData;
+          await storage.createWarrantyPurchase({
+            userId: req.session.userId,
+            productId: warrantyData.productId,
+            warrantyId: warrantyData.warrantyId,
+            orderId: order.id,
+            price: warrantyData.price,
+          });
+        } catch (warrantyError) {
+          console.error("Error creating warranty purchase:", warrantyError);
+          // Don't fail the order if warranty creation fails
+        }
+      }
+      
       res.status(201).json(order);
     } catch (e: any) {
       console.error("Error creating order:", e);

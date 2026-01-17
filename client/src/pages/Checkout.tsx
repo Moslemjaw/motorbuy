@@ -13,10 +13,12 @@ import { Link, useLocation } from "wouter";
 import { formatKWD } from "@/lib/currency";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@shared/routes";
 import { buildApiUrl } from "@/lib/api-config";
+import { ShieldCheck } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Checkout() {
   const { isAuthenticated, user } = useAuth();
@@ -29,6 +31,7 @@ export default function Checkout() {
 
   const [isSuccess, setIsSuccess] = useState(false);
   const [successOrder, setSuccessOrder] = useState<any>(null);
+  const [pendingWarranty, setPendingWarranty] = useState<any>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -41,6 +44,18 @@ export default function Checkout() {
 
   const [paymentMethod, setPaymentMethod] = useState("pay-in-store");
 
+  // Check for pending warranty from sessionStorage
+  useEffect(() => {
+    const warrantyData = sessionStorage.getItem("pendingWarranty");
+    if (warrantyData) {
+      try {
+        setPendingWarranty(JSON.parse(warrantyData));
+      } catch (e) {
+        console.error("Error parsing warranty data:", e);
+      }
+    }
+  }, []);
+
   // Redirect to auth if not authenticated
   if (!isAuthenticated && !isCartLoading) {
     setLocation("/auth");
@@ -50,10 +65,13 @@ export default function Checkout() {
   // Filter out items without products (deleted products)
   const validCartItems = cartItems?.filter(item => item.product && item.product.id) || [];
   
-  const total = validCartItems.reduce((sum, item) => {
+  const cartTotal = validCartItems.reduce((sum, item) => {
     if (!item.product || !item.product.price) return sum;
     return sum + (Number(item.product.price) * item.quantity);
   }, 0);
+
+  const warrantyTotal = pendingWarranty ? parseFloat(pendingWarranty.price) : 0;
+  const total = cartTotal + warrantyTotal;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +85,7 @@ export default function Checkout() {
       return;
     }
 
-    if (validCartItems.length === 0) {
+    if (validCartItems.length === 0 && !pendingWarranty) {
       toast({
         title: t("checkout.cartEmpty"),
         description: t("checkout.cartEmptyDesc"),
@@ -89,6 +107,8 @@ export default function Checkout() {
           customerAddress: formData.address,
           customerCity: formData.city,
           paymentMethod: paymentMethod,
+          warrantyTotal: pendingWarranty ? pendingWarranty.price : "0",
+          warrantyData: pendingWarranty ? pendingWarranty : null,
         }),
       });
 
@@ -98,6 +118,12 @@ export default function Checkout() {
       }
 
       const order = await res.json();
+      
+      // Clear pending warranty from sessionStorage
+      if (pendingWarranty) {
+        sessionStorage.removeItem("pendingWarranty");
+        queryClient.invalidateQueries({ queryKey: ["/api/warranty-purchases"] });
+      }
       
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: [api.orders.list.path] });
@@ -191,7 +217,7 @@ export default function Checkout() {
     );
   }
 
-  if (validCartItems.length === 0) {
+  if (validCartItems.length === 0 && !pendingWarranty) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -371,13 +397,40 @@ export default function Checkout() {
                       </div>
                     </div>
                   ))}
+                  {pendingWarranty && (
+                    <div className={`flex justify-between items-center text-sm pt-2 border-t ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      <div className={`flex items-center gap-2 flex-1 min-w-0 ${isRTL ? 'text-right ml-4 flex-row-reverse' : 'text-left'}`}>
+                        <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">
+                            {t("warranties.warrantyFor") || "Warranty"}: {pendingWarranty.productName}
+                          </p>
+                          <p className="text-muted-foreground text-xs">
+                            {pendingWarranty.warrantyName} ({pendingWarranty.periodMonths} {t("warranties.months") || "months"})
+                            {pendingWarranty.isExtension && ` - ${t("warranties.extension") || "Extension"}`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className={`font-medium ${isRTL ? 'mr-4' : 'ml-4'}`}>
+                        {formatKWD(pendingWarranty.price)}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="border-t pt-4 space-y-2">
-                  <div className={`flex justify-between text-sm ${isRTL ? 'flex-row-reverse' : ''}`}>
-                    <span className="text-muted-foreground">{t("checkout.subtotal")}</span>
-                    <span className="font-medium">{formatKWD(total)}</span>
-                  </div>
+                  {validCartItems.length > 0 && (
+                    <div className={`flex justify-between text-sm ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      <span className="text-muted-foreground">{t("checkout.subtotal")}</span>
+                      <span className="font-medium">{formatKWD(cartTotal)}</span>
+                    </div>
+                  )}
+                  {pendingWarranty && (
+                    <div className={`flex justify-between text-sm ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      <span className="text-muted-foreground">{t("warranties.warranty") || "Warranty"}</span>
+                      <span className="font-medium">{formatKWD(warrantyTotal)}</span>
+                    </div>
+                  )}
                   <div className={`flex justify-between text-sm ${isRTL ? 'flex-row-reverse' : ''}`}>
                     <span className="text-muted-foreground">{t("checkout.shipping")}</span>
                     <span className="text-green-600 font-medium">{t("checkout.free")}</span>

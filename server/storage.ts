@@ -973,33 +973,73 @@ export class MongoStorage implements IStorage {
       purchaseData.orderId = new mongoose.Types.ObjectId(purchaseData.orderId);
     }
     
-    // Calculate end date from warranty period
+    // Check if there's an existing active warranty for this product
+    const existingPurchase = await WarrantyPurchase.findOne({
+      userId: purchaseData.userId,
+      productId: purchaseData.productId,
+      status: "active",
+    }).sort({ endDate: -1 }); // Get the most recent one
+    
     const warranty = await Warranty.findById(purchaseData.warrantyId);
     if (!warranty) {
       throw new Error("Warranty not found");
     }
     
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setMonth(endDate.getMonth() + warranty.periodMonths);
-    purchaseData.startDate = startDate;
-    purchaseData.endDate = endDate;
+    let startDate: Date;
+    let endDate: Date;
     
-    const newPurchase = await WarrantyPurchase.create(purchaseData);
-    const populated = await WarrantyPurchase.findById(newPurchase._id)
-      .populate('productId')
-      .populate('warrantyId');
-    
-    const obj = toPlainObject(populated);
-    if (obj.productId && typeof obj.productId === 'object') {
-      obj.product = toPlainObject(obj.productId);
-      obj.productId = obj.product.id;
+    if (existingPurchase && new Date(existingPurchase.endDate) > new Date()) {
+      // Extend existing warranty
+      startDate = new Date(existingPurchase.startDate);
+      endDate = new Date(existingPurchase.endDate);
+      endDate.setMonth(endDate.getMonth() + warranty.periodMonths);
+      
+      // Update existing purchase
+      existingPurchase.endDate = endDate;
+      existingPurchase.price = (parseFloat(existingPurchase.price) + parseFloat(purchaseData.price)).toFixed(3);
+      if (purchaseData.orderId) {
+        existingPurchase.orderId = purchaseData.orderId;
+      }
+      await existingPurchase.save();
+      
+      const populated = await WarrantyPurchase.findById(existingPurchase._id)
+        .populate('productId')
+        .populate('warrantyId');
+      
+      const obj = toPlainObject(populated);
+      if (obj.productId && typeof obj.productId === 'object') {
+        obj.product = toPlainObject(obj.productId);
+        obj.productId = obj.product.id;
+      }
+      if (obj.warrantyId && typeof obj.warrantyId === 'object') {
+        obj.warranty = toPlainObject(obj.warrantyId);
+        obj.warrantyId = obj.warranty.id;
+      }
+      return obj;
+    } else {
+      // Create new warranty purchase
+      startDate = new Date();
+      endDate = new Date();
+      endDate.setMonth(endDate.getMonth() + warranty.periodMonths);
+      purchaseData.startDate = startDate;
+      purchaseData.endDate = endDate;
+      
+      const newPurchase = await WarrantyPurchase.create(purchaseData);
+      const populated = await WarrantyPurchase.findById(newPurchase._id)
+        .populate('productId')
+        .populate('warrantyId');
+      
+      const obj = toPlainObject(populated);
+      if (obj.productId && typeof obj.productId === 'object') {
+        obj.product = toPlainObject(obj.productId);
+        obj.productId = obj.product.id;
+      }
+      if (obj.warrantyId && typeof obj.warrantyId === 'object') {
+        obj.warranty = toPlainObject(obj.warrantyId);
+        obj.warrantyId = obj.warranty.id;
+      }
+      return obj;
     }
-    if (obj.warrantyId && typeof obj.warrantyId === 'object') {
-      obj.warranty = toPlainObject(obj.warrantyId);
-      obj.warrantyId = obj.warranty.id;
-    }
-    return obj;
   }
 }
 
