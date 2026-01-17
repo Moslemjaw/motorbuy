@@ -1755,6 +1755,7 @@ export async function registerRoutes(
     { name: "Wheels & Tires", slug: "wheels-tires", icon: "Circle" },
     { name: "Lighting", slug: "lighting", icon: "Lightbulb" },
     { name: "Fluids & Chemicals", slug: "fluids-chemicals", icon: "Droplets" },
+    { name: "Bundles", slug: "bundles", icon: "Package" },
   ];
   const categories = await storage.getCategories();
   if (categories.length < defaultCategories.length) {

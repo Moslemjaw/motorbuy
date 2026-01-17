@@ -107,6 +107,11 @@ const categories = [
     slug: "cooling-system",
     imageUrl: "https://placehold.co/100x100?text=Cooling",
   },
+  {
+    name: "Bundles",
+    slug: "bundles",
+    imageUrl: "https://placehold.co/100x100?text=Bundles",
+  },
 ];
 
 export async function seedDatabase() {
