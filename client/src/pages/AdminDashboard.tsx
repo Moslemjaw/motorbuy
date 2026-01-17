@@ -2695,12 +2695,12 @@ function BundlesSection() {
                   <p className="text-sm text-muted-foreground line-clamp-2">{bundle.description}</p>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-primary">{bundle.price} KWD</div>
+                  <div className="font-bold text-primary">{bundle.price} {t("common.kwd")}</div>
                 </div>
               </div>
               
               <div className="mt-4 space-y-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase">Includes:</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase">{t("admin.dashboard.includedProducts")}:</p>
                 <div className="space-y-1">
                   {bundle.bundleItems?.map((item: any, i: number) => (
                     <div key={i} className="text-sm flex justify-between">
@@ -2713,7 +2713,7 @@ function BundlesSection() {
 
               <div className="mt-4 flex justify-end gap-2">
                 <Button variant="destructive" size="sm" onClick={() => {
-                  if (confirm("Are you sure you want to delete this bundle?")) {
+                  if (confirm(t("admin.dashboard.deleteBundleConfirm"))) {
                     deleteProductMutation.mutate(bundle.id);
                   }
                 }}>
@@ -2728,37 +2728,37 @@ function BundlesSection() {
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create New Bundle</DialogTitle>
-            <DialogDescription>Combine products into a special package deal</DialogDescription>
+            <DialogTitle>{t("admin.dashboard.createBundle")}</DialogTitle>
+            <DialogDescription>{t("admin.dashboard.createBundleDesc")}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Bundle Name</Label>
-                <Input value={bundleName} onChange={e => setBundleName(e.target.value)} placeholder="e.g. Summer Service Package" />
+                <Label>{t("admin.dashboard.bundleName")}</Label>
+                <Input value={bundleName} onChange={e => setBundleName(e.target.value)} placeholder={t("admin.dashboard.bundleNamePlaceholder")} />
               </div>
               <div className="space-y-2">
-                <Label>Bundle Price (KWD)</Label>
+                <Label>{t("admin.dashboard.bundlePrice")}</Label>
                 <Input type="number" value={bundlePrice} onChange={e => setBundlePrice(e.target.value)} placeholder="0.000" />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea value={bundleDesc} onChange={e => setBundleDesc(e.target.value)} placeholder="Describe this bundle..." />
+              <Label>{t("admin.dashboard.description")}</Label>
+              <Textarea value={bundleDesc} onChange={e => setBundleDesc(e.target.value)} placeholder={t("admin.dashboard.descriptionPlaceholder")} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Vendor</Label>
+                <Label>{t("admin.dashboard.vendor")}</Label>
                 <Select value={bundleVendor} onValueChange={setBundleVendor} disabled>
                    <SelectTrigger>
-                    <SelectValue placeholder="MotorBuy (System)" />
+                    <SelectValue placeholder={t("admin.dashboard.motorbuySystem")} />
                   </SelectTrigger>
                   <SelectContent>
                      {/* Show only MotorBuy or system option */}
-                     <SelectItem value="motorbuy-system">MotorBuy</SelectItem>
+                     <SelectItem value="motorbuy-system">{t("brand.name")}</SelectItem>
                      {vendors?.filter(v => v.storeName === "MotorBuy").map(v => (
                         <SelectItem key={v.id} value={v.id}>{v.storeName}</SelectItem>
                      ))}
@@ -2766,10 +2766,10 @@ function BundlesSection() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Category</Label>
+                <Label>{t("admin.dashboard.category")}</Label>
                 <Select value={bundleCategory} onValueChange={setBundleCategory} disabled>
                   <SelectTrigger>
-                    <SelectValue placeholder="Bundles" />
+                    <SelectValue placeholder={t("admin.dashboard.bundles")} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories?.filter(c => c.slug === "bundles").map(c => (
@@ -2781,7 +2781,7 @@ function BundlesSection() {
             </div>
 
             <div className="space-y-2">
-              <Label>Bundle Image</Label>
+              <Label>{t("admin.dashboard.bundleImage")}</Label>
               <Input 
                 type="file" 
                 accept="image/*" 
@@ -2793,18 +2793,18 @@ function BundlesSection() {
 
             <div className="space-y-4 border rounded-lg p-4">
               <div className="flex justify-between items-center">
-                <Label>Included Products</Label>
-                <span className="text-sm text-muted-foreground">Original Total: {calculateOriginalPrice()} KWD</span>
+                <Label>{t("admin.dashboard.includedProducts")}</Label>
+                <span className="text-sm text-muted-foreground">{t("admin.dashboard.originalTotal")}: {calculateOriginalPrice()} {t("common.kwd")}</span>
               </div>
               
               <div className="flex gap-2">
                 <Select onValueChange={handleAddProductToBundle}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Add product to bundle..." />
+                    <SelectValue placeholder={t("admin.dashboard.addProductToBundle")} />
                   </SelectTrigger>
                   <SelectContent>
                     {regularProducts.map(p => (
-                      <SelectItem key={p.id} value={p.id}>{p.name} ({p.price} KWD)</SelectItem>
+                      <SelectItem key={p.id} value={p.id}>{p.name} ({p.price} {t("common.kwd")})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -2822,7 +2822,7 @@ function BundlesSection() {
                         <span className="text-sm font-medium">{product?.name}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">{product?.price} KWD</span>
+                        <span className="text-sm text-muted-foreground">{product?.price} {t("common.kwd")}</span>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveProductFromBundle(item.productId)}>
                           <X className="w-3 h-3" />
                         </Button>
@@ -2835,10 +2835,10 @@ function BundlesSection() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>{t("common.cancel")}</Button>
             <Button onClick={handleCreateBundle} disabled={createProductMutation.isPending}>
               {createProductMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Create Bundle
+              {t("admin.dashboard.createBundle")}
             </Button>
           </DialogFooter>
         </DialogContent>
