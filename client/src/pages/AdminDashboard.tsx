@@ -364,14 +364,18 @@ function AnalyticsSection() {
   const handleExport = async (format: "excel" | "pdf") => {
     setIsExporting(true);
     try {
-      const params = new URLSearchParams({
-        format,
-        ...(selectedVendorsForExport.length > 0 && { vendorIds: selectedVendorsForExport }),
-      });
-      const res = await fetch(buildApiUrl(`/api/admin/export/analytics?${params}`), {
+      const params = new URLSearchParams();
+      params.append("format", format);
+      if (selectedVendorsForExport.length > 0) {
+        selectedVendorsForExport.forEach(id => params.append("vendorIds", id));
+      }
+      const res = await fetch(buildApiUrl(`/api/admin/export/analytics?${params.toString()}`), {
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Export failed");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: "Export failed" }));
+        throw new Error(errorData.message || "Export failed");
+      }
       
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);

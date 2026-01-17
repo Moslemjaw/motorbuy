@@ -354,27 +354,60 @@ export async function registerRoutes(
         return res.status(403).json({ message: "Forbidden" });
       
       const format = req.query.format as "excel" | "pdf" || "excel";
-      const vendorIds = req.query.vendorIds ? (Array.isArray(req.query.vendorIds) ? req.query.vendorIds : [req.query.vendorIds]) : [];
+      const vendorIdsParam = req.query.vendorIds;
+      const vendorIds = vendorIdsParam 
+        ? (Array.isArray(vendorIdsParam) ? vendorIdsParam : [vendorIdsParam])
+        : [];
       
-      const { XLSX } = await import("xlsx");
       const { Order, OrderItem, Vendor, Product } = await import("./mongodb");
+      const mongoose = await import("mongoose");
       
-      let orders = await Order.find({}).populate("items");
-      let vendors = await Vendor.find({});
+      // Get all orders and order items
+      const allOrders = await Order.find({}) || [];
+      const allOrderItems = await OrderItem.find({}).populate("productId") || [];
       
-      // Filter by vendor IDs if provided
-      if (vendorIds.length > 0) {
-        const mongoose = await import("mongoose");
-        const vendorObjectIds = vendorIds.map((id: string) => new mongoose.default.Types.ObjectId(id));
-        orders = orders.filter((o: any) => {
-          const orderItems = o.items || [];
-          return orderItems.some((item: any) => {
-            const product = item.productId;
-            if (!product) return false;
-            return vendorObjectIds.some(vid => product.vendorId?.toString() === vid.toString());
-          });
-        });
-        vendors = vendors.filter((v: any) => vendorObjectIds.some(vid => v._id.toString() === vid.toString()));
+      // Filter orders by vendor if vendor IDs provided
+      let filteredOrderIds: any[] = [];
+      if (vendorIds.length > 0 && vendorIds[0]) {
+        try {
+          const vendorObjectIds = vendorIds
+            .filter((id: string) => id && mongoose.default.Types.ObjectId.isValid(id))
+            .map((id: string) => new mongoose.default.Types.ObjectId(id));
+          
+          if (vendorObjectIds.length > 0) {
+            const products = await Product.find({ vendorId: { $in: vendorObjectIds } });
+            const productIds = products.map((p: any) => p._id);
+            
+            if (productIds.length > 0) {
+              filteredOrderIds = allOrderItems
+                .filter((item: any) => item.productId && productIds.some((pid: any) => pid.toString() === item.productId?._id?.toString()))
+                .map((item: any) => item.orderId);
+            }
+          }
+        } catch (err) {
+          console.error("Error filtering by vendors:", err);
+        }
+      }
+      
+      const orders = vendorIds.length > 0 && filteredOrderIds.length > 0
+        ? allOrders.filter((o: any) => filteredOrderIds.some((oid: any) => oid && oid.toString() === o._id.toString()))
+        : allOrders;
+      
+      let vendors;
+      if (vendorIds.length > 0 && vendorIds[0]) {
+        try {
+          const validVendorIds = vendorIds
+            .filter((id: string) => id && mongoose.default.Types.ObjectId.isValid(id))
+            .map((id: string) => new mongoose.default.Types.ObjectId(id));
+          vendors = validVendorIds.length > 0 
+            ? await Vendor.find({ _id: { $in: validVendorIds } })
+            : [];
+        } catch (err) {
+          console.error("Error fetching vendors:", err);
+          vendors = [];
+        }
+      } else {
+        vendors = await Vendor.find({}) || [];
       }
       
       const analytics = {
@@ -397,6 +430,7 @@ export async function registerRoutes(
       };
       
       if (format === "excel") {
+        const XLSX = await import("xlsx");
         const workbook = XLSX.utils.book_new();
         
         // Summary Sheet
@@ -427,8 +461,8 @@ export async function registerRoutes(
             ...analytics.orders.map((o: any) => [
               o.id,
               o.total.toFixed(3),
-              o.status,
-              new Date(o.createdAt).toLocaleDateString(),
+              o.status || "pending",
+              o.createdAt ? new Date(o.createdAt).toLocaleDateString() : "N/A",
             ]),
           ];
           const ordersSheet = XLSX.utils.aoa_to_sheet(ordersData);
@@ -441,8 +475,8 @@ export async function registerRoutes(
         res.send(buffer);
       } else {
         // PDF export
-        const PDFDocument = (await import("pdfkit")).default;
-        const doc = new PDFDocument();
+        const PDFDocument = await import("pdfkit");
+        const doc = new PDFDocument.default();
         
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", `attachment; filename=analytics_${Date.now()}.pdf`);
@@ -466,9 +500,9 @@ export async function registerRoutes(
         
         doc.end();
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Error exporting analytics:", e);
-      res.status(500).json({ message: "Failed to export analytics" });
+      res.status(500).json({ message: "Failed to export analytics", error: e.message });
     }
   });
 
@@ -505,7 +539,7 @@ export async function registerRoutes(
       };
       
       if (format === "excel") {
-        const { XLSX } = await import("xlsx");
+        const XLSX = await import("xlsx");
         const workbook = XLSX.utils.book_new();
         
         const summaryData = [
@@ -528,8 +562,8 @@ export async function registerRoutes(
             ...analytics.orders.map((o: any) => [
               o.id,
               o.total,
-              o.status,
-              new Date(o.createdAt).toLocaleDateString(),
+              o.status || "pending",
+              o.createdAt ? new Date(o.createdAt).toLocaleDateString() : "N/A",
             ]),
           ];
           const ordersSheet = XLSX.utils.aoa_to_sheet(ordersData);
@@ -541,8 +575,8 @@ export async function registerRoutes(
         res.setHeader("Content-Disposition", `attachment; filename=vendor_analytics_${Date.now()}.xlsx`);
         res.send(buffer);
       } else {
-        const PDFDocument = (await import("pdfkit")).default;
-        const doc = new PDFDocument();
+        const PDFDocument = await import("pdfkit");
+        const doc = new PDFDocument.default();
         
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", `attachment; filename=vendor_analytics_${Date.now()}.pdf`);
@@ -561,9 +595,9 @@ export async function registerRoutes(
         
         doc.end();
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Error exporting vendor analytics:", e);
-      res.status(500).json({ message: "Failed to export analytics" });
+      res.status(500).json({ message: "Failed to export analytics", error: e.message });
     }
   });
 
