@@ -955,7 +955,7 @@ export default function VendorDashboard() {
                     <FileText className="w-4 h-4 mr-2" />
                     {t("vendor.dashboard.exportPDF") || "Export PDF"}
                   </Button>
-                </div>
+        </div>
 
                 {/* Sales Chart */}
                 <VendorSalesChart />

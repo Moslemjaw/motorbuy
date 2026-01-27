@@ -411,46 +411,46 @@ function AnalyticsSection() {
 
   return (
     <>
-      <Card className="border shadow-sm">
-        <CardHeader>
-          <div className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${isRTL ? "md:flex-row-reverse" : ""}`}>
-            <div>
-              <CardTitle>{t("admin.dashboard.salesChart") || "Sales Chart"}</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                {t("admin.dashboard.salesChartDesc") || "Sales performance over time"}
-              </p>
-            </div>
-            <div className={`flex gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+    <Card className="border shadow-sm">
+      <CardHeader>
+        <div className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${isRTL ? "md:flex-row-reverse" : ""}`}>
+          <div>
+            <CardTitle>{t("admin.dashboard.salesChart") || "Sales Chart"}</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              {t("admin.dashboard.salesChartDesc") || "Sales performance over time"}
+            </p>
+          </div>
+          <div className={`flex gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
               <Button variant="outline" size="sm" onClick={() => setIsExportDialogOpen(true)}>
                 <FileText className="w-4 h-4 mr-2" />
                 {t("admin.dashboard.export") || "Export"}
               </Button>
-              <Select value={timeRange} onValueChange={(v: "day" | "month" | "year") => setTimeRange(v)}>
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="day">{t("admin.dashboard.day") || "Day"}</SelectItem>
-                  <SelectItem value="month">{t("admin.dashboard.month") || "Month"}</SelectItem>
-                  <SelectItem value="year">{t("admin.dashboard.year") || "Year"}</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={selectedVendor} onValueChange={setSelectedVendor}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder={t("admin.dashboard.allVendors") || "All Vendors"} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("admin.dashboard.allVendors") || "All Vendors"}</SelectItem>
-                  {vendors?.map((vendor) => (
-                    <SelectItem key={vendor.id} value={vendor.id}>
-                      {vendor.storeName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Select value={timeRange} onValueChange={(v: "day" | "month" | "year") => setTimeRange(v)}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="day">{t("admin.dashboard.day") || "Day"}</SelectItem>
+                <SelectItem value="month">{t("admin.dashboard.month") || "Month"}</SelectItem>
+                <SelectItem value="year">{t("admin.dashboard.year") || "Year"}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={selectedVendor} onValueChange={setSelectedVendor}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder={t("admin.dashboard.allVendors") || "All Vendors"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("admin.dashboard.allVendors") || "All Vendors"}</SelectItem>
+                {vendors?.map((vendor) => (
+                  <SelectItem key={vendor.id} value={vendor.id}>
+                    {vendor.storeName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </CardHeader>
+        </div>
+      </CardHeader>
       <CardContent>
         {chartData.length === 0 ? (
           <div className="flex items-center justify-center h-[300px] text-muted-foreground">
@@ -2238,8 +2238,8 @@ function WarrantiesSection() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+        </div>
+    );
 }
 
 function AdsSection() {
