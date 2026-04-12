@@ -164,16 +164,16 @@ const sessionSchema = new mongoose.Schema({
   expire: { type: Date, required: true },
 });
 
-export const User = mongoose.models.User || mongoose.model("User", userSchema);
-export const Vendor = mongoose.models.Vendor || mongoose.model("Vendor", vendorSchema);
-export const Category = mongoose.models.Category || mongoose.model("Category", categorySchema);
-export const Product = mongoose.models.Product || mongoose.model("Product", productSchema);
-export const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);
-export const OrderItem = mongoose.models.OrderItem || mongoose.model("OrderItem", orderItemSchema);
-export const VendorStory = mongoose.models.VendorStory || mongoose.model("VendorStory", vendorStorySchema);
-export const CartItem = mongoose.models.CartItem || mongoose.model("CartItem", cartItemSchema);
-export const PaymentRequest = mongoose.models.PaymentRequest || mongoose.model("PaymentRequest", paymentRequestSchema);
-export const VendorRequest = mongoose.models.VendorRequest || mongoose.model("VendorRequest", vendorRequestSchema);
-export const Warranty = mongoose.models.Warranty || mongoose.model("Warranty", warrantySchema);
-export const WarrantyPurchase = mongoose.models.WarrantyPurchase || mongoose.model("WarrantyPurchase", warrantyPurchaseSchema);
-export const Session = mongoose.models.Session || mongoose.model("Session", sessionSchema);
+export const User = mongoose.models.User || mongoose.model("User", userSchema, "usersProjectM");
+export const Vendor = mongoose.models.Vendor || mongoose.model("Vendor", vendorSchema, "vendorsProjectM");
+export const Category = mongoose.models.Category || mongoose.model("Category", categorySchema, "categoriesProjectM");
+export const Product = mongoose.models.Product || mongoose.model("Product", productSchema, "productsProjectM");
+export const Order = mongoose.models.Order || mongoose.model("Order", orderSchema, "ordersProjectM");
+export const OrderItem = mongoose.models.OrderItem || mongoose.model("OrderItem", orderItemSchema, "orderItemsProjectM");
+export const VendorStory = mongoose.models.VendorStory || mongoose.model("VendorStory", vendorStorySchema, "vendorStoriesProjectM");
+export const CartItem = mongoose.models.CartItem || mongoose.model("CartItem", cartItemSchema, "cartItemsProjectM");
+export const PaymentRequest = mongoose.models.PaymentRequest || mongoose.model("PaymentRequest", paymentRequestSchema, "paymentRequestsProjectM");
+export const VendorRequest = mongoose.models.VendorRequest || mongoose.model("VendorRequest", vendorRequestSchema, "vendorRequestsProjectM");
+export const Warranty = mongoose.models.Warranty || mongoose.model("Warranty", warrantySchema, "warrantiesProjectM");
+export const WarrantyPurchase = mongoose.models.WarrantyPurchase || mongoose.model("WarrantyPurchase", warrantyPurchaseSchema, "warrantyPurchasesProjectM");
+export const Session = mongoose.models.Session || mongoose.model("Session", sessionSchema, "sessionsProjectM");
