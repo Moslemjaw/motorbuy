@@ -56,8 +56,8 @@ const categorySchema = new mongoose.Schema({
 });
 
 const productSchema = new mongoose.Schema({
-  vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor", required: true },
-  categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
+  vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor-motorbuy", required: true },
+  categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category-motorbuy", required: true },
   name: { type: String, required: true },
   description: { type: String, required: true },
   price: { type: String, required: true },
@@ -68,7 +68,7 @@ const productSchema = new mongoose.Schema({
   warrantyInfo: String,
   isBundle: { type: Boolean, default: false },
   bundleItems: [{
-    productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+    productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product-motorbuy" },
     quantity: { type: Number, default: 1 }
   }],
   warrantyEligible: { type: Boolean, default: false },
@@ -96,14 +96,14 @@ const orderSchema = new mongoose.Schema({
 });
 
 const orderItemSchema = new mongoose.Schema({
-  orderId: { type: mongoose.Schema.Types.ObjectId, ref: "Order", required: true },
-  productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
+  orderId: { type: mongoose.Schema.Types.ObjectId, ref: "Order-motorbuy", required: true },
+  productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product-motorbuy", required: true },
   quantity: { type: Number, required: true },
   price: { type: String, required: true },
 });
 
 const vendorStorySchema = new mongoose.Schema({
-  vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor", required: true },
+  vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor-motorbuy", required: true },
   content: String,
   imageUrl: String,
   createdAt: { type: Date, default: Date.now },
@@ -111,12 +111,12 @@ const vendorStorySchema = new mongoose.Schema({
 
 const cartItemSchema = new mongoose.Schema({
   userId: { type: String, required: true },
-  productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
+  productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product-motorbuy", required: true },
   quantity: { type: Number, default: 1 },
 });
 
 const paymentRequestSchema = new mongoose.Schema({
-  vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor", required: true },
+  vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor-motorbuy", required: true },
   amount: { type: String, required: true },
   status: { type: String, enum: ["pending", "approved", "paid", "rejected"], default: "pending" },
   notes: String,
@@ -148,9 +148,9 @@ const warrantySchema = new mongoose.Schema({
 
 const warrantyPurchaseSchema = new mongoose.Schema({
   userId: { type: String, required: true },
-  productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
-  warrantyId: { type: mongoose.Schema.Types.ObjectId, ref: "Warranty", required: true },
-  orderId: { type: mongoose.Schema.Types.ObjectId, ref: "Order" }, // Link to order if purchased
+  productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product-motorbuy", required: true },
+  warrantyId: { type: mongoose.Schema.Types.ObjectId, ref: "Warranty-motorbuy", required: true },
+  orderId: { type: mongoose.Schema.Types.ObjectId, ref: "Order-motorbuy" }, // Link to order if purchased
   price: { type: String, required: true },
   startDate: { type: Date, default: Date.now },
   endDate: { type: Date, required: true },
@@ -164,16 +164,16 @@ const sessionSchema = new mongoose.Schema({
   expire: { type: Date, required: true },
 });
 
-export const User = mongoose.models.User || mongoose.model("User", userSchema, "usersProjectM");
-export const Vendor = mongoose.models.Vendor || mongoose.model("Vendor", vendorSchema, "vendorsProjectM");
-export const Category = mongoose.models.Category || mongoose.model("Category", categorySchema, "categoriesProjectM");
-export const Product = mongoose.models.Product || mongoose.model("Product", productSchema, "productsProjectM");
-export const Order = mongoose.models.Order || mongoose.model("Order", orderSchema, "ordersProjectM");
-export const OrderItem = mongoose.models.OrderItem || mongoose.model("OrderItem", orderItemSchema, "orderItemsProjectM");
-export const VendorStory = mongoose.models.VendorStory || mongoose.model("VendorStory", vendorStorySchema, "vendorStoriesProjectM");
-export const CartItem = mongoose.models.CartItem || mongoose.model("CartItem", cartItemSchema, "cartItemsProjectM");
-export const PaymentRequest = mongoose.models.PaymentRequest || mongoose.model("PaymentRequest", paymentRequestSchema, "paymentRequestsProjectM");
-export const VendorRequest = mongoose.models.VendorRequest || mongoose.model("VendorRequest", vendorRequestSchema, "vendorRequestsProjectM");
-export const Warranty = mongoose.models.Warranty || mongoose.model("Warranty", warrantySchema, "warrantiesProjectM");
-export const WarrantyPurchase = mongoose.models.WarrantyPurchase || mongoose.model("WarrantyPurchase", warrantyPurchaseSchema, "warrantyPurchasesProjectM");
-export const Session = mongoose.models.Session || mongoose.model("Session", sessionSchema, "sessionsProjectM");
+export const User = mongoose.models["User-motorbuy"] || mongoose.model("User-motorbuy", userSchema, "users-motorbuy");
+export const Vendor = mongoose.models["Vendor-motorbuy"] || mongoose.model("Vendor-motorbuy", vendorSchema, "vendors-motorbuy");
+export const Category = mongoose.models["Category-motorbuy"] || mongoose.model("Category-motorbuy", categorySchema, "categories-motorbuy");
+export const Product = mongoose.models["Product-motorbuy"] || mongoose.model("Product-motorbuy", productSchema, "products-motorbuy");
+export const Order = mongoose.models["Order-motorbuy"] || mongoose.model("Order-motorbuy", orderSchema, "orders-motorbuy");
+export const OrderItem = mongoose.models["OrderItem-motorbuy"] || mongoose.model("OrderItem-motorbuy", orderItemSchema, "orderItems-motorbuy");
+export const VendorStory = mongoose.models["VendorStory-motorbuy"] || mongoose.model("VendorStory-motorbuy", vendorStorySchema, "vendorStories-motorbuy");
+export const CartItem = mongoose.models["CartItem-motorbuy"] || mongoose.model("CartItem-motorbuy", cartItemSchema, "cartItems-motorbuy");
+export const PaymentRequest = mongoose.models["PaymentRequest-motorbuy"] || mongoose.model("PaymentRequest-motorbuy", paymentRequestSchema, "paymentRequests-motorbuy");
+export const VendorRequest = mongoose.models["VendorRequest-motorbuy"] || mongoose.model("VendorRequest-motorbuy", vendorRequestSchema, "vendorRequests-motorbuy");
+export const Warranty = mongoose.models["Warranty-motorbuy"] || mongoose.model("Warranty-motorbuy", warrantySchema, "warranties-motorbuy");
+export const WarrantyPurchase = mongoose.models["WarrantyPurchase-motorbuy"] || mongoose.model("WarrantyPurchase-motorbuy", warrantyPurchaseSchema, "warrantyPurchases-motorbuy");
+export const Session = mongoose.models["Session-motorbuy"] || mongoose.model("Session-motorbuy", sessionSchema, "sessions-motorbuy");
