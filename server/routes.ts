@@ -1148,8 +1148,8 @@ export async function registerRoutes(
             colX = 70;
             yPos += 50;
           }
-          doc.fontSize(10).font("Helvetica").fillColor("#6B7280").text(label, colX, yPos);
-          doc.fontSize(14).font("Helvetica-Bold").fillColor("#111827").text(value.toString(), colX, yPos + 15);
+          doc.fontSize(10).font("Helvetica").fillColor("#6B7280").text(String(label), colX, yPos);
+          doc.fontSize(14).font("Helvetica-Bold").fillColor("#111827").text(String(value), colX, yPos + 15);
           colX += 240;
         });
         
@@ -1842,7 +1842,7 @@ export async function registerRoutes(
       let userId: string | null = null;
       if (req.session?.userId) {
         userId = req.session.userId;
-        const role = await storage.getUserRole(userId);
+        const role = await storage.getUserRole(req.session.userId);
         if (role && role !== "customer") {
           return res
             .status(403)

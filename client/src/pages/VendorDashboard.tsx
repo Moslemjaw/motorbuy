@@ -1109,7 +1109,7 @@ export default function VendorDashboard() {
                 <CardContent className="space-y-6">
                   <div className="relative h-48 bg-muted rounded-lg overflow-hidden">
                     {storeCoverImageUrl ? (
-                      <img src={storeCoverImageUrl} alt="Cover" className="w-full h-full object-cover" />
+                      <img src={storeCoverImageUrl || undefined} alt="Cover" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                         <Image className="w-12 h-12" />
@@ -1131,7 +1131,7 @@ export default function VendorDashboard() {
                   <div className="flex items-center gap-4">
                     <div className="relative">
                       {storeLogoUrl ? (
-                        <img src={storeLogoUrl} alt="Logo" className="w-24 h-24 rounded-lg object-cover border" />
+                        <img src={storeLogoUrl || undefined} alt="Logo" className="w-24 h-24 rounded-lg object-cover border" />
                       ) : (
                         <div className="w-24 h-24 rounded-lg bg-muted flex items-center justify-center border">
                           <Store className="w-8 h-8 text-muted-foreground" />
@@ -2037,7 +2037,7 @@ export default function VendorDashboard() {
             return (
               <Link
                 key={item.value}
-                href={item.href}
+                href={item.href || "#"}
                 className="flex flex-col items-center justify-center gap-1 flex-1 h-full text-muted-foreground transition-colors"
                 data-testid={`mobile-nav-${item.value}`}
               >

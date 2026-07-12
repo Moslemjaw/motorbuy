@@ -123,7 +123,7 @@ export function startKeepalive(): void {
 
   // Then ping every interval
   keepaliveInterval = window.setInterval(() => {
-    if (document.visibilityState === "visible" || document.visibilityState === "prerender") {
+    if (document.visibilityState === "visible") {
       pingWithRetry();
     } else {
       // Even when tab is hidden, try to ping (some browsers allow this)
