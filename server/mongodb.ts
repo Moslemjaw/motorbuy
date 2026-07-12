@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema({
 const vendorSchema = new mongoose.Schema({
   userId: { type: String, required: true },
   storeName: { type: String, required: true },
-  description: { type: String, required: true },
+  description: { type: String, default: "" },
   logoUrl: String,
   coverImageUrl: String,
   bio: String,
