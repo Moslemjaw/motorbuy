@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { registerAuthRoutes, isAuthenticated } from "./auth";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { api } from "@shared/routes";
-import { User, PaymentRequest } from "./mongodb";
+import { User, PaymentRequest, Vendor } from "./mongodb";
 
 // Helper function to normalize IDs for comparison
 function normalizeId(id: any): string {
