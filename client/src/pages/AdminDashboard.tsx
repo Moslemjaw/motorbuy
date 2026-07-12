@@ -1,4 +1,4 @@
-import { useAuth } from "@/hooks/use-auth";
+﻿import { useAuth } from "@/hooks/use-auth";
 import { useRole, useProducts, useCategories, useVendors, useCreateProduct, useDeleteProduct } from "@/hooks/use-motorbuy";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -877,7 +877,7 @@ function VendorsSection() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/vendors/financials"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/vendors/financials"] }); queryClient.invalidateQueries({ queryKey: ["/api/vendors"] });
       toast({ title: "Success", description: "Vendor created successfully" });
       setShowCreateForm(false);
       setNewStoreName("");
@@ -936,7 +936,7 @@ function VendorsSection() {
       return res.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/vendors/financials"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/vendors/financials"] }); queryClient.invalidateQueries({ queryKey: ["/api/vendors"] });
       toast({ title: "Success", description: data.message });
     },
     onError: (err: Error) => {
@@ -955,7 +955,7 @@ function VendorsSection() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/vendors/financials"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/vendors/financials"] }); queryClient.invalidateQueries({ queryKey: ["/api/vendors"] });
       toast({ title: "Success", description: "Vendor updated successfully" });
       setIsEditVendorDialogOpen(false);
       setEditingVendorDetails(null);
@@ -976,7 +976,7 @@ function VendorsSection() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/vendors/financials"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/vendors/financials"] }); queryClient.invalidateQueries({ queryKey: ["/api/vendors"] });
       toast({ title: "Success", description: "Vendor approval status updated" });
     },
     onError: (err: Error) => {
@@ -998,7 +998,7 @@ function VendorsSection() {
       return res.text();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/vendors/financials"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/vendors/financials"] }); queryClient.invalidateQueries({ queryKey: ["/api/vendors"] });
       toast({ title: "Success", description: "Vendor deleted successfully" });
     },
     onError: (err: Error) => {
