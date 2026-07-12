@@ -1530,7 +1530,7 @@ export async function registerRoutes(
       if (role !== "admin")
         return res.status(403).json({ message: "Forbidden" });
         
-      const { storeName, description, email, password, firstName, lastName } = req.body;
+      const { storeName, description, email, password, firstName, lastName, phone } = req.body;
       
       if (!storeName)
         return res.status(400).json({ message: "Store name is required" });
@@ -1550,6 +1550,7 @@ export async function registerRoutes(
           passwordHash,
           firstName: firstName || "",
           lastName: lastName || "",
+          phone: phone || "",
           role: "vendor",
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -1557,6 +1558,9 @@ export async function registerRoutes(
       } else {
         // Update existing user role to vendor
         user.role = "vendor";
+        if (phone && !user.phone) {
+          user.phone = phone;
+        }
         await user.save();
         
         // Check if vendor profile already exists

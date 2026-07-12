@@ -1,4 +1,4 @@
-﻿import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-auth";
 import { useRole, useProducts, useCategories, useVendors, useCreateProduct, useDeleteProduct } from "@/hooks/use-motorbuy";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -855,6 +855,7 @@ function VendorsSection() {
   const [vendorPassword, setVendorPassword] = useState("");
   const [vendorFirstName, setVendorFirstName] = useState("");
   const [vendorLastName, setVendorLastName] = useState("");
+  const [vendorPhone, setVendorPhone] = useState("");
 
   const { data: vendors, isLoading: isVendorsLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/vendors/financials"],
@@ -868,7 +869,7 @@ function VendorsSection() {
   });
 
   const createVendorMutation = useMutation({
-    mutationFn: async (data: { storeName: string; description: string; email: string; password: string; firstName: string; lastName: string }) => {
+    mutationFn: async (data: { storeName: string; description: string; email: string; password: string; firstName: string; lastName: string; phone?: string }) => {
       const res = await apiRequest("POST", "/api/admin/vendors", data);
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
@@ -886,6 +887,7 @@ function VendorsSection() {
       setVendorPassword("");
       setVendorFirstName("");
       setVendorLastName("");
+      setVendorPhone("");
     },
     onError: (error: Error) => {
       toast({
@@ -1091,6 +1093,12 @@ function VendorsSection() {
                 onChange={(e) => setVendorEmail(e.target.value)}
               />
               <Input
+                type="tel"
+                placeholder={t("auth.phone") || "Phone Number"}
+                value={vendorPhone}
+                onChange={(e) => setVendorPhone(e.target.value)}
+              />
+              <Input
                 type="password"
                 placeholder={t("auth.password") || "Password"}
                 value={vendorPassword}
@@ -1119,6 +1127,7 @@ function VendorsSection() {
                     password: vendorPassword,
                     firstName: vendorFirstName,
                     lastName: vendorLastName,
+                    phone: vendorPhone,
                   })
                 }
                 disabled={!newStoreName || !vendorEmail || !vendorPassword || createVendorMutation.isPending}
