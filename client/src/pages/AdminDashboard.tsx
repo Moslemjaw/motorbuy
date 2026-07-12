@@ -1094,17 +1094,18 @@ function VendorsSection() {
               />
               <Input
                 type="tel"
-                placeholder={t("auth.phone") || "Phone Number"}
+                placeholder="Phone Number"
                 value={vendorPhone}
                 onChange={(e) => setVendorPhone(e.target.value)}
               />
-              <Input
-                type="password"
-                placeholder={t("auth.password") || "Password"}
-                value={vendorPassword}
-                onChange={(e) => setVendorPassword(e.target.value)}
-              />
             </div>
+            <Input
+              type="password"
+              placeholder={t("auth.password") || "Password"}
+              value={vendorPassword}
+              onChange={(e) => setVendorPassword(e.target.value)}
+            />
+
             <Input
               placeholder={t("admin.dashboard.storeName")}
               value={newStoreName}
