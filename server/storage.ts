@@ -17,6 +17,7 @@ export interface IStorage {
   updateCategory(id: string, updates: any): Promise<any>;
   deleteCategory(id: string): Promise<void>;
   getAllUsers(): Promise<any[]>;
+  deleteUser(id: string): Promise<void>;
   getAnalytics(): Promise<any>;
   getSalesChartData(range: "day" | "month" | "year", vendorId?: string): Promise<any[]>;
   getAllOrders(): Promise<any[]>;
@@ -177,6 +178,19 @@ export class MongoStorage implements IStorage {
       createdAt: user.createdAt,
       role: user.role || "customer"
     }));
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    if (!mongoose.Types.ObjectId.isValid(id)) return;
+    
+    // Check if user is a vendor
+    const vendor = await this.getVendorByUserId(id);
+    if (vendor) {
+      // Use existing deleteVendor logic which also deletes the user and products
+      await this.deleteVendor(vendor.id);
+    } else {
+      await User.findByIdAndDelete(id);
+    }
   }
 
   async getAnalytics(): Promise<any> {

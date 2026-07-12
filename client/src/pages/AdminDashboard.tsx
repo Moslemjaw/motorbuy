@@ -594,6 +594,27 @@ function UsersSection() {
         },
     });
 
+    const deleteUserMutation = useMutation({
+        mutationFn: async (userId: string) => {
+            const res = await apiRequest("DELETE", `/api/admin/users/${userId}`);
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.message || "Failed to delete user");
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+            toast({ title: "Success", description: "User deleted successfully" });
+        },
+        onError: (err: Error) => {
+            toast({
+                title: "Error",
+                description: err.message,
+                variant: "destructive",
+            });
+        },
+    });
+
     const handleEditUser = (user: any) => {
         setEditingUser(user);
         setEditFirstName(user.firstName || "");
@@ -601,6 +622,12 @@ function UsersSection() {
         setEditEmail(user.email || "");
         setEditRole(user.role || "customer");
         setIsEditDialogOpen(true);
+    };
+
+    const handleDeleteUser = (user: any) => {
+        if (confirm(t("admin.dashboard.confirmDeleteUser") || "Are you sure you want to delete this user? This action cannot be undone.")) {
+            deleteUserMutation.mutate(user.id);
+        }
     };
 
     const handleUpdateUser = () => {
@@ -723,6 +750,14 @@ function UsersSection() {
                                                 onClick={() => handleEditUser(u)}
                                             >
                                                 <Pencil className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                onClick={() => handleDeleteUser(u)}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
                                             </Button>
                                         </div>
                                     </TableCell>

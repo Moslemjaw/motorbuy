@@ -240,6 +240,26 @@ export async function registerRoutes(
     }
   });
 
+  app.delete("/api/admin/users/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "admin")
+        return res.status(403).json({ message: "Forbidden" });
+
+      const targetUserId = req.params.id;
+      // Prevent admin from deleting themselves
+      if (targetUserId === req.session.userId.toString()) {
+        return res.status(400).json({ message: "You cannot delete your own account" });
+      }
+
+      await storage.deleteUser(targetUserId);
+      res.status(204).send();
+    } catch (e) {
+      console.error("Error deleting user:", e);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
   app.post("/api/admin/users/role", isAuthenticated, async (req: any, res) => {
     try {
       const role = await storage.getUserRole(req.session.userId);
