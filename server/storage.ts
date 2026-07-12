@@ -11,6 +11,7 @@ export interface IStorage {
   getVendorByUserId(userId: string): Promise<any | undefined>;
   createVendor(vendor: any): Promise<any>;
   updateVendor(id: string, updates: any): Promise<any>;
+  deleteVendor(id: string): Promise<void>;
   getCategories(): Promise<any[]>;
   createCategory(category: any): Promise<any>;
   updateCategory(id: string, updates: any): Promise<any>;
@@ -121,6 +122,27 @@ export class MongoStorage implements IStorage {
   async updateVendor(id: string, updates: any): Promise<any> {
     const updated = await Vendor.findByIdAndUpdate(id, updates, { new: true });
     return toPlainObject(updated);
+  }
+
+  async deleteVendor(id: string): Promise<void> {
+    if (!mongoose.Types.ObjectId.isValid(id)) return;
+    const vendor = await Vendor.findById(id);
+    if (!vendor) return;
+    
+    // Delete the vendor profile
+    await Vendor.findByIdAndDelete(id);
+    
+    // Delete the user account associated with the vendor
+    if (vendor.userId) {
+      await User.findByIdAndDelete(vendor.userId);
+    }
+    
+    // Delete all products associated with this vendor
+    const products = await Product.find({ vendorId: new mongoose.Types.ObjectId(id) });
+    for (const product of products) {
+      await Product.findByIdAndDelete(product._id);
+      await CartItem.deleteMany({ productId: product._id });
+    }
   }
 
   async getCategories(): Promise<any[]> {

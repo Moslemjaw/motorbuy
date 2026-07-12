@@ -1611,6 +1611,25 @@ export async function registerRoutes(
     }
   });
 
+  app.delete("/api/vendors/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const vendorId = req.params.id;
+      const vendor = await storage.getVendor(vendorId);
+      if (!vendor) return res.status(404).json({ message: "Vendor not found" });
+      
+      const role = await storage.getUserRole(req.session.userId);
+      if (role !== "admin") {
+        return res.status(403).json({ message: "Only admins can delete vendors" });
+      }
+      
+      await storage.deleteVendor(vendorId);
+      res.status(204).send();
+    } catch (e: any) {
+      console.error("Error deleting vendor:", e);
+      res.status(500).json({ message: e.message || "Failed to delete vendor" });
+    }
+  });
+
   app.get(
     "/api/admin/vendors/financials",
     isAuthenticated,

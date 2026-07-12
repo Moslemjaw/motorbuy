@@ -953,6 +953,28 @@ function VendorsSection() {
     },
   });
 
+  const deleteVendorMutation = useMutation({
+    mutationFn: async (vendorId: string) => {
+      const res = await apiRequest("DELETE", `/api/vendors/${vendorId}`);
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to delete vendor");
+      }
+      return res.text();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/vendors/financials"] });
+      toast({ title: "Success", description: "Vendor deleted successfully" });
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const startEditing = (vendor: any) => {
     setEditingVendor(vendor.id);
     setCommissionType(vendor.commissionType || "percentage");
@@ -1271,6 +1293,24 @@ function VendorsSection() {
                               <XCircle className="w-4 h-4 text-destructive" />
                             ) : (
                               <CheckCircle className="w-4 h-4 text-green-600" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => {
+                              if (confirm(t("admin.dashboard.confirmDeleteVendor") || "Are you sure you want to delete this vendor and all their products? This action cannot be undone.")) {
+                                deleteVendorMutation.mutate(vendor.id);
+                              }
+                            }}
+                            disabled={deleteVendorMutation.isPending}
+                            title={t("common.delete")}
+                          >
+                            {deleteVendorMutation.isPending ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-4 h-4 text-destructive" />
                             )}
                           </Button>
                         </div>
