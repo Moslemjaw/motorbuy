@@ -133,7 +133,7 @@ export class MongoStorage implements IStorage {
     await Vendor.findByIdAndDelete(id);
     
     // Delete the user account associated with the vendor
-    if (vendor.userId) {
+    if (vendor.userId && mongoose.Types.ObjectId.isValid(vendor.userId)) {
       await User.findByIdAndDelete(vendor.userId);
     }
     
