@@ -1578,9 +1578,9 @@ export async function registerRoutes(
         lifetimePayoutsKwd: "0",
       });
       res.status(201).json(vendor);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Error creating vendor:", e);
-      res.status(500).json({ message: "Failed to create vendor" });
+      res.status(500).json({ message: "Failed to create vendor: " + (e.message || String(e)) });
     }
   });
 
