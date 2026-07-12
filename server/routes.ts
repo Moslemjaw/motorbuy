@@ -1509,13 +1509,38 @@ export async function registerRoutes(
       const role = await storage.getUserRole(req.session.userId);
       if (role !== "admin")
         return res.status(403).json({ message: "Forbidden" });
-      const { storeName, description, userId } = req.body;
+        
+      const { storeName, description, email, password, firstName, lastName } = req.body;
+      
       if (!storeName)
         return res.status(400).json({ message: "Store name is required" });
+      if (!email || !password)
+        return res.status(400).json({ message: "Email and password are required for the vendor account" });
+
+      // Check if user already exists
+      const existingUser = await User.findOne({ email: email.toLowerCase() });
+      if (existingUser) {
+        return res.status(400).json({ message: "User with this email already exists" });
+      }
+
+      // Hash password and create User
+      const { hash } = await import("bcryptjs");
+      const passwordHash = await hash(password, 12);
+      
+      const user = await User.create({
+        email: email.toLowerCase(),
+        passwordHash,
+        firstName: firstName || "",
+        lastName: lastName || "",
+        role: "vendor",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
       const vendor = await storage.createVendor({
         storeName,
         description: description || "",
-        userId: userId || `admin-created-${Date.now()}`,
+        userId: user._id.toString(),
         isApproved: true,
         commissionType: "percentage",
         commissionValue: "5",

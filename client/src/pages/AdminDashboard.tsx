@@ -821,6 +821,10 @@ function VendorsSection() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newStoreName, setNewStoreName] = useState("");
   const [newDescription, setNewDescription] = useState("");
+  const [vendorEmail, setVendorEmail] = useState("");
+  const [vendorPassword, setVendorPassword] = useState("");
+  const [vendorFirstName, setVendorFirstName] = useState("");
+  const [vendorLastName, setVendorLastName] = useState("");
 
   const { data: vendors, isLoading: isVendorsLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/vendors/financials"],
@@ -834,9 +838,12 @@ function VendorsSection() {
   });
 
   const createVendorMutation = useMutation({
-    mutationFn: async (data: { storeName: string; description: string }) => {
+    mutationFn: async (data: { storeName: string; description: string; email: string; password: string; firstName: string; lastName: string }) => {
       const res = await apiRequest("POST", "/api/admin/vendors", data);
-      if (!res.ok) throw new Error("Failed to create vendor");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to create vendor");
+      }
       return res.json();
     },
     onSuccess: () => {
@@ -845,6 +852,10 @@ function VendorsSection() {
       setShowCreateForm(false);
       setNewStoreName("");
       setNewDescription("");
+      setVendorEmail("");
+      setVendorPassword("");
+      setVendorFirstName("");
+      setVendorLastName("");
     },
     onError: (error: Error) => {
       toast({
@@ -1010,6 +1021,30 @@ function VendorsSection() {
             <CardTitle>{t("admin.dashboard.createVendor")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                placeholder={t("admin.dashboard.firstName") || "First Name"}
+                value={vendorFirstName}
+                onChange={(e) => setVendorFirstName(e.target.value)}
+              />
+              <Input
+                placeholder={t("admin.dashboard.lastName") || "Last Name"}
+                value={vendorLastName}
+                onChange={(e) => setVendorLastName(e.target.value)}
+              />
+              <Input
+                type="email"
+                placeholder={t("admin.dashboard.email") || "Email"}
+                value={vendorEmail}
+                onChange={(e) => setVendorEmail(e.target.value)}
+              />
+              <Input
+                type="password"
+                placeholder={t("admin.dashboard.password") || "Password"}
+                value={vendorPassword}
+                onChange={(e) => setVendorPassword(e.target.value)}
+              />
+            </div>
             <Input
               placeholder={t("admin.dashboard.storeName")}
               value={newStoreName}
@@ -1028,9 +1063,13 @@ function VendorsSection() {
                   createVendorMutation.mutate({
                     storeName: newStoreName,
                     description: newDescription,
+                    email: vendorEmail,
+                    password: vendorPassword,
+                    firstName: vendorFirstName,
+                    lastName: vendorLastName,
                   })
                 }
-                disabled={!newStoreName || createVendorMutation.isPending}
+                disabled={!newStoreName || !vendorEmail || !vendorPassword || createVendorMutation.isPending}
                 data-testid="button-save-vendor"
               >
                 {createVendorMutation.isPending ? (
