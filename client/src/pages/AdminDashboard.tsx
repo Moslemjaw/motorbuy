@@ -60,15 +60,10 @@ import { buildApiUrl } from "@/lib/api-config";
 import { formatKWD } from "@/lib/currency";
 import { useLocation } from "wouter";
 import { useLanguage } from "@/lib/i18n";
-import { formatKWD } from "@/lib/currency";
 import { Navbar } from "@/components/Navbar";
 import { LoadingPage } from "@/components/LoadingPage";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
-
-function buildApiUrl(path: string) {
-  return path.startsWith("/") ? path : `/${path}`;
-}
 
 export default function AdminDashboard() {
   const { user, logout, isLoading: isAuthLoading } = useAuth();
@@ -83,7 +78,7 @@ export default function AdminDashboard() {
   }
 
   // Check role from both user object and roleData
-  const isAdmin = user?.role === "admin" || roleData?.role === "admin";
+  const isAdmin = (user as any)?.role === "admin" || (roleData as any)?.role === "admin";
 
   // Redirect if not authenticated or not admin
   if (!user || !isAdmin) {
@@ -1137,7 +1132,7 @@ function VendorsSection() {
                           <div className={`flex items-center gap-1 ${isRTL ? "flex-row-reverse justify-end" : ""}`}>
                             <Select
                               value={commissionType}
-                              onValueChange={setCommissionType}
+                              onValueChange={(val) => setCommissionType(val as "percentage" | "fixed")}
                             >
                               <SelectTrigger className="w-16 h-8 text-xs">
                                 <SelectValue />
