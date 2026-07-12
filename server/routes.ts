@@ -1518,24 +1518,33 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Email and password are required for the vendor account" });
 
       // Check if user already exists
-      const existingUser = await User.findOne({ email: email.toLowerCase() });
-      if (existingUser) {
-        return res.status(400).json({ message: "User with this email already exists" });
-      }
-
-      // Hash password and create User
-      const { hash } = await import("bcryptjs");
-      const passwordHash = await hash(password, 12);
+      let user = await User.findOne({ email: email.toLowerCase() });
       
-      const user = await User.create({
-        email: email.toLowerCase(),
-        passwordHash,
-        firstName: firstName || "",
-        lastName: lastName || "",
-        role: "vendor",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      if (!user) {
+        // Hash password and create User
+        const { hash } = await import("bcryptjs");
+        const passwordHash = await hash(password, 12);
+        
+        user = await User.create({
+          email: email.toLowerCase(),
+          passwordHash,
+          firstName: firstName || "",
+          lastName: lastName || "",
+          role: "vendor",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      } else {
+        // Update existing user role to vendor
+        user.role = "vendor";
+        await user.save();
+        
+        // Check if vendor profile already exists
+        const existingVendor = await Vendor.findOne({ userId: user._id.toString() });
+        if (existingVendor) {
+          return res.status(400).json({ message: "This user is already a vendor" });
+        }
+      }
 
       const vendor = await storage.createVendor({
         storeName,
