@@ -4,15 +4,8 @@
  * In production, uses VITE_API_URL if set, otherwise falls back to relative
  */
 export function getApiBaseUrl(): string {
-  // Vite exposes env vars prefixed with VITE_ to the client
-  const apiUrl = import.meta.env.VITE_API_URL;
-  
-  // If VITE_API_URL is set, use it (remove trailing slash if present)
-  if (apiUrl) {
-    return apiUrl.replace(/\/$/, '');
-  }
-  
-  // Otherwise, use relative URLs (same origin)
+  // Always use relative URLs so Vercel can proxy the requests to Render
+  // This solves third-party cookie blocking issues natively.
   return '';
 }
 
