@@ -1040,24 +1040,24 @@ function VendorsSection() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
-                placeholder={t("admin.dashboard.firstName") || "First Name"}
+                placeholder={t("auth.firstName") || "First Name"}
                 value={vendorFirstName}
                 onChange={(e) => setVendorFirstName(e.target.value)}
               />
               <Input
-                placeholder={t("admin.dashboard.lastName") || "Last Name"}
+                placeholder={t("auth.lastName") || "Last Name"}
                 value={vendorLastName}
                 onChange={(e) => setVendorLastName(e.target.value)}
               />
               <Input
                 type="email"
-                placeholder={t("admin.dashboard.email") || "Email"}
+                placeholder={t("common.email") || "Email"}
                 value={vendorEmail}
                 onChange={(e) => setVendorEmail(e.target.value)}
               />
               <Input
                 type="password"
-                placeholder={t("admin.dashboard.password") || "Password"}
+                placeholder={t("auth.password") || "Password"}
                 value={vendorPassword}
                 onChange={(e) => setVendorPassword(e.target.value)}
               />
